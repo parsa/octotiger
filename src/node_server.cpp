@@ -12,6 +12,8 @@
 #include <fstream>
 #include <iostream>
 
+
+
 HPX_REGISTER_MINIMAL_COMPONENT_FACTORY(hpx::components::managed_component<node_server>, node_server);
 
 typedef node_server::load_action load_action_type;
@@ -36,17 +38,18 @@ typedef node_server::get_ptr_action get_ptr_action_type;
 typedef node_server::diagnostics_action diagnostics_action_type;
 typedef node_server::send_hydro_children_action send_hydro_children_action_type;
 typedef node_server::send_hydro_flux_correct_action send_hydro_flux_correct_action_type;
-//typedef node_server::output_action output_action_type;
 typedef node_server::get_nieces_action get_nieces_action_type;
 typedef node_server::set_aunt_action set_aunt_action_type;
 typedef node_server::check_for_refinement_action check_for_refinement_action_type;
 typedef node_server::force_nodes_to_exist_action force_nodes_to_exist_action_type;
 typedef node_server::set_grid_action set_grid_action_type;
-
 typedef node_server::find_omega_part_action find_omega_part_action_type;
+typedef node_server::scf_params_action scf_params_action_type;
+typedef node_server::scf_update_action scf_update_action_type;
 
+HPX_REGISTER_ACTION(scf_update_action_type);
+HPX_REGISTER_ACTION(scf_params_action_type);
 HPX_REGISTER_ACTION(find_omega_part_action_type);
-
 HPX_REGISTER_ACTION(set_grid_action_type);
 HPX_REGISTER_ACTION(force_nodes_to_exist_action_type);
 HPX_REGISTER_ACTION(check_for_refinement_action_type);
@@ -54,7 +57,6 @@ HPX_REGISTER_ACTION(set_aunt_action_type);
 HPX_REGISTER_ACTION(get_nieces_action_type);
 HPX_REGISTER_ACTION(load_action_type);
 HPX_REGISTER_ACTION(save_action_type);
-//HPX_REGISTER_ACTION( output_action_type);
 HPX_REGISTER_ACTION(send_hydro_children_action_type);
 HPX_REGISTER_ACTION(send_hydro_flux_correct_action_type);
 HPX_REGISTER_ACTION(regrid_gather_action_type);
@@ -75,6 +77,8 @@ HPX_REGISTER_ACTION(diagnostics_action_type);
 HPX_REGISTER_ACTION(timestep_driver_action_type);
 HPX_REGISTER_ACTION(timestep_driver_ascend_action_type);
 HPX_REGISTER_ACTION(timestep_driver_descend_action_type);
+
+
 
 bool node_server::static_initialized(false);
 std::atomic<integer> node_server::static_initializing(0);

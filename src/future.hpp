@@ -11,6 +11,7 @@
 #include "defs.hpp"
 
 //#include <boost/chrono.hpp>
+#define NFUTDEBUG
 
 #define TIMEOUT 60.0
 

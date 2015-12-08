@@ -412,11 +412,11 @@ void node_server::run_scf() {
 				data.rho_max_don, global.omega, global.x_com, global.C_acc, global.C_don, virial_error, global.x_drift,
 				global.y_drift, global.z_drift, data.m_don / data.m_acc, w0, res);
 		fclose(fp);
-		if (res < 1.0e-5) {
+		if (res < 1.0e-3) {
 			if (done) {
 				break;
 			}
-			if (i > 10) {
+			if (i > 50) {
 				done = true;
 			}
 		} else {

@@ -262,6 +262,7 @@ public:
 
 };
 
+HPX_REGISTER_ACTION_DECLARATION( node_server::scf_update_action);
 HPX_REGISTER_ACTION_DECLARATION( node_server::find_omega_part_action);
 HPX_REGISTER_ACTION_DECLARATION( node_server::set_grid_action);
 HPX_REGISTER_ACTION_DECLARATION( node_server::force_nodes_to_exist_action);
@@ -290,7 +291,9 @@ HPX_REGISTER_ACTION_DECLARATION( node_server::diagnostics_action);
 HPX_REGISTER_ACTION_DECLARATION( node_server::timestep_driver_action);
 HPX_REGISTER_ACTION_DECLARATION( node_server::timestep_driver_ascend_action);
 HPX_REGISTER_ACTION_DECLARATION( node_server::timestep_driver_descend_action);
+HPX_REGISTER_ACTION_DECLARATION( node_server::scf_params_action);
 
+HPX_ACTION_USES_MEDIUM_STACK( node_server::scf_update_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::find_omega_part_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::set_grid_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::force_nodes_to_exist_action);
@@ -316,7 +319,11 @@ HPX_ACTION_USES_MEDIUM_STACK( node_server::get_child_client_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::form_tree_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::get_ptr_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::diagnostics_action);
+HPX_ACTION_USES_MEDIUM_STACK( node_server::scf_params_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::timestep_driver_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::timestep_driver_ascend_action);
 HPX_ACTION_USES_MEDIUM_STACK( node_server::timestep_driver_descend_action);
+
+
+
 #endif /* NODE_SERVER_HPP_ */
