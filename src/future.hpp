@@ -10,10 +10,6 @@
 
 #include "defs.hpp"
 
-#ifndef MINI_HPX
-#define NFUTDEBUG
-#endif
-
 //#include <boost/chrono.hpp>
 
 #define TIMEOUT 60.0

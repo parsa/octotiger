@@ -7,9 +7,7 @@
 
 #ifndef TYPES444_HPP_
 
-
 #define DO_OUTPUT
-
 
 #ifdef MINI_HPX
 #include "../hpx/hpx_lite.hpp"
@@ -38,13 +36,14 @@ enum gsolve_type {
 #include <hpx/runtime/serialization/set.hpp>
 #include <hpx/runtime/serialization/array.hpp>
 #include <hpx/runtime/serialization/vector.hpp>
+#include <mutex>
 #endif
 
 #define USE_ROTATING_FRAME
 
 const real DEFAULT_OMEGA = 0.142194022;
 
-const integer MAX_LEVEL = 6;
+const integer MAX_LEVEL = 5;
 
 enum boundary_type {
 	OUTFLOW, REFLECT
