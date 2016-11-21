@@ -246,21 +246,39 @@ void grid::compute_interactions(gsolve_type type) {
                 A1[0] += m1[i] * tmp;
             }
 
-            for (integer a = 0; a < NDIM; ++a) {
-                A0(a) =  m0() * D(a);
-                A1(a) = -m1() * D(a);
-                for (integer b = 0; b < NDIM; ++b) {
-                    if (type != RHO) {
-                        A0(a) -= m0(a) * D(a, b);
-                        A1(a) -= m1(a) * D(a, b);
-                    }
-                    for (integer c = b; c < NDIM; ++c) {
-                        const auto tmp1 = D(a, b, c) * (factor(c, b) / real(2));
-                        A0(a) += m0(c, b) * tmp1;
-                        A1(a) -= m1(c, b) * tmp1;
-                    }
-
+//             for (integer a = 0; a < NDIM; ++a) {
+//                 A0(a) =  m0() * D(a);
+//                 A1(a) = -m1() * D(a);
+//                 for (integer b = 0; b < NDIM; ++b) {
+//                     if (type != RHO) {
+//                         A0(a) -= m0(a) * D(a, b);
+//                         A1(a) -= m1(a) * D(a, b);
+//                     }
+//                     for (integer c = b; c < NDIM; ++c) {
+//                         const auto tmp1 = D(a, b, c) * (factor(c, b) / real(2));
+//                         A0(a) += m0(c, b) * tmp1;
+//                         A1(a) -= m1(c, b) * tmp1;
+//                     }
+//
+//                 }
+//             }
+            for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
+                integer a = to_a(i);
+                A0[a] =  m0[0] * D[a];
+                A1[a] = -m1[0] * D[a];
+            }
+            if (type != RHO) {
+                for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
+                    integer a = to_a(i), ab = to_ab(i);
+                    A0[a] -= m0[a] * D[ab];
+                    A1[a] -= m1[a] * D[ab];
                 }
+            }
+            for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+                integer a = to_a(i), b = to_b(i), c = to_c(i);
+                const auto tmp1 = D[to_abc(i)] * (factor(c, b) / real(2));
+                A0[a] += m0(c, b) * tmp1;
+                A1[a] -= m1(c, b) * tmp1;
             }
 
             if (type == RHO) {
@@ -276,6 +294,14 @@ void grid::compute_interactions(gsolve_type type) {
                     }
 
                 }
+//                 for (integer d = 0; d < NDIM; ++d) {
+//                     for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//                         integer a = to_a(i), b = to_b(i), c = to_c(i);
+//                         const auto tmp = D(d, a, b, c) * (factor(a, b, c) / real(6));
+//                         B0[d] -= n0(a, b, c) * tmp;
+//                         B1[d] -= n1(a, b, c) * tmp;
+//                     }
+//                 }
             }
 
             for (integer a = 0; a < NDIM; ++a) {
@@ -290,22 +316,33 @@ void grid::compute_interactions(gsolve_type type) {
 
                 }
             }
-
-//             for (integer a = 0; a < NDIM; ++a) {
-//                 for (integer b = a; b < NDIM; ++b) {
-//                     for (integer c = b; c < NDIM; ++c) {
-//                         const auto tmp2 = D(a, b, c);
-//                         A1(a, b, c) = -m1() * tmp2;
-//                         A0(a, b, c) =  m0() * tmp2;
-//                     }
-//
-//                 }
+//             for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
+//                 integer ab = to_ab(i);
+//                 A0[ab] = m0[0] * D[ab];
+//                 A1[ab] = m1[0] * D[ab];
 //             }
-            for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
-                const auto& tmp = D[i];
-                A1[i] = -m1[0] * tmp;
-                A0[i] =  m0[0] * tmp;
+//             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//                 integer ab = to_ab(i), c = to_c(i);
+//                 const auto& tmp = D[to_abc(i)];
+//                 A0[ab] -= m0[c] * tmp;
+//                 A1[ab] += m1[c] * tmp;
+//             }
+
+            for (integer a = 0; a < NDIM; ++a) {
+                for (integer b = a; b < NDIM; ++b) {
+                    for (integer c = b; c < NDIM; ++c) {
+                        const auto tmp2 = D(a, b, c);
+                        A1(a, b, c) = -m1() * tmp2;
+                        A0(a, b, c) =  m0() * tmp2;
+                    }
+
+                }
             }
+//             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//                 const auto& tmp = D[i];
+//                 A1[i] = -m1[0] * tmp;
+//                 A0[i] =  m0[0] * tmp;
+//             }
 
             for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
                 const integer iii0 = this_ilist[li + i].first;
@@ -456,17 +493,31 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type, c
                 A0[0] -= m0[i] * D[i] * (factor[i] / real(6));
             }
 
-            for (integer a = 0; a < NDIM; ++a) {
-                A0(a) = m0() * D(a);
-                for (integer b = 0; b < NDIM; ++b) {
-                    if (type != RHO) {
-                        A0(a) -= m0(a) * D(a, b);
-                    }
-                    for (integer c = b; c < NDIM; ++c) {
-                        const auto tmp = D(a, b, c) * (factor(c, b) / real(2));
-                        A0(a) += m0(c, b) * tmp;
-                    }
+//             for (integer a = 0; a < NDIM; ++a) {
+//                 A0(a) = m0() * D(a);
+//                 for (integer b = 0; b < NDIM; ++b) {
+//                     if (type != RHO) {
+//                         A0(a) -= m0(a) * D(a, b);
+//                     }
+//                     for (integer c = b; c < NDIM; ++c) {
+//                         const auto tmp = D(a, b, c) * (factor(c, b) / real(2));
+//                         A0(a) += m0(c, b) * tmp;
+//                     }
+//                 }
+//             }
+            for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
+                integer a = to_a(i);
+                A0[a] =  m0[0] * D[a];
+            }
+            if (type != RHO) {
+                for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
+                    integer a = to_a(i);
+                    A0[a] -= m0[a] * D[to_ab(i)];
                 }
+            }
+            for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+                integer a = to_a(i), b = to_b(i), c = to_c(i);
+                A0[a] += m0(c, b) *  D[to_abc(i)] * (factor(c, b) / real(2));
             }
 
             if (type == RHO) {
@@ -480,6 +531,13 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type, c
                         }
                     }
                 }
+//                 for (integer d = 0; d < NDIM; ++d) {
+//                     for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//                         integer a = to_a(i), b = to_b(i), c = to_c(i);
+//                         const auto tmp = D(d, a, b, c) * (factor(a, b, c) / real(6));
+//                         B0[d] -= n0(a, b, c) * tmp;
+//                     }
+//                 }
             }
 
             for (integer a = 0; a < NDIM; ++a) {
@@ -490,17 +548,24 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type, c
                     }
                 }
             }
-
-//             for (integer a = 0; a < NDIM; ++a) {
-//                 for (integer b = a; b < NDIM; ++b) {
-//                     for (integer c = b; c < NDIM; ++c) {
-//                         A0(a, b, c) = m0() * D(a, b, c);
-//                     }
-//                 }
+//             for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
+//                 integer ab = to_ab(i);
+//                 A0[ab] = m0[0] * D[ab];
 //             }
-            for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
-                A0[i] =  m0[0] * D[i];
+//             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//                 A0[to_ab(i)] -= m0[to_c(i)] * D[to_abc(i)];
+//             }
+
+            for (integer a = 0; a < NDIM; ++a) {
+                for (integer b = a; b < NDIM; ++b) {
+                    for (integer c = b; c < NDIM; ++c) {
+                        A0(a, b, c) = m0() * D(a, b, c);
+                    }
+                }
             }
+//             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//                 A0[i] =  m0[0] * D[i];
+//             }
 
             for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
                 const integer iii0 = bnd.first[li + i];
@@ -587,14 +652,35 @@ void grid::compute_boundary_interactions_multipole_monopole(gsolve_type type, co
 
             for (integer a = 0; a < NDIM; ++a) {
                 A0(a) = m0() * D(a);
+                std::cout << A0.index(a) << std::endl;
                 for (integer b = 0; b < NDIM; ++b) {
                     if (type != RHO) {
+                        std::cout << A0.index(a) << "," << A0.index(a, b) << std::endl;
                         A0(a) -= m0(a) * D(a, b);
                     }
                     for (integer c = b; c < NDIM; ++c) {
+                        std::cout << m0.index(c, b) << "," << D.index(a, b, c) << std::endl;
                         A0(a) += m0(c, b) * D(a, b, c) * (factor(b, c) / real(2));
                     }
                 }
+            }
+            std::cout << std::endl;
+            for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
+                integer a = to_a(i);
+                std::cout << a << std::endl;
+                A0[a] =  m0[0] * D[a];
+            }
+            if (type != RHO) {
+                for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
+                    integer a = to_a(i);
+                    std::cout << a << "," << to_ab(i) << std::endl;
+                    A0[a] -= m0[a] * D[to_ab(i)];
+                }
+            }
+            for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+                integer a = to_a(i), b = to_b(i), c = to_c(i);
+                std::cout << m0.index(c, b) << "," << to_abc(i) << std::endl;
+                A0[a] += m0(c, b) *  D[to_abc(i)] * (factor(c, b) / real(2));
             }
 
             if (type == RHO) {
@@ -608,6 +694,13 @@ void grid::compute_boundary_interactions_multipole_monopole(gsolve_type type, co
                         }
                     }
                 }
+//                 for (integer d = 0; d < NDIM; ++d) {
+//                     for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//                         integer a = to_a(i), b = to_b(i), c = to_c(i);
+//                         const auto tmp = D(d, a, b, c) * (factor(a, b, c) / real(6));
+//                         B0[d] -= n0(a, b, c) * tmp;
+//                     }
+//                 }
             }
 
             for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
@@ -748,6 +841,13 @@ void grid::compute_boundary_interactions_monopole_multipole(gsolve_type type, co
                         }
                     }
                 }
+//                 for (integer d = 0; d < NDIM; ++d) {
+//                     for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//                         integer a = to_a(i), b = to_b(i), c = to_c(i);
+//                         const auto tmp = D(d, a, b, c) * (factor(a, b, c) / real(6));
+//                         B0[d] -= n0(a, b, c) * tmp;
+//                     }
+//                 }
             }
 
             for (integer i = 0; i != simd_len && i + li < list_size; ++i) {

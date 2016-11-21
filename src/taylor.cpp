@@ -166,6 +166,15 @@ void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM>& X) {
             }
         }
     }
+//     for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
+//         XX[to_a(i)] = X[to_a(i) - 1];
+//     }
+//     for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
+//         XX[to_ab(i)] = XX[to_a(i)] * X[to_b(i) - 1];
+//     }
+//     for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+//         XX[to_abc(i)] = XX[to_ab(i)] * X[to_c(i) - 1];
+//     }
 
     // 3 LOADS, 3 MULS, 2 ADDS, 1 DIV (AKA 1 RCP + 1 MUL)
     const T r2inv = ONE / (X[0] * X[0] + X[1] * X[1] + X[2] * X[2]);

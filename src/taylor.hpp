@@ -35,6 +35,49 @@ struct taylor_consts {
 
 constexpr integer taylor_sizes[MAX_ORDER] = {1, 4, 10, 20, 35}; //
 
+// For more information about the mapping tables belows see
+// https://github.com/STEllAR-GROUP/octotiger/wiki/Taylor-Indicies
+
+constexpr integer to_a_mapping[] = {
+    -1, 1, 2, 3, 1, 1, 1, 2, 2, 3, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3
+};
+constexpr inline integer to_a(integer i) {
+//    assert(i >= taylor_sizes[0] && i < taylor_sizes[3]);
+    return to_a_mapping[i];
+}
+
+constexpr integer to_b_mapping[] = {
+    -1, -1, -1, -1, 1, 2, 3, 2, 3, 3, 1, 1, 1, 2, 2, 3, 2, 2, 3, 3
+};
+constexpr inline integer to_b(integer i) {
+//    assert(i >= taylor_sizes[1] && i < taylor_sizes[3]);
+    return to_b_mapping[i];
+}
+
+constexpr integer to_c_mapping[] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 2, 3, 2, 3, 3, 2, 3, 3, 3
+};
+constexpr inline integer to_c(integer i) {
+//    assert(i >= taylor_sizes[2] && i < taylor_sizes[3]);
+    return to_c_mapping[i];
+}
+
+constexpr integer to_ab_mapping[] = {
+    -1, -1, -1, -1, 4, 5, 6, 7, 8, 9, 4, 4, 4, 5, 5, 6, 7, 7, 8, 9
+};
+constexpr inline integer to_ab(integer i) {
+//    assert(i >= taylor_sizes[1] && i < taylor_sizes[3]);
+    return to_ab_mapping[i];
+}
+
+constexpr integer to_abc_mapping[] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+};
+constexpr inline integer to_abc(integer i) {
+//    assert(i >= taylor_sizes[2] && i < taylor_sizes[3]);
+    return to_abc_mapping[i];
+}
+
 template<int N, class T = real>
 class taylor {
 private:
