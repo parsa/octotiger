@@ -38,6 +38,7 @@ endif()
 
 if(NOT MSVC)
     include_directories(${CMAKE_SOURCE_DIR}/src ~/include ${Silo_INCLUDE_DIR})
+    include_directories(${CMAKE_SOURCE_DIR})
 
     set(CMAKE_CXX_FLAGS "-std=c++14 -march=native -Wno-attributes -Wno-deprecated-declarations ${CMAKE_CXX_FLAGS}")
     set(CMAKE_C_FLAGS "-march=native -Wno-attributes -Wno-deprecated-declarations ${CMAKE_CXX_FLAGS}")
@@ -49,6 +50,7 @@ else()
     add_definitions(-D_USE_MATH_DEFINES)
     add_definitions(-DNOMINMAX)
     include_directories(${CMAKE_SOURCE_DIR}/src)
+    include_directories(${CMAKE_SOURCE_DIR})
 
     hpx_add_compile_flag(-wd4244)
     hpx_add_compile_flag(-wd4267)
@@ -116,6 +118,12 @@ set(source_files ${source_files}
     src/stack_trace.cpp
     src/taylor.cpp
     src/util.cpp
+    #refactored starts here:
+    src/create_tree.cpp
+    src/get_locality_id.cpp
+    src/node_tree.cpp
+    src/node_tree_component.cpp
+    src/tree_location.cpp
 )
 
 set(header_files
@@ -138,9 +146,15 @@ set(header_files
     src/simd.hpp
     src/space_vector.hpp
     src/taylor.hpp
+    #refactored starts here:
+    octotiger/create_tree.hpp
+    octotiger/get_locality_id.hpp
+    octotiger/node_tree.hpp
+    octotiger/node_tree_component.hpp
+    octotiger/tree_location.hpp
 )
 
-add_hpx_executable(
+add_hpx_library(
   octotiger
   DEPENDENCIES
     ${dependencies}
@@ -148,7 +162,19 @@ add_hpx_executable(
     ${source_files}
   HEADERS
     ${header_files}
-  FOLDER  "Octotiger"
+  FOLDER  "Octotiger/Lib"
 )
 
+add_hpx_executable(
+  octotiger
+  DEPENDENCIES
+    ${dependencies}
+    octotiger_lib
+  SOURCES
+    src/main.cpp
+  FOLDER  "Octotiger/Driver"
+)
 
+enable_testing()
+include(CTest)
+add_subdirectory(tests)

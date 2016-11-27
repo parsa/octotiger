@@ -202,6 +202,14 @@ hpx::future<integer> node_client::regrid_gather(bool rb) const {
 integer node_server::regrid_gather(bool rebalance_only) {
     integer count = integer(1);
 
+    if (!needs_refinment)
+    {
+        if (refinement_flag > 0)
+        {
+            std::cout << "child got refined, parent not ...\n";
+        }
+    }
+
     if (is_refined) {
         if (!rebalance_only) {
             /* Turning refinement off */
@@ -297,6 +305,7 @@ void node_server::regrid_scatter(integer a_, integer total) {
                 id.get_gid());
             auto current_child_loc = localities[current_child_id];
             if (child_loc != current_child_loc) {
+                std::cout << "copy ...\n";
                 children[ci] = children[ci].copy_to_locality(child_loc);
             }
         }

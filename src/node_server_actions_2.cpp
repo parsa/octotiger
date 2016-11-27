@@ -32,9 +32,10 @@ bool node_server::check_for_refinement() {
     }
     wait_all_and_propagate_exceptions(futs);
     if (!rc) {
-        rc = grid_ptr->refine_me(my_location.level());
+        rc = true;//grid_ptr->refine_me(my_location.level());
     }
     if (rc) {
+        needs_refinment = true;
         if (refinement_flag++ == 0) {
             if (!parent.empty()) {
                 const auto neighbors = my_location.get_neighbors();
@@ -42,6 +43,10 @@ bool node_server::check_for_refinement() {
                     std::list < node_location > (neighbors.begin(), neighbors.end())).get();
             }
         }
+    }
+    else
+    {
+        needs_refinment = false;
     }
     return refinement_flag != 0;
 }

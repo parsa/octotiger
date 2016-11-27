@@ -129,6 +129,7 @@ public:
     hpx::future<void> refined_step(std::vector<hpx::future<void>> child_futs);
 
 public:
+    bool needs_refinment;
 
     static bool child_is_on_face(integer ci, integer face);
 
