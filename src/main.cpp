@@ -19,13 +19,8 @@
 #include <hpx/hpx_init.hpp>
 #include <hpx/include/lcos.hpp>
 
-options opts;
-
 bool gravity_on = true;
 bool hydro_on = true;
-HPX_PLAIN_ACTION(grid::set_pivot, set_pivot_action);
-
-void compute_ilist();
 
 void initialize(options _opts) {
 	opts = _opts;
@@ -98,20 +93,6 @@ void initialize(options _opts) {
 HPX_PLAIN_ACTION(initialize, initialize_action);
 
 real OMEGA;
-void node_server::set_pivot() {
-	auto localities = hpx::find_all_localities();
-	space_vector pivot = grid_ptr->center_of_mass();
-	std::vector<hpx::future<void>> futs;
-	futs.reserve(localities.size());
-	for (auto& locality : localities) {
-		if (current_time == ZERO) {
-			futs.push_back(hpx::async < set_pivot_action > (locality, pivot));
-		}
-	}
-	for (auto&& fut : futs) {
-		fut.get();
-	}
-}
 
 int hpx_main(int argc, char* argv[]) {
 	printf("Running\n");

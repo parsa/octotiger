@@ -5,6 +5,7 @@
  *      Author: dmarce1
  */
 
+#include "grid.hpp"
 #include "node_server.hpp"
 #include "problem.hpp"
 #include "future.hpp"
@@ -500,3 +501,22 @@ void node_server::report_timing()
 {
     timings_.report("...");
 }
+
+
+HPX_PLAIN_ACTION(grid::set_pivot, set_pivot_action);
+
+void node_server::set_pivot() {
+	auto localities = hpx::find_all_localities();
+	space_vector pivot = grid_ptr->center_of_mass();
+	std::vector<hpx::future<void>> futs;
+	futs.reserve(localities.size());
+	for (auto& locality : localities) {
+		if (current_time == ZERO) {
+			futs.push_back(hpx::async<set_pivot_action> (locality, pivot));
+		}
+	}
+	for (auto&& fut : futs) {
+		fut.get();
+	}
+}
+

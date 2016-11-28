@@ -6,6 +6,7 @@
  */
 
 #include <hpx/config.hpp>
+#include "export_definitions.hpp"
 
 #ifndef TYPES444_HPP_
 

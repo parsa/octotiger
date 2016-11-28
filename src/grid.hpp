@@ -15,16 +15,17 @@
 #include "roe.hpp"
 #include "space_vector.hpp"
 #include "geometry.hpp"
-#include <functional>
-#include <list>
-#include <set>
+#include "options.hpp"
 #include "problem.hpp"
 #include "taylor.hpp"
 #include "scf_data.hpp"
-//#include <hpx/runtime/serialization/serialize.hpp>
-#include <hpx/runtime/serialization/set.hpp>
-#include <hpx/runtime/serialization/array.hpp>
-#include <hpx/runtime/serialization/vector.hpp>
+
+#include <functional>
+#include <list>
+#include <set>
+
+#include <hpx/include/actions.hpp>
+#include <hpx/include/serialization.hpp>
 
 //typedef double v4sd __attribute__ ((vector_size (32)));
 
@@ -140,12 +141,12 @@ public:
 	static char const* field_names[];
 	typedef std::array<xpoint_type, NDIM> xpoint;
 	struct node_point;
-	static void set_max_level(integer l);
-	static void set_fgamma(real);
+	OCTOTIGER_EXPORT static void set_max_level(integer l);
+	OCTOTIGER_EXPORT static void set_fgamma(real);
 	static real get_fgamma();
 	static real get_A();
 	static real get_B();
-	static void set_analytic_func(const analytic_func_type& func);
+	OCTOTIGER_EXPORT static void set_analytic_func(const analytic_func_type& func);
 private:
 	static analytic_func_type analytic;
 	static real Acons, Bcons;
@@ -183,7 +184,7 @@ private:
 public:
 	analytic_t compute_analytic(real);
 	void compute_boundary_interactions(gsolve_type, const geo::direction&, bool is_monopole, const gravity_boundary_type&);
-	static void set_scaling_factor(real f);
+	OCTOTIGER_EXPORT static void set_scaling_factor(real f);
 	static real get_scaling_factor();
 	bool get_leaf() const;
 	static space_vector get_pivot();
@@ -195,7 +196,7 @@ public:
 	static void set_omega(real);
 	static void set_AB(real, real);
 	static real get_omega();
-	static void set_pivot(const space_vector& p);
+	OCTOTIGER_EXPORT static void set_pivot(const space_vector& p);
 	line_of_centers_t line_of_centers(const std::pair<space_vector, space_vector>& line);
 	void compute_conserved_slopes(const std::array<integer, NDIM> lb = { 1, 1, 1 }, const std::array<integer, NDIM> ub = { H_NX - 1, H_NX - 1, H_NX - 1 },
 		bool tau_only = false);
@@ -219,7 +220,7 @@ public:
 	void set_prolong(const std::vector<real>&, std::vector<real>&&);
 	void set_restrict(const std::vector<real>&, const geo::octant&);
 	void set_flux_restrict(const std::vector<real>&, const std::array<integer, NDIM>& lb, const std::array<integer, NDIM>& ub, const geo::dimension&);
-	space_vector center_of_mass() const;
+	OCTOTIGER_EXPORT space_vector center_of_mass() const;
 	bool refine_me(integer lev) const;
 	void compute_dudt();
 	void egas_to_etot();
@@ -252,53 +253,53 @@ public:
 	std::pair<space_vector,space_vector> find_axis() const;
 	space_vector get_cell_center(integer i, integer j, integer k);
 	gravity_boundary_type get_gravity_boundary(const geo::direction& dir, bool is_local);
-   void allocate();
-   void reconstruct();
-   void store();
-   real compute_fluxes();
-   void compute_sources(real t);
-   void set_physical_boundaries(const geo::face&, real t);
-   void next_u(integer rk, real t, real dt);
-   static void output(const output_list_type&, std::string, real t, int cycle, bool a);
-   output_list_type get_output_list(bool analytic) const;
-   template<class Archive>
-   void load(Archive& arc, const unsigned) {
-   	arc >> is_leaf;
-   	arc >> is_root;
-   	arc >> dx;
-   	arc >> xmin;
-   	allocate();
-   	arc >> U;
-   	for( integer i = 0; i != INX*INX*INX; ++i ) {
+    void allocate();
+    void reconstruct();
+    void store();
+    real compute_fluxes();
+    void compute_sources(real t);
+    void set_physical_boundaries(const geo::face&, real t);
+    void next_u(integer rk, real t, real dt);
+    static void output(const output_list_type&, std::string, real t, int cycle, bool a);
+    output_list_type get_output_list(bool analytic) const;
+    template<class Archive>
+    void load(Archive& arc, const unsigned) {
+        arc >> is_leaf;
+        arc >> is_root;
+        arc >> dx;
+        arc >> xmin;
+        allocate();
+        arc >> U;
+        for( integer i = 0; i != INX*INX*INX; ++i ) {
 #if defined(HPX_HAVE_DATAPAR)
         arc >> G[i];
 #else
-   		arc >> G[i][0];
-   		arc >> G[i][1];
-   		arc >> G[i][2];
-   		arc >> G[i][3];
+        arc >> G[i][0];
+        arc >> G[i][1];
+        arc >> G[i][2];
+        arc >> G[i][3];
 #endif
-   	}
-   	arc >> U_out;
-   }
-   template<class Archive>
-   void save(Archive& arc, const unsigned) const {
-   	arc << is_leaf;
-   	arc << is_root;
-   	arc << dx;
-   	arc << xmin;
-   	arc << U;
-   	for( integer i = 0; i != INX*INX*INX; ++i ) {
+        }
+        arc >> U_out;
+    }
+    template<class Archive>
+    void save(Archive& arc, const unsigned) const {
+        arc << is_leaf;
+        arc << is_root;
+        arc << dx;
+        arc << xmin;
+        arc << U;
+        for( integer i = 0; i != INX*INX*INX; ++i ) {
 #if defined(HPX_HAVE_DATAPAR)
-        arc << G[i];
+            arc << G[i];
 #else
-   		arc << G[i][0];
-   		arc << G[i][1];
-   		arc << G[i][2];
-   		arc << G[i][3];
+            arc << G[i][0];
+            arc << G[i][1];
+            arc << G[i][2];
+            arc << G[i][3];
 #endif
-   	}
-   	arc << U_out;
+        }
+        arc << U_out;
    }
    HPX_SERIALIZATION_SPLIT_MEMBER();
    std::size_t load(FILE* fp);
@@ -337,6 +338,9 @@ struct grid::output_list_type {
 }
 ;
 
-void scf_binary_init();
+OCTOTIGER_EXPORT void scf_binary_init();
+OCTOTIGER_EXPORT void compute_ilist();
+
+HPX_DECLARE_ACTION(grid::set_pivot, set_pivot_action);
 
 #endif /* GRID_HPP_ */

@@ -80,7 +80,9 @@ public:
 		});
 	}*/
 
-	bool process_options(int argc, char* argv[]);
+	OCTOTIGER_EXPORT bool process_options(int argc, char* argv[]);
 };
+
+OCTOTIGER_EXPORT extern options opts;
 
 #endif /* OPTIONS_HPP_ */

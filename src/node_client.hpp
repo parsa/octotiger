@@ -20,7 +20,7 @@
 class node_server;
 class analytic_t;
 
-class node_client {
+class OCTOTIGER_EXPORT node_client {
 private:
 //	hpx::shared_future<hpx::id_type> id_fut;
 	hpx::id_type id;

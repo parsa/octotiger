@@ -7,8 +7,11 @@
 
 #include "defs.hpp"
 #include "options.hpp"
-#include <math.h>
 #include "grid.hpp"
+
+#include <math.h>
+
+OCTOTIGER_EXPORT options opts;
 
 #define HELP_OPT "-Help"
 #define PROBLEM_OPT "-Problem"

@@ -106,7 +106,6 @@ set(source_files ${source_files}
     src/grid_output.cpp
     src/grid_scf.cpp
     src/lane_emden.cpp
-    src/main.cpp
     src/new.cpp
     src/node_client.cpp
     src/node_location.cpp
@@ -119,7 +118,6 @@ set(source_files ${source_files}
     src/taylor.cpp
     src/util.cpp
     #refactored starts here:
-    src/create_tree.cpp
     src/get_locality_id.cpp
     src/node_tree.cpp
     src/node_tree_component.cpp
@@ -147,11 +145,17 @@ set(header_files
     src/space_vector.hpp
     src/taylor.hpp
     #refactored starts here:
-    octotiger/create_tree.hpp
     octotiger/get_locality_id.hpp
     octotiger/node_tree.hpp
     octotiger/node_tree_component.hpp
     octotiger/tree_location.hpp
+    octotiger/geometry/constants.hpp
+    octotiger/geometry/dimension.hpp
+    octotiger/geometry/direction.hpp
+    octotiger/geometry/face.hpp
+    octotiger/geometry/octant.hpp
+    octotiger/geometry/quadrant.hpp
+    octotiger/geometry/side.hpp
 )
 
 add_hpx_library(
@@ -164,6 +168,7 @@ add_hpx_library(
     ${header_files}
   FOLDER  "Octotiger/Lib"
 )
+target_compile_definitions(octotiger_lib PRIVATE -DOCTOTIGER_EXPORTS)
 
 add_hpx_executable(
   octotiger

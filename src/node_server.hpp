@@ -24,7 +24,8 @@ namespace hpx {
     using mutex = hpx::lcos::local::spinlock;
 }
 
-class node_server: public hpx::components::managed_component_base<node_server> {
+class OCTOTIGER_EXPORT node_server
+  : public hpx::components::managed_component_base<node_server> {
 public:
     static void set_gravity(bool);
     static void set_hydro(bool);
