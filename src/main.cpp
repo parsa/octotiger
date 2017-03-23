@@ -1,11 +1,12 @@
 #include "defs.hpp"
 
-#include "node_server.hpp"
-#include "node_client.hpp"
 #include "future.hpp"
-#include "problem.hpp"
+#include "node_client.hpp"
+#include "node_server.hpp"
 #include "options.hpp"
+#include "problem.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <string>
 #include <utility>
@@ -22,6 +23,11 @@
 #include <hpx/include/lcos.hpp>
 #include <hpx/lcos/broadcast.hpp>
 
+#ifdef COUNT_GRID_FLOP
+extern std::atomic<uint64_t> total_flop;
+extern std::atomic<uint64_t> total_duration_nanos;
+#endif
+
 options opts;
 
 bool gravity_on = true;
@@ -32,81 +38,79 @@ HPX_REGISTER_BROADCAST_ACTION(set_pivot_action)
 
 void compute_ilist();
 
-void initialize(options _opts, std::vector<hpx::id_type> const& localities)
-{
+void initialize(options _opts, std::vector<hpx::id_type> const& localities) {
     options::all_localities = localities;
-	opts = _opts;
+    opts = _opts;
     grid::get_omega() = opts.omega;
 #if !defined(_MSC_VER)
-	feenableexcept (FE_DIVBYZERO);
-	feenableexcept (FE_INVALID);
-	feenableexcept (FE_OVERFLOW);
+    feenableexcept(FE_DIVBYZERO);
+    feenableexcept(FE_INVALID);
+    feenableexcept(FE_OVERFLOW);
 #else
     _controlfp(_EM_INEXACT | _EM_DENORMAL | _EM_INVALID, _MCW_EM);
 #endif
-	grid::set_scaling_factor(opts.xscale);
-	grid::set_max_level(opts.max_level);
+    grid::set_scaling_factor(opts.xscale);
+    grid::set_max_level(opts.max_level);
 #ifdef RADIATION
-	if (opts.problem == RADIATION_TEST) {
-		gravity_on = false;
-		set_problem(radiation_test_problem);
-		set_refine_test(radiation_test_refine);
-	} else
+    if (opts.problem == RADIATION_TEST) {
+        gravity_on = false;
+        set_problem(radiation_test_problem);
+        set_refine_test(radiation_test_refine);
+    } else
 #endif
-	if (opts.problem == DWD) {
-		set_problem(scf_binary);
-		set_refine_test(refine_test);
-	} else if (opts.problem == SOD) {
-		grid::set_fgamma(7.0 / 5.0);
-		gravity_on = false;
-		set_problem(sod_shock_tube_init);
-		set_refine_test (refine_sod);
-		grid::set_analytic_func(sod_shock_tube_analytic);
-	} else if (opts.problem == BLAST) {
-		grid::set_fgamma(7.0 / 5.0);
-		gravity_on = false;
-		set_problem (blast_wave);
-		set_refine_test (refine_blast);
-	} else if (opts.problem == STAR) {
-		grid::set_fgamma(5.0 / 3.0);
-		set_problem(star);
-		set_refine_test(refine_test_bibi);
-	} else if (opts.problem == MOVING_STAR) {
-		grid::set_fgamma(5.0 / 3.0);
-		grid::set_analytic_func(moving_star_analytic);
-		set_problem(moving_star);
-		set_refine_test(refine_test_bibi);
-		/*} else if (opts.problem == OLD_SCF) {
-		 set_refine_test(refine_test_bibi);
-		 set_problem(init_func_type([=](real a, real b, real c, real dx) {
-		 return old_scf(a,b,c,opts.omega,opts.core_thresh_1,opts.core_thresh_2, dx);
-		 }));
-		 if (!opts.found_restart_file) {
-		 if (opts.omega < ZERO) {
-		 printf("Must specify omega for bibi polytrope\n");
-		 throw;
-		 }
-		 if (opts.core_thresh_1 < ZERO) {
-		 printf("Must specify core_thresh_1 for bibi polytrope\n");
-		 throw;
-		 }
-		 if (opts.core_thresh_2 < ZERO) {
-		 printf("Must specify core_thresh_2 for bibi polytrope\n");
-		 throw;
-		 }
-		 }*/
-	} else if (opts.problem == SOLID_SPHERE) {
-		hydro_on = false;
-		set_problem(init_func_type([](real x, real y, real z, real dx) {
-			return solid_sphere(x,y,z,dx,0.25);
-		}));
-	} else {
-		printf("No problem specified\n");
-		throw;
-	}
-	node_server::set_gravity(gravity_on);
-	node_server::set_hydro(hydro_on);
-	compute_ilist();
+        if (opts.problem == DWD) {
+        set_problem(scf_binary);
+        set_refine_test(refine_test);
+    } else if (opts.problem == SOD) {
+        grid::set_fgamma(7.0 / 5.0);
+        gravity_on = false;
+        set_problem(sod_shock_tube_init);
+        set_refine_test(refine_sod);
+        grid::set_analytic_func(sod_shock_tube_analytic);
+    } else if (opts.problem == BLAST) {
+        grid::set_fgamma(7.0 / 5.0);
+        gravity_on = false;
+        set_problem(blast_wave);
+        set_refine_test(refine_blast);
+    } else if (opts.problem == STAR) {
+        grid::set_fgamma(5.0 / 3.0);
+        set_problem(star);
+        set_refine_test(refine_test_bibi);
+    } else if (opts.problem == MOVING_STAR) {
+        grid::set_fgamma(5.0 / 3.0);
+        grid::set_analytic_func(moving_star_analytic);
+        set_problem(moving_star);
+        set_refine_test(refine_test_bibi);
+        /*} else if (opts.problem == OLD_SCF) {
+         set_refine_test(refine_test_bibi);
+         set_problem(init_func_type([=](real a, real b, real c, real dx) {
+         return old_scf(a,b,c,opts.omega,opts.core_thresh_1,opts.core_thresh_2, dx);
+         }));
+         if (!opts.found_restart_file) {
+         if (opts.omega < ZERO) {
+         printf("Must specify omega for bibi polytrope\n");
+         throw;
+         }
+         if (opts.core_thresh_1 < ZERO) {
+         printf("Must specify core_thresh_1 for bibi polytrope\n");
+         throw;
+         }
+         if (opts.core_thresh_2 < ZERO) {
+         printf("Must specify core_thresh_2 for bibi polytrope\n");
+         throw;
+         }
+         }*/
+    } else if (opts.problem == SOLID_SPHERE) {
+        hydro_on = false;
+        set_problem(init_func_type(
+            [](real x, real y, real z, real dx) { return solid_sphere(x, y, z, dx, 0.25); }));
+    } else {
+        printf("No problem specified\n");
+        throw;
+    }
+    node_server::set_gravity(gravity_on);
+    node_server::set_hydro(hydro_on);
+    compute_ilist();
 }
 
 HPX_PLAIN_ACTION(initialize, initialize_action);
@@ -115,77 +119,92 @@ HPX_REGISTER_BROADCAST_ACTION(initialize_action)
 
 real OMEGA;
 void node_server::set_pivot() {
-	space_vector pivot = grid_ptr->center_of_mass();
+    space_vector pivot = grid_ptr->center_of_mass();
     hpx::lcos::broadcast<set_pivot_action>(options::all_localities, pivot).get();
 }
 
 int hpx_main(int argc, char* argv[]) {
-	printf("Running\n");
-// 	auto test_fut = hpx::async([]() {
-//		while(1){hpx::this_thread::yield();}
-// 	});
-// 	test_fut.get();
+    printf("Running\n");
+    // 	auto test_fut = hpx::async([]() {
+    //		while(1){hpx::this_thread::yield();}
+    // 	});
+    // 	test_fut.get();
 
-	try {
-		if (opts.process_options(argc, argv)) {
-			auto all_locs = hpx::find_all_localities();
+    try {
+        if (opts.process_options(argc, argv)) {
+            auto all_locs = hpx::find_all_localities();
             hpx::lcos::broadcast<initialize_action>(all_locs, opts, all_locs).get();
 
-			node_client root_id = hpx::new_ < node_server > (hpx::find_here());
-			node_client root_client(root_id);
+            node_client root_id = hpx::new_<node_server>(hpx::find_here());
+            node_client root_client(root_id);
 
-			if (opts.found_restart_file) {
-				set_problem(null_problem);
-				const std::string fname = opts.restart_filename;
-				printf("Loading from %s...\n", fname.c_str());
-				if (opts.output_only) {
-					const std::string oname = opts.output_filename;
-					root_client.get_ptr().get()->load_from_file_and_output(fname, oname);
-				} else {
-					root_client.get_ptr().get()->load_from_file(fname);
-					root_client.regrid(root_client.get_gid(), true).get();
-				}
-				printf("Done. \n");
-			} else {
-				for (integer l = 0; l < opts.max_level; ++l) {
-					root_client.regrid(root_client.get_gid(), false).get();
-					printf("---------------Created Level %i---------------\n\n", int(l + 1));
-				}
-				root_client.regrid(root_client.get_gid(), false).get();
-				printf("---------------Regridded Level %i---------------\n\n", int(opts.max_level));
-			}
+            if (opts.found_restart_file) {
+                set_problem(null_problem);
+                const std::string fname = opts.restart_filename;
+                printf("Loading from %s...\n", fname.c_str());
+                if (opts.output_only) {
+                    const std::string oname = opts.output_filename;
+                    root_client.get_ptr().get()->load_from_file_and_output(fname, oname);
+                } else {
+                    root_client.get_ptr().get()->load_from_file(fname);
+                    root_client.regrid(root_client.get_gid(), true).get();
+                }
+                printf("Done. \n");
+            } else {
+                for (integer l = 0; l < opts.max_level; ++l) {
+                    root_client.regrid(root_client.get_gid(), false).get();
+                    printf("---------------Created Level %i---------------\n\n", int(l + 1));
+                }
+                root_client.regrid(root_client.get_gid(), false).get();
+                printf("---------------Regridded Level %i---------------\n\n", int(opts.max_level));
+            }
 
-			if (gravity_on) {
-			    printf("solving gravity------------\n");
-				//real tstart = MPI_Wtime();
-				root_client.solve_gravity(false).get();
-				//	printf("Gravity Solve Time = %e\n", MPI_Wtime() - tstart);
+            if (gravity_on) {
+                printf("solving gravity------------\n");
+                // real tstart = MPI_Wtime();
+                root_client.solve_gravity(false).get();
+                //	printf("Gravity Solve Time = %e\n", MPI_Wtime() - tstart);
                 printf("...done\n");
-			}
+            }
 
-			if (!opts.output_only) {
-				//	set_problem(null_problem);
-				root_client.start_run(opts.problem == DWD && !opts.found_restart_file).get();
-			}
+            if (!opts.output_only) {
+                //	set_problem(null_problem);
+                root_client.start_run(opts.problem == DWD && !opts.found_restart_file).get();
+            }
             root_client.report_timing();
-		}
-	} catch (...) {
+        }
+    } catch (...) {
         throw;
-	}
-	printf("Exiting...\n");
-	return hpx::finalize();
+    }
+    printf("Exiting...\n");
+    return hpx::finalize();
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     std::vector<std::string> cfg = {
-        "hpx.commandline.allow_unknown=1",         // HPX should not complain about unknown command line options
-        "hpx.scheduler=local-priority-lifo",       // use LIFO scheduler by default
-        "hpx.parcel.mpi.zero_copy_optimization!=0" // Disable the usage of zero copy optimization for MPI...
+        "hpx.commandline.allow_unknown=1",    // HPX should not complain about unknown command line
+                                              // options
+        "hpx.scheduler=local-priority-lifo",          // use LIFO scheduler by default
+        "hpx.parcel.mpi.zero_copy_optimization!=0"    // Disable the usage of zero copy optimization
+                                                      // for MPI...
     };
 
-    hpx::register_pre_shutdown_function([](){ std::cout << "clearing localities ...\n"; options::all_localities.clear(); });
+    hpx::register_pre_shutdown_function([]() {
+        std::cout << "clearing localities ...\n";
+        options::all_localities.clear();
+    });
 
     hpx::init(argc, argv, cfg);
     std::cout << "done...\n";
+#ifdef COUNT_GRID_FLOP
+    std::cout << "total_flop: " << total_flop << std::endl;
+    std::cout << "core total_duration_nano: " << total_duration_nanos << std::endl;
+    std::cout << "core total_duration (s): " << (static_cast<double>(total_duration_nanos) * 1E-9)
+              << std::endl;
+    double core_flops = (static_cast<double>(total_flop) * 1E-9) /
+        (static_cast<double>(total_duration_nanos) * 1E-9);
+    std::cout << "GFlops (per core, multiply by number of cores!): " << core_flops << std::endl;
+    std::cout << "GFlops (4 cores):" << (core_flops * 4) << std::endl;
+    std::cout << "GFlops (68 cores):" << (core_flops * 68) << std::endl;
+#endif
 }
