@@ -197,14 +197,14 @@ int main(int argc, char* argv[]) {
     hpx::init(argc, argv, cfg);
     std::cout << "done...\n";
 #ifdef COUNT_GRID_FLOP
-    std::cout << "total_flop: " << total_flop << std::endl;
-    std::cout << "core total_duration_nano: " << total_duration_nanos << std::endl;
-    std::cout << "core total_duration (s): " << (static_cast<double>(total_duration_nanos) * 1E-9)
+    hpx::cout << "total_flop: " << total_flop << std::endl;
+    hpx::cout << "core total_duration_nano: " << total_duration_nanos << std::endl;
+    hpx::cout << "core total_duration (s): " << (static_cast<double>(total_duration_nanos) * 1E-9)
               << std::endl;
     double core_flops = (static_cast<double>(total_flop) * 1E-9) /
         (static_cast<double>(total_duration_nanos) * 1E-9);
-    std::cout << "GFlops (per core, multiply by number of cores!): " << core_flops << std::endl;
-    std::cout << "GFlops (4 cores):" << (core_flops * 4) << std::endl;
-    std::cout << "GFlops (68 cores):" << (core_flops * 68) << std::endl;
+    hpx::cout << "GFlops (per core, multiply by number of cores!): " << core_flops << std::endl;
+    hpx::cout << "GFlops (4 cores):" << (core_flops * 4) << std::endl;
+    hpx::cout << "GFlops (68 cores):" << (core_flops * 68) << std::endl;
 #endif
 }
