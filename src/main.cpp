@@ -126,16 +126,18 @@ int hpx_main(int argc, char* argv[]) {
         if (opts.process_options(argc, argv)) {
             auto all_locs = hpx::find_all_localities();
             hpx::lcos::broadcast<initialize_action>(all_locs, opts, all_locs).get();
+            printf("setting options done.\n");
 
             node_client root_id = hpx::new_ < node_server > (hpx::find_here());
             node_client root_client(root_id);
             node_server* root = root_client.get_ptr().get();
+            printf("created root node....\n");
 
             int ngrids = 0;
             if (opts.found_restart_file) {
-                set_problem(null_problem);
                 const std::string fname = opts.restart_filename;
                 printf("Loading from %s...\n", fname.c_str());
+                set_problem(null_problem);
                 if (opts.output_only) {
                     const std::string oname = opts.output_filename;
                     root->load_from_file_and_output(fname, oname, opts.data_dir);
@@ -154,6 +156,7 @@ int hpx_main(int argc, char* argv[]) {
                 }
                 printf("Done. \n");
             } else {
+                printf("start regridding ...\n");
                 for (integer l = 0; l < opts.max_level; ++l) {
                     ngrids = root->regrid(root_client.get_gid(), grid::get_omega(), false);
                     printf("---------------Created Level %i---------------\n\n", int(l + 1));

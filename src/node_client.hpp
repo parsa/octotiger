@@ -32,17 +32,19 @@ public:
 	template<class Arc>
 	void load(Arc& arc, unsigned)
     {
-		arc & id;
-        if (!empty())
+        hpx::naming::gid_type gid;
+		arc & gid;
+        if (gid)
         {
-            unmanaged = hpx::id_type(id.get_gid(), hpx::id_type::unmanaged);
+            unmanaged = hpx::id_type(gid, hpx::id_type::unmanaged);
+            id = unmanaged;
         }
 	}
 
 	template<class Arc>
 	void save(Arc& arc, unsigned) const
     {
-		arc & id;
+		arc & id.get_gid();
     }
     HPX_SERIALIZATION_SPLIT_MEMBER();
 

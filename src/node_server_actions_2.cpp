@@ -422,7 +422,7 @@ hpx::future<void> node_client::force_nodes_to_exist(
         std::move(locs));
 }
 
-void node_server::force_nodes_to_exist(std::vector<node_location>&& locs) {
+hpx::future<void> node_server::force_nodes_to_exist(std::vector<node_location>&& locs) {
     std::vector<hpx::future<void>> futs;
     std::vector<node_location> parent_list;
     std::vector<std::vector<node_location>> child_lists(NCHILD);
@@ -464,7 +464,8 @@ void node_server::force_nodes_to_exist(std::vector<node_location>&& locs) {
         futs.push_back(parent.force_nodes_to_exist(std::move(parent_list)));
     }
 
-    wait_all_and_propagate_exceptions(futs);
+    if (futs.empty()) return hpx::make_ready_future();
+    return hpx::when_all(futs);
 }
 
 typedef node_server::form_tree_action form_tree_action_type;
@@ -491,9 +492,7 @@ hpx::future<void> node_server::form_tree(const hpx::id_type& self_gid, const hpx
         for (integer cx = 0; cx != 2; ++cx) {
             for (integer cy = 0; cy != 2; ++cy) {
                 for (integer cz = 0; cz != 2; ++cz) {
-                    std::vector<hpx::future<hpx::id_type>> child_neighbors_f(
-                        geo::direction::count());
-                    std::vector<hpx::id_type> child_neighbors(geo::direction::count());
+                    std::array<hpx::future<hpx::id_type>, geo::direction::count()> child_neighbors_f;
                     const integer ci = cx + 2 * cy + 4 * cz;
                     for (integer dx = -1; dx != 2; ++dx) {
                         for (integer dy = -1; dy != 2; ++dy) {
@@ -521,17 +520,37 @@ hpx::future<void> node_server::form_tree(const hpx::id_type& self_gid, const hpx
                         }
                     }
 
-                    for (auto& dir : geo::direction::full_set()) {
-                        child_neighbors[dir] = child_neighbors_f[dir].get();
-                        if (child_neighbors[dir] == hpx::invalid_id) {
-                            amr_flags[ci][dir] = true;
-                        } else {
-                            amr_flags[ci][dir] = false;
-                        }
-                    }
-                    cfuts[index++] =
-                        children[ci].form_tree(hpx::unmanaged(children[ci].get_gid()),
-                            me.get_gid(), std::move(child_neighbors));
+                    cfuts[index++] = hpx::dataflow(hpx::launch::sync,
+                        [this, ci](std::array<hpx::future<hpx::id_type>, geo::direction::count()>&& neighbors_f)
+                        {
+                            std::vector<hpx::id_type> child_neighbors(geo::direction::count());
+                            for (auto& dir : geo::direction::full_set()) {
+                                child_neighbors[dir] = neighbors_f[dir].get();
+                                if (child_neighbors[dir] == hpx::invalid_id) {
+                                    amr_flags[ci][dir] = true;
+                                } else {
+                                    amr_flags[ci][dir] = false;
+                                }
+                            }
+
+                            return
+                                children[ci].form_tree(hpx::unmanaged(children[ci].get_gid()),
+                                    me.get_gid(), std::move(child_neighbors));
+                        },
+                        std::move(child_neighbors_f)
+                    );
+
+//                     for (auto& dir : geo::direction::full_set()) {
+//                         child_neighbors[dir] = child_neighbors_f[dir].get();
+//                         if (child_neighbors[dir] == hpx::invalid_id) {
+//                             amr_flags[ci][dir] = true;
+//                         } else {
+//                             amr_flags[ci][dir] = false;
+//                         }
+//                     }
+//                     cfuts[index++] =
+//                         children[ci].form_tree(hpx::unmanaged(children[ci].get_gid()),
+//                             me.get_gid(), std::move(child_neighbors));
                 }
             }
         }

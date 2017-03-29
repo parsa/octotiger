@@ -246,7 +246,7 @@ public:
     void start_run(bool scf, integer);
 
     void set_grid(const std::vector<real>&, std::vector<real>&&);
-    HPX_DEFINE_COMPONENT_ACTION(node_server, set_grid, set_grid_action);
+    HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, set_grid, set_grid_action);
 
     hpx::future<real> timestep_driver_descend();
 
@@ -278,7 +278,7 @@ public:
 
     diagnostics_t diagnostics() const;
 
-    grid::output_list_type load(integer, integer, integer, bool do_output,
+    hpx::future<grid::output_list_type> load(integer, integer, integer, bool do_output,
         std::string);
     HPX_DEFINE_COMPONENT_ACTION(node_server, load, load_action);
 
@@ -286,7 +286,7 @@ public:
     HPX_DEFINE_COMPONENT_ACTION(node_server, save, save_action);
 
     void set_aunt(const hpx::id_type&, const geo::face& face);
-    HPX_DEFINE_COMPONENT_ACTION(node_server, set_aunt, set_aunt_action);
+    HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, set_aunt, set_aunt_action);
 
     std::vector<hpx::id_type> get_nieces(const hpx::id_type&,
         const geo::face& face) const;
@@ -295,7 +295,7 @@ public:
     hpx::future<void> check_for_refinement(real omega);
     HPX_DEFINE_COMPONENT_ACTION(node_server, check_for_refinement, check_for_refinement_action);
 
-    void force_nodes_to_exist(std::vector<node_location>&& loc);
+    hpx::future<void> force_nodes_to_exist(std::vector<node_location>&& loc);
     HPX_DEFINE_COMPONENT_ACTION(node_server, force_nodes_to_exist, force_nodes_to_exist_action);
 
     scf_data_t scf_params();
