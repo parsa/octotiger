@@ -18,6 +18,8 @@
 #include <utility>
 
 #ifdef USE_GRAV_PAR
+// FIXME: Before using this again, make sure to do something about the
+// op_stats_t<> captured in the for_loop lambda in compute_interactions.
 const auto for_loop_policy = hpx::parallel::execution::par;
 #else
 const auto for_loop_policy = hpx::parallel::execution::seq;
@@ -35,7 +37,25 @@ static std::vector<interaction_type> ilist_d;
 static std::vector<interaction_type> ilist_r;
 static std::vector<std::vector<boundary_interaction_type>> ilist_d_bnd(geo::direction::count());
 static std::vector<std::vector<boundary_interaction_type>> ilist_n_bnd(geo::direction::count());
-static taylor<4, real> factor;
+   
+constexpr taylor<4, real> generate_factor()
+{ 
+    taylor<4, real> tmp{};
+    tmp() += 1.0;
+    for (integer a = 0; a < NDIM; ++a) {
+        tmp(a) += 1.0;
+        for (integer b = 0; b < NDIM; ++b) {
+            tmp(a, b) += 1.0;
+            for (integer c = 0; c < NDIM; ++c) {
+                tmp(a, b, c) += 1.0;
+            }
+        }
+    }
+    return tmp;
+}
+
+constexpr taylor<4, real> factor = generate_factor();
+
 extern options opts;
 
 template <class T>
@@ -202,8 +222,10 @@ constexpr int ab_idx_map6[6] = {
     4, 5, 6, 7, 8, 9
 };
 
-void grid::compute_interactions(gsolve_type type) {
+op_stats_t<set_basis> grid::compute_interactions(gsolve_type type) {
     PROF_BEGIN;
+
+    op_stats_t<set_basis> s;
 
     // calculating the contribution of all the inner cells
     // calculating the interaction
@@ -235,7 +257,7 @@ void grid::compute_interactions(gsolve_type type) {
         // It is unclear what the underlying vectorization library does, if simd_len > architectural
         // length (David)
         hpx::parallel::for_loop_strided(for_loop_policy, 0, list_size, simd_len,
-            [&com0, &this_ilist, list_size, type, this](std::size_t li) {
+            [&s, &com0, &this_ilist, list_size, type, this](std::size_t li) {
 
                 // dX is distance between X and Y
                 // X and Y are the two cells interacting
@@ -322,9 +344,13 @@ void grid::compute_interactions(gsolve_type type) {
                 std::array<simd_vector, NDIM> B1 = {
                     simd_vector(ZERO), simd_vector(ZERO), simd_vector(ZERO)};
 
+                hpx::util::high_resolution_timer timer;
+
                 // calculates all D-values, calculate all coefficients of 1/r (not the potential),
                 // formula (6)-(9) and (19)
-                D.set_basis(dX);
+                D.set_basis(dX, s);
+
+                s.add_time(timer.elapsed());
 
                 // the following loops calculate formula (10), potential from A->B and B->A
                 // (basically alternating)
@@ -530,6 +556,8 @@ void grid::compute_interactions(gsolve_type type) {
         }
     }
     PROF_END;
+
+    return s;
 }
 
 void grid::compute_boundary_interactions(gsolve_type type, const geo::direction& dir,
@@ -610,7 +638,8 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
                 std::array<simd_vector, NDIM> B0 = {
                     simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
 
-                D.set_basis(dX);
+                op_stats_t<set_basis> s;
+                D.set_basis(dX, s);
                 A0[0] = m0[0] * D[0];
                 if (type != RHO) {
                     for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
@@ -777,7 +806,8 @@ void grid::compute_boundary_interactions_multipole_monopole(gsolve_type type,
                 std::array<simd_vector, NDIM> B0 = {
                     simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
 
-                D.set_basis(dX);
+                op_stats_t<set_basis> s;
+                D.set_basis(dX, s);
                 A0[0] = m0[0] * D[0];
                 if (type != RHO) {
                     for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
@@ -924,7 +954,8 @@ void grid::compute_boundary_interactions_monopole_multipole(gsolve_type type,
                 std::array<simd_vector, NDIM> B0 = {
                     simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
 
-                D.set_basis(dX);
+                op_stats_t<set_basis> s;
+                D.set_basis(dX, s);
 
                 A0[0] = m0 * D[0];
                 for (integer i = taylor_sizes[0]; i != taylor_sizes[2]; ++i) {
@@ -1035,18 +1066,6 @@ void grid::compute_boundary_interactions_monopole_monopole(gsolve_type type,
 }
 
 void compute_ilist() {
-    factor = 0.0;
-    factor() += 1.0;
-    for (integer a = 0; a < NDIM; ++a) {
-        factor(a) += 1.0;
-        for (integer b = 0; b < NDIM; ++b) {
-            factor(a, b) += 1.0;
-            for (integer c = 0; c < NDIM; ++c) {
-                factor(a, b, c) += 1.0;
-            }
-        }
-    }
-
     const integer inx = INX;
     const integer nx = inx;
     interaction_type np;

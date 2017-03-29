@@ -5,6 +5,12 @@
  *      Author: dmarce1
  */
 
+//  Copyright (c) 2015-2017 Louisiana State University
+//  Copyright (c) 2017      Bryce Adelstein Lelbach
+//
+//  Distributed under the Boost Software License, Version 1.0. (See accompanying
+//  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
 #ifndef TAYLOR_HPP_
 #define TAYLOR_HPP_
 
@@ -13,7 +19,8 @@
 #include "simd.hpp"
 
 #include <algorithm>
-#include <array>
+//#include <array>
+#include "array.hpp"
 #include <cmath>
 #include <type_traits>
 
@@ -28,15 +35,37 @@
 
 #define MAX_ORDER 5
 
-struct taylor_consts
-{
-    static const real delta[3][3];
-    static integer map2[3][3];
-    static integer map3[3][3][3];
-    static integer map4[3][3][3][3];
+constexpr real taylor_elta[3][3] = {
+    { ONE, ZERO, ZERO },
+    { ZERO, ONE, ZERO },
+    { ZERO, ZERO, ONE }
 };
 
-constexpr integer taylor_sizes[MAX_ORDER] = {1, 4, 10, 20, 35};    //
+constexpr integer taylor_map2[3][3] = {
+    { 4+0, 4+1, 4+2 },
+    { 4+1, 4+3, 4+4 },
+    { 4+2, 4+4, 4+5 }
+};
+
+constexpr integer taylor_map3[3][3][3] = {
+    { { 10+0, 10+1, 10+2 }, { 10+1, 10+3, 10+4 }, { 10+2, 10+4, 10+5 } },
+    { { 10+1, 10+3, 10+4 }, { 10+3, 10+6, 10+7 }, { 10+4, 10+7, 10+8 } },
+    { { 10+2, 10+4, 10+5 }, { 10+4, 10+7, 10+8 }, { 10+5, 10+8, 10+9 } }
+};
+
+constexpr integer taylor_map4[3][3][3][3] = {
+    { { { 20+0,  20+1,  20+2 }, { 20+1,  20+3,  20+4 }, { 20+2,  20+4,  20+5 } },
+      { { 20+1,  20+3,  20+4 }, { 20+3,  20+6,  20+7 }, { 20+4,  20+7,  20+8 } },
+      { { 20+2,  20+4,  20+5 }, { 20+4,  20+7,  20+8 }, { 20+5,  20+8,  20+9 } } },
+    { { { 20+1,  20+3,  20+4 }, { 20+3,  20+6,  20+7 }, { 20+4,  20+7,  20+8 } },
+      { { 20+3,  20+6,  20+7 }, { 20+6, 20+10, 20+11 }, { 20+7, 20+11, 20+12 } },
+      { { 20+4,  20+7,  20+8 }, { 20+7, 20+11, 20+12 }, { 20+8, 20+12, 20+13 } } },
+    { { { 20+2,  20+4,  20+5 }, { 20+4,  20+7,  20+8 }, { 20+5,  20+8,  20+9 } },
+      { { 20+4,  20+7,  20+8 }, { 20+7, 20+11, 20+12 }, { 20+8, 20+12, 20+13 } },
+      { { 20+5,  20+8,  20+9 }, { 20+8, 20+12, 20+13 }, { 20+9, 20+13, 20+14 } } }
+};
+
+constexpr integer taylor_sizes[MAX_ORDER] = {1, 4, 10, 20, 35};
 
 ///////////////////////////////////////////////////////////////////////////////
 template <int N, class T = real>
@@ -44,122 +73,237 @@ class taylor
 {
 private:
     static constexpr integer my_size = taylor_sizes[N - 1];
-    static taylor_consts tc;
-    std::array<T, my_size> data;
+    hpx::util::array<T, my_size> data;
 
 public:
-    OCTOTIGER_FORCEINLINE T& operator[](integer i) {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE T& operator[](integer i) {
+//         return data[i];
+//     }
+//     OCTOTIGER_FORCEINLINE const T& operator[](integer i) const {
+// =======
+    constexpr T& operator[](integer i) {
         return data[i];
     }
-    OCTOTIGER_FORCEINLINE const T& operator[](integer i) const {
+    constexpr const T& operator[](integer i) const {
+// >>>>>>> origin/12th
         return data[i];
     }
     OCTOTIGER_FORCEINLINE static constexpr integer size() {
         return my_size;
     }
-    taylor() = default;
+    constexpr taylor() = default;
     ~taylor() = default;
-    taylor(const taylor<N, T>&) = default;
-    OCTOTIGER_FORCEINLINE taylor(taylor<N, T>&& other) {
+// <<<<<<< HEAD
+//     taylor(const taylor<N, T>&) = default;
+//     OCTOTIGER_FORCEINLINE taylor(taylor<N, T>&& other) {
+//         data = std::move(other.data);
+//     }
+//     taylor<N, T>& operator=(const taylor<N, T>&) = default;
+//     OCTOTIGER_FORCEINLINE taylor<N, T>& operator=(taylor<N, T>&& other) {
+// =======
+    constexpr taylor(const taylor<N, T>&) = default;
+    constexpr taylor(taylor<N, T>&& other) {
         data = std::move(other.data);
     }
-    taylor<N, T>& operator=(const taylor<N, T>&) = default;
-    OCTOTIGER_FORCEINLINE taylor<N, T>& operator=(taylor<N, T>&& other) {
+    constexpr taylor<N, T>& operator=(const taylor<N, T>&) = default;
+    constexpr taylor<N, T>& operator=(taylor<N, T>&& other) {
+// >>>>>>> origin/12th
         data = std::move(other.data);
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T>& operator=(T d) {
-#pragma GCC ivdep
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T>& operator=(T d) {
+// #pragma GCC ivdep
+//         for (integer i = 0; i != my_size; ++i) {
+//             data[i] = d;
+//         }
+//         return *this;
+//     }
+//
+//     OCTOTIGER_FORCEINLINE taylor<N, T>& operator*=(T d) {
+// #pragma GCC ivdep
+//         for (integer i = 0; i != my_size; ++i) {
+//             data[i] *= d;
+//         }
+//         return *this;
+//     }
+//
+//     OCTOTIGER_FORCEINLINE taylor<N, T>& operator/=(T d) {
+// #pragma GCC ivdep
+//         for (integer i = 0; i != my_size; ++i) {
+//             data[i] /= d;
+//         }
+//         return *this;
+//     }
+//
+//     OCTOTIGER_FORCEINLINE taylor<N, T>& operator+=(const taylor<N, T>& other) {
+// #pragma GCC ivdep
+// =======
+    constexpr taylor<N, T>& operator=(T d) {
+//#if !defined(HPX_HAVE_DATAPAR)
+//#pragma GCC ivdep
         for (integer i = 0; i != my_size; ++i) {
             data[i] = d;
         }
+//#else
+//        hpx::parallel::fill(hpx::parallel::execution::dataseq, data.begin(), data.end(), d);
+//#endif
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T>& operator*=(T d) {
-#pragma GCC ivdep
+    constexpr taylor<N, T>& operator*=(T d) {
+//#if !defined(HPX_HAVE_DATAPAR)
+//#pragma GCC ivdep
         for (integer i = 0; i != my_size; ++i) {
             data[i] *= d;
         }
+//#else
+//        hpx::parallel::transform(hpx::parallel::execution::dataseq, data.begin(), data.end(),
+//            data.begin(), [d](auto const& val) { return val * d; });
+//#endif
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T>& operator/=(T d) {
-#pragma GCC ivdep
+    constexpr taylor<N, T>& operator/=(T d) {
+//#if !defined(HPX_HAVE_DATAPAR)
+//#pragma GCC ivdep
         for (integer i = 0; i != my_size; ++i) {
             data[i] /= d;
         }
+//#else
+//        hpx::parallel::transform(hpx::parallel::execution::dataseq, data.begin(), data.end(),
+//            data.begin(), [d](auto const& val) { return val / d; });
+//#endif
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T>& operator+=(const taylor<N, T>& other) {
-#pragma GCC ivdep
+    constexpr taylor<N, T>& operator+=(const taylor<N, T>& other) {
+// #if !defined(HPX_HAVE_DATAPAR)
+//#pragma GCC ivdep
+// >>>>>>> origin/12th
         for (integer i = 0; i != my_size; ++i) {
             data[i] += other.data[i];
         }
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T>& operator-=(const taylor<N, T>& other) {
-#pragma GCC ivdep
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T>& operator-=(const taylor<N, T>& other) {
+// #pragma GCC ivdep
+// =======
+    constexpr taylor<N, T>& operator-=(const taylor<N, T>& other) {
+// #if !defined(HPX_HAVE_DATAPAR)
+//#pragma GCC ivdep
+// >>>>>>> origin/12th
         for (integer i = 0; i != my_size; ++i) {
             data[i] -= other.data[i];
         }
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T> operator+(const taylor<N, T>& other) const {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T> operator+(const taylor<N, T>& other) const {
+// =======
+    constexpr taylor<N, T> operator+(const taylor<N, T>& other) const {
+// >>>>>>> origin/12th
         taylor<N, T> r = *this;
         r += other;
         return r;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T> operator-(const taylor<N, T>& other) const {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T> operator-(const taylor<N, T>& other) const {
+// =======
+    constexpr taylor<N, T> operator-(const taylor<N, T>& other) const {
+// >>>>>>> origin/12th
         taylor<N, T> r = *this;
         r -= other;
         return r;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T> operator*(const T& d) const {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T> operator*(const T& d) const {
+// =======
+    constexpr taylor<N, T> operator*(const T& d) const {
+// >>>>>>> origin/12th
         taylor<N, T> r = *this;
         r *= d;
         return r;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T> operator/(const T& d) const {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T> operator/(const T& d) const {
+// =======
+    constexpr taylor<N, T> operator/(const T& d) const {
+// >>>>>>> origin/12th
         taylor<N, T> r = *this;
         r /= d;
         return r;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T> operator+() const {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T> operator+() const {
+//         return *this;
+//     }
+//
+//     OCTOTIGER_FORCEINLINE taylor<N, T>& operator+=(v4sd const& other) {
+// #pragma GCC ivdep
+// =======
+    constexpr taylor<N, T> operator+() const {
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T>& operator+=(v4sd const& other) {
-#pragma GCC ivdep
+    taylor<N, T>& operator+=(v4sd const& other) {
+//#pragma GCC ivdep
+// >>>>>>> origin/12th
         for (integer i = 0; i != 4; ++i) {
             data[i] += other[i];
         }
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T> operator-() const {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T> operator-() const {
+//         taylor<N, T> r = *this;
+// #pragma GCC ivdep
+//         for (integer i = 0; i != my_size; ++i) {
+//             r.data[i] = -r.data[i];
+//         }
+//         return r;
+//     }
+//
+// #if defined(HPX_HAVE_DATAPAR)
+//     OCTOTIGER_FORCEINLINE friend bool operator==(taylor<N, T> const& lhs, taylor<N, T> const& rhs) {
+//         return std::equal(lhs.data.begin(), lhs.data.end(), rhs.data.begin(),
+//             [](T const& t1, T const& t2) { return all_of(t1 == t2); });
+//     }
+// #endif
+// =======
+    constexpr taylor<N, T> operator-() const {
         taylor<N, T> r = *this;
-#pragma GCC ivdep
+//#if !defined(HPX_HAVE_DATAPAR)
+//#pragma GCC ivdep
         for (integer i = 0; i != my_size; ++i) {
             r.data[i] = -r.data[i];
         }
+//#else
+//        hpx::parallel::transform(hpx::parallel::execution::dataseq, r.data.begin(), r.data.end(),
+//            r.data.begin(), [](T const& val) { return -val; });
+//#endif
         return r;
     }
 
-#if defined(HPX_HAVE_DATAPAR)
-    OCTOTIGER_FORCEINLINE friend bool operator==(taylor<N, T> const& lhs, taylor<N, T> const& rhs) {
-        return std::equal(lhs.data.begin(), lhs.data.end(), rhs.data.begin(),
-            [](T const& t1, T const& t2) { return all_of(t1 == t2); });
-    }
-#endif
+// FIXME: Why do we only need this if we have datapar?
+//#if defined(HPX_HAVE_DATAPAR)
+//    friend bool operator==(taylor<N, T> const& lhs, taylor<N, T> const& rhs) {
+//        return hpx::parallel::equal(hpx::parallel::execution::dataseq, lhs.data.begin(),
+//            lhs.data.end(), rhs.data.begin(),
+//            [](T const& t1, T const& t2) { return all_of(t1 == t2); });
+//    }
+//#endif
+// >>>>>>> origin/12th
 
     OCTOTIGER_FORCEINLINE static constexpr integer index() {
         return 0;
@@ -169,59 +313,111 @@ public:
         return 1 + i;
     }
 
-    OCTOTIGER_FORCEINLINE static integer index(integer i, integer j) {
-        return tc.map2[i][j];
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE static integer index(integer i, integer j) {
+//         return tc.map2[i][j];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE static integer index(integer i, integer j, integer k) {
+//         return tc.map3[i][j][k];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE static integer index(integer i, integer j, integer k, integer l) {
+//         return tc.map4[i][j][k][l];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T const& operator()() const {
+//         return data[index()];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T const& operator()(integer i) const {
+//         return data[index(i)];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T const& operator()(integer i, integer j) const {
+//         return data[index(i, j)];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T const& operator()(integer i, integer j, integer k) const {
+//         return data[index(i, j, k)];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T const& operator()(integer i, integer j, integer k, integer l) const {
+//         return data[index(i, j, k, l)];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T& operator()() {
+//         return data[index()];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T& operator()(integer i) {
+//         return data[index(i)];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T& operator()(integer i, integer j) {
+//         return data[index(i, j)];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T& operator()(integer i, integer j, integer k) {
+//         return data[index(i, j, k)];
+//     }
+//
+//     OCTOTIGER_FORCEINLINE T& operator()(integer i, integer j, integer k, integer l) {
+// =======
+    static constexpr integer index(integer i, integer j) {
+        return taylor_map2[i][j];
     }
 
-    OCTOTIGER_FORCEINLINE static integer index(integer i, integer j, integer k) {
-        return tc.map3[i][j][k];
+    static constexpr integer index(integer i, integer j, integer k) {
+        return taylor_map3[i][j][k];
     }
 
-    OCTOTIGER_FORCEINLINE static integer index(integer i, integer j, integer k, integer l) {
-        return tc.map4[i][j][k][l];
+    static constexpr integer index(integer i, integer j, integer k, integer l) {
+        return taylor_map4[i][j][k][l];
     }
 
-    OCTOTIGER_FORCEINLINE T const& operator()() const {
+    constexpr T const& operator()() const {
         return data[index()];
     }
 
-    OCTOTIGER_FORCEINLINE T const& operator()(integer i) const {
+    constexpr T const& operator()(integer i) const {
         return data[index(i)];
     }
 
-    OCTOTIGER_FORCEINLINE T const& operator()(integer i, integer j) const {
+    constexpr T const& operator()(integer i, integer j) const {
         return data[index(i, j)];
     }
 
-    OCTOTIGER_FORCEINLINE T const& operator()(integer i, integer j, integer k) const {
+    constexpr T const& operator()(integer i, integer j, integer k) const {
         return data[index(i, j, k)];
     }
 
-    OCTOTIGER_FORCEINLINE T const& operator()(integer i, integer j, integer k, integer l) const {
+    constexpr T const& operator()(integer i, integer j, integer k, integer l) const {
         return data[index(i, j, k, l)];
     }
 
-    OCTOTIGER_FORCEINLINE T& operator()() {
+    constexpr T& operator()() {
         return data[index()];
     }
 
-    OCTOTIGER_FORCEINLINE T& operator()(integer i) {
+    constexpr T& operator()(integer i) {
         return data[index(i)];
     }
 
-    OCTOTIGER_FORCEINLINE T& operator()(integer i, integer j) {
+    constexpr T& operator()(integer i, integer j) {
         return data[index(i, j)];
     }
 
-    OCTOTIGER_FORCEINLINE T& operator()(integer i, integer j, integer k) {
+    constexpr T& operator()(integer i, integer j, integer k) {
         return data[index(i, j, k)];
     }
 
-    OCTOTIGER_FORCEINLINE T& operator()(integer i, integer j, integer k, integer l) {
+    constexpr T& operator()(integer i, integer j, integer k, integer l) {
+// >>>>>>> origin/12th
         return data[index(i, j, k, l)];
     }
 
-    taylor<N, T>& operator>>=(const std::array<T, NDIM>& X) {
+    constexpr taylor<N, T>& operator>>=(const std::array<T, NDIM>& X) {
         // PROF_BEGIN;
         const taylor<N, T>& A = *this;
         taylor<N, T> B = A;
@@ -256,13 +452,17 @@ public:
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T> operator>>(const std::array<T, NDIM>& X) const {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE taylor<N, T> operator>>(const std::array<T, NDIM>& X) const {
+// =======
+    constexpr taylor<N, T> operator>>(const std::array<T, NDIM>& X) const {
+// >>>>>>> origin/12th
         taylor<N, T> r = *this;
         r >>= X;
         return r;
     }
 
-    taylor<N, T>& operator<<=(const std::array<T, NDIM>& X) {
+    constexpr taylor<N, T>& operator<<=(const std::array<T, NDIM>& X) {
         // PROF_BEGIN;
         const taylor<N, T>& A = *this;
         taylor<N, T> B = A;
@@ -318,13 +518,21 @@ public:
         return r;
     }
 
-    void set_basis(const std::array<T, NDIM>& X);
+    void set_basis(const std::array<T, NDIM>& X, op_stats_t<set_basis>& s);
 
-    OCTOTIGER_FORCEINLINE T* ptr() {
+// <<<<<<< HEAD
+//     OCTOTIGER_FORCEINLINE T* ptr() {
+//         return data.data();
+//     }
+//
+//     OCTOTIGER_FORCEINLINE const T* ptr() const {
+// =======
+    constexpr T* ptr() {
         return data.data();
     }
 
-    OCTOTIGER_FORCEINLINE const T* ptr() const {
+    constexpr const T* ptr() const {
+// >>>>>>> origin/12th
         return data.data();
     }
 
@@ -344,8 +552,8 @@ namespace hpx { namespace traits
 
 #include "space_vector.hpp"
 
-template <int N, class T>
-taylor_consts taylor<N, T>::tc;
+//template <int N, class T>
+//taylor_consts taylor<N, T>::tc;
 
 constexpr integer to_aa[] = {
     -1,
@@ -425,7 +633,9 @@ constexpr integer to_c[] = {
 };
 
 template <>
-inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM>& X) {
+inline void taylor<5, simd_vector>::set_basis(
+    const std::array<simd_vector, NDIM>& X, op_stats_t<::set_basis>& s
+) {
     constexpr integer N = 5;
     using T = simd_vector;
     // PROF_BEGIN;
@@ -436,12 +646,31 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
     taylor<N, T>& A = *this;
 
     const T r2 = sqr(X[0]) + sqr(X[1]) + sqr(X[2]);
+
+    s.add_fp_tileloads(3*simd_len);
+    s.add_fp_muls(     1*simd_len);
+    s.add_fp_fmas(     2*simd_len);
+
     T r2inv = 0.0;
-    for (volatile integer i = 0; i != simd_len; ++i) {
+// <<<<<<< HEAD
+//     for (volatile integer i = 0; i != simd_len; ++i) {
+// =======
+// #if !defined(HPX_HAVE_DATAPAR)
+    for (/*volatile*/integer i = 0; i != simd_len; ++i) {
+// >>>>>>> origin/12th
         if (r2[i] > 0.0) {
             r2inv[i] = ONE / std::max(r2[i], 1.0e-20);
         }
     }
+// <<<<<<< HEAD
+// =======
+
+    s.add_fp_divs(1*simd_len);
+
+// #else
+//     where(r2 > 0.0) | r2inv = ONE / r2;
+// #endif
+// >>>>>>> origin/12th
 
     // parts of formula (6)
     const T d0 = -sqrt(r2inv);
@@ -456,15 +685,30 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
     // formula (6)
     A[0] = d0;
 
+    s.add_fp_sqrts(      1*simd_len);
+    s.add_fp_muls(       5*simd_len);
+    s.add_fp_tilestores( 1*simd_len);
+    s.add_fp_cachestores(4*simd_len);
+
     // formula (7)
     for (integer i = taylor_sizes[0], a = 0; a != NDIM; ++a, ++i) {
         A[i] = X[a] * d1;
+
+        s.add_fp_cacheloads(1*simd_len);
+        s.add_fp_tileloads( 2*simd_len);
+        s.add_fp_muls(      1*simd_len);
+        s.add_fp_tilestores(1*simd_len);
     }
     // formula (8)
     for (integer i = taylor_sizes[1], a = 0; a != NDIM; ++a) {
         T const Xad2 = X[a] * d2;
         for (integer b = a; b != NDIM; ++b, ++i) {
             A[i] = Xad2 * X[b];
+
+            s.add_fp_cacheloads(1*simd_len);
+            s.add_fp_tileloads( 3*simd_len);
+            s.add_fp_muls(      2*simd_len);
+            s.add_fp_tilestores(1*simd_len);
         }
     }
     // formula (9)
@@ -474,6 +718,11 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
             T const Xabd3 = Xad3 * X[b];
             for (integer c = b; c != NDIM; ++c, ++i) {
                 A[i] = Xabd3 * X[c];
+
+                s.add_fp_cacheloads(1);
+                s.add_fp_tileloads( 4);
+                s.add_fp_muls(      3);
+                s.add_fp_tilestores(1);
             }
         }
     }
@@ -484,6 +733,7 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
     for (integer i = taylor_sizes[3]; i != taylor_sizes[4]; ++i) {
         A[i] = ZERO;
     }
+    s.add_fp_tilestores(1*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
 
     auto const d22 = 2.0 * d2;
 //     for (integer a = 0; a != NDIM; a++) {
@@ -513,6 +763,12 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
         A[to_aaa[i]] += X[to_a_idx] * d2;
         A[to_aaaa[i]] += sqr(X[to_a_idx]) * d3 + d22;
     }
+    s.add_fp_cacheloads(2*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+    s.add_fp_tileloads( 4*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+    s.add_fp_adds(      1*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+    s.add_fp_fmas(      3*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+    s.add_fp_tilestores(3*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+
     for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
         integer const to_a_idx = to_a[i];
         integer const to_b_idx = to_b[i];
@@ -523,6 +779,13 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
         A[to_abbb[i]] += Xabd3;
         A[to_aabb[i]] += d2;
     }
+    s.add_fp_cacheloads(2*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_tileloads( 7*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_adds(      1*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_muls(      2*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_fmas(      4*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_tilestores(5*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+
     for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
         integer const to_a_idx = to_a[i];
         integer const to_c_idx = to_c[i];
@@ -531,6 +794,11 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
         A[to_abbc[i]] += X[to_a_idx] * X[to_c_idx] * d3;
         A[to_abcc[i]] += X[to_a_idx] * Xbd3;
     }
+    s.add_fp_cacheloads(2*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
+    s.add_fp_tileloads( 6*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
+    s.add_fp_muls(      3*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
+    s.add_fp_fmas(      3*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
+    s.add_fp_tilestores(3*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
 
     // PROF_END;
 }

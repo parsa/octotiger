@@ -266,7 +266,7 @@ public:
 	void dual_energy_update();
 	void solve_gravity(gsolve_type = RHO);
 	multipole_pass_type compute_multipoles(gsolve_type, const multipole_pass_type* = nullptr);
-	void compute_interactions(gsolve_type);
+	op_stats_t<set_basis> compute_interactions(gsolve_type);
 	void rho_mult(real f0, real f1 );
 	void rho_move(real x);
 	expansion_pass_type compute_expansions(gsolve_type, const expansion_pass_type* = nullptr);
