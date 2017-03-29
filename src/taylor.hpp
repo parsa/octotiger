@@ -389,7 +389,7 @@ public:
         return r;
     }
 
-    void set_basis(const std::array<T, NDIM>& X);
+    void set_basis(const std::array<T, NDIM>& X, op_stats_t<set_basis>& s);
 
     constexpr T* ptr() {
         return data.data();
@@ -496,7 +496,9 @@ constexpr integer to_c[] = {
 };
 
 template <>
-inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM>& X) {
+inline void taylor<5, simd_vector>::set_basis(
+    const std::array<simd_vector, NDIM>& X, op_stats_t<::set_basis>& s
+) {
     constexpr integer N = 5;
     using T = simd_vector;
     // PROF_BEGIN;
@@ -507,13 +509,21 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
     taylor<N, T>& A = *this;
 
     const T r2 = sqr(X[0]) + sqr(X[1]) + sqr(X[2]);
+
+    s.add_fp_tileloads(3*simd_len);
+    s.add_fp_muls(     1*simd_len);
+    s.add_fp_fmas(     2*simd_len);
+
     T r2inv = 0.0;
 // #if !defined(HPX_HAVE_DATAPAR)
-    for (volatile integer i = 0; i != simd_len; ++i) {
+    for (/*volatile*/integer i = 0; i != simd_len; ++i) {
         if (r2[i] > 0.0) {
             r2inv[i] = ONE / std::max(r2[i], 1.0e-20);
         }
     }
+
+    s.add_fp_divs(1*simd_len);
+
 // #else
 //     where(r2 > 0.0) | r2inv = ONE / r2;
 // #endif
@@ -531,15 +541,30 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
     // formula (6)
     A[0] = d0;
 
+    s.add_fp_sqrts(      1*simd_len);
+    s.add_fp_muls(       5*simd_len);
+    s.add_fp_tilestores( 1*simd_len);
+    s.add_fp_cachestores(4*simd_len);
+
     // formula (7)
     for (integer i = taylor_sizes[0], a = 0; a != NDIM; ++a, ++i) {
         A[i] = X[a] * d1;
+
+        s.add_fp_cacheloads(1*simd_len);
+        s.add_fp_tileloads( 2*simd_len);
+        s.add_fp_muls(      1*simd_len);
+        s.add_fp_tilestores(1*simd_len);
     }
     // formula (8)
     for (integer i = taylor_sizes[1], a = 0; a != NDIM; ++a) {
         T const Xad2 = X[a] * d2;
         for (integer b = a; b != NDIM; ++b, ++i) {
             A[i] = Xad2 * X[b];
+
+            s.add_fp_cacheloads(1*simd_len);
+            s.add_fp_tileloads( 3*simd_len);
+            s.add_fp_muls(      2*simd_len);
+            s.add_fp_tilestores(1*simd_len);
         }
     }
     // formula (9)
@@ -549,6 +574,11 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
             T const Xabd3 = Xad3 * X[b];
             for (integer c = b; c != NDIM; ++c, ++i) {
                 A[i] = Xabd3 * X[c];
+
+                s.add_fp_cacheloads(1);
+                s.add_fp_tileloads( 4);
+                s.add_fp_muls(      3);
+                s.add_fp_tilestores(1);
             }
         }
     }
@@ -559,6 +589,7 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
     for (integer i = taylor_sizes[3]; i != taylor_sizes[4]; ++i) {
         A[i] = ZERO;
     }
+    s.add_fp_tilestores(1*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
 
     auto const d22 = 2.0 * d2;
 //     for (integer a = 0; a != NDIM; a++) {
@@ -588,6 +619,12 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
         A[to_aaa[i]] += X[to_a_idx] * d2;
         A[to_aaaa[i]] += sqr(X[to_a_idx]) * d3 + d22;
     }
+    s.add_fp_cacheloads(2*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+    s.add_fp_tileloads( 4*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+    s.add_fp_adds(      1*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+    s.add_fp_fmas(      3*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+    s.add_fp_tilestores(3*simd_len*(taylor_sizes[1]-taylor_sizes[0]));
+
     for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
         integer const to_a_idx = to_a[i];
         integer const to_b_idx = to_b[i];
@@ -598,6 +635,13 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
         A[to_abbb[i]] += Xabd3;
         A[to_aabb[i]] += d2;
     }
+    s.add_fp_cacheloads(2*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_tileloads( 7*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_adds(      1*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_muls(      2*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_fmas(      4*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+    s.add_fp_tilestores(5*simd_len*(taylor_sizes[2]-taylor_sizes[1]));
+
     for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
         integer const to_a_idx = to_a[i];
         integer const to_c_idx = to_c[i];
@@ -606,6 +650,11 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
         A[to_abbc[i]] += X[to_a_idx] * X[to_c_idx] * d3;
         A[to_abcc[i]] += X[to_a_idx] * Xbd3;
     }
+    s.add_fp_cacheloads(2*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
+    s.add_fp_tileloads( 6*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
+    s.add_fp_muls(      3*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
+    s.add_fp_fmas(      3*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
+    s.add_fp_tilestores(3*simd_len*(taylor_sizes[3]-taylor_sizes[2]));
 
     // PROF_END;
 }
