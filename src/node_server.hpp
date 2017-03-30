@@ -204,7 +204,7 @@ public:
     integer regrid_gather(bool rebalance_only);
     HPX_DEFINE_COMPONENT_ACTION(node_server, regrid_gather, regrid_gather_action);
 
-    hpx::future<void> regrid_scatter(integer, integer);
+    hpx::future<void> regrid_scatter(integer, integer, bool rb);
     HPX_DEFINE_COMPONENT_ACTION(node_server, regrid_scatter, regrid_scatter_action);
 
     void recv_hydro_boundary(std::vector<real>&&, const geo::direction&, std::size_t cycle);

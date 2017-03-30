@@ -73,7 +73,7 @@ public:
 	hpx::future<node_server*> get_ptr() const;
 	hpx::future<void> form_tree(const hpx::id_type&, const hpx::id_type&, const std::vector<hpx::id_type>& );
 	hpx::future<hpx::id_type> get_child_client(const geo::octant&);
-	hpx::future<void> regrid_scatter(integer, integer) const;
+	hpx::future<void> regrid_scatter(integer, integer, bool rb) const;
 	hpx::future<integer> regrid_gather(bool) const;
 	hpx::future<line_of_centers_t> line_of_centers(const std::pair<space_vector,space_vector>& line) const;
 	void send_hydro_boundary(std::vector<real>&&, const geo::direction& dir, std::size_t cycle) const;

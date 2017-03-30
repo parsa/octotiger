@@ -484,6 +484,7 @@ hpx::future<void> node_server::form_tree(const hpx::id_type& self_gid, const hpx
     }
     me = self_gid;
     parent = parent_gid;
+    hpx::id_type me_gid = me.get_gid();
     if (is_refined) {
         std::array<hpx::future<void>, 2*2*2> cfuts;
         integer index = 0;
@@ -521,7 +522,7 @@ hpx::future<void> node_server::form_tree(const hpx::id_type& self_gid, const hpx
                     }
 
                     cfuts[index++] = hpx::dataflow(hpx::launch::sync,
-                        [this, ci](std::array<hpx::future<hpx::id_type>, geo::direction::count()>&& neighbors_f)
+                        [this, me_gid, ci](std::array<hpx::future<hpx::id_type>, geo::direction::count()>&& neighbors_f)
                         {
                             std::vector<hpx::id_type> child_neighbors(geo::direction::count());
                             for (auto& dir : geo::direction::full_set()) {
@@ -535,7 +536,7 @@ hpx::future<void> node_server::form_tree(const hpx::id_type& self_gid, const hpx
 
                             return
                                 children[ci].form_tree(hpx::unmanaged(children[ci].get_gid()),
-                                    me.get_gid(), std::move(child_neighbors));
+                                    me_gid, std::move(child_neighbors));
                         },
                         std::move(child_neighbors_f)
                     );
@@ -561,14 +562,14 @@ hpx::future<void> node_server::form_tree(const hpx::id_type& self_gid, const hpx
         	const auto& neighbor = neighbors[f.to_direction()];
             if (!neighbor.empty())
             {
-                nfuts[f] = neighbor.get_nieces(me.get_gid(), f ^ 1);
+                nfuts[f] = neighbor.get_nieces(me_gid, f ^ 1);
             }
             else
             {
                 nfuts[f] = hpx::make_ready_future(std::vector<hpx::id_type>());
             }
         }
-        return hpx::dataflow(
+        return hpx::dataflow(hpx::launch::sync,
             [this](std::vector<hpx::future<std::vector<hpx::id_type>>> nfuts)
             {
                 for (auto& f : geo::face::full_set()) {

@@ -111,7 +111,8 @@ hpx::future<grid::output_list_type> node_server::load(
 
         integer index = 0;
         for (auto const& ci : geo::octant::full_set()) {
-            integer loc_id = ((cnt * options::all_localities.size()) / (total_nodes + 1));
+            std::size_t num_localities = (std::min)(options::all_localities.size(), std::size_t(512));
+            integer loc_id = ((cnt * num_localities) / (total_nodes + 1));
             futs[ci] = hpx::new_<node_server>(options::all_localities[loc_id],
                 my_location.get_child(ci), me.get_gid(), ZERO, ZERO, step_num, hcycle, gcycle).then(
                 [this, ci, counts, total_nodes, rec_size, do_output, filename](hpx::future<hpx::id_type>&& child)
@@ -346,11 +347,11 @@ integer node_server::regrid_gather(bool rebalance_only) {
 typedef node_server::regrid_scatter_action regrid_scatter_action_type;
 HPX_REGISTER_ACTION(regrid_scatter_action_type);
 
-hpx::future<void> node_client::regrid_scatter(integer a, integer b) const {
-    return hpx::async<typename node_server::regrid_scatter_action>(get_unmanaged_gid(), a, b);
+hpx::future<void> node_client::regrid_scatter(integer a, integer b, bool rb) const {
+    return hpx::async<typename node_server::regrid_scatter_action>(get_unmanaged_gid(), a, b, rb);
 }
 
-hpx::future<void> node_server::regrid_scatter(integer a_, integer total) {
+hpx::future<void> node_server::regrid_scatter(integer a_, integer total, bool rb) {
     refinement_flag = 0;
     std::array<hpx::future<void>, geo::octant::count()> futs;
     if (is_refined) {
@@ -358,7 +359,12 @@ hpx::future<void> node_server::regrid_scatter(integer a_, integer total) {
         ++a;
         std::array<hpx::future<hpx::id_type>, NCHILD> copied_children;
         for (auto& ci : geo::octant::full_set()) {
-            const integer loc_index = a * options::all_localities.size() / total;
+            std::size_t num_localities = options::all_localities.size();
+            if (rb)
+            {
+                num_localities = (std::min)(num_localities, std::size_t(512));
+            }
+            const integer loc_index = a * num_localities/ total;
             const auto child_loc = options::all_localities[loc_index];
             a += child_descendant_count[ci];
             const hpx::id_type id = children[ci].get_gid();
@@ -376,7 +382,7 @@ hpx::future<void> node_server::regrid_scatter(integer a_, integer total) {
             {
                 children[ci] = copied_children[ci].get();
             }
-            futs[index++] = children[ci].regrid_scatter(a, total);
+            futs[index++] = children[ci].regrid_scatter(a, total, rb);
             a += child_descendant_count[ci];
         }
     }
@@ -400,7 +406,7 @@ integer node_server::regrid(const hpx::id_type& root_gid, real omega, bool rb) {
     printf("regridding\n");
     integer a = regrid_gather(rb);
     printf("rebalancing %i nodes\n", int(a));
-    regrid_scatter(0, a).get();
+    regrid_scatter(0, a, rb).get();
     assert(grid_ptr != nullptr);
     std::vector<hpx::id_type> null_neighbors(geo::direction::count());
     printf("forming tree connections\n");
