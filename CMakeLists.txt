@@ -95,6 +95,7 @@ set(source_files ${source_files}
     src/geometry.cpp
     src/grid.cpp
     src/grid_fmm.cpp
+    src/grid_fmm_compute_interactions.cpp
     src/grid_output.cpp
     src/grid_scf.cpp
     src/lane_emden.cpp
