@@ -159,8 +159,8 @@ struct gravity_boundary_type {
 			M = std::make_shared<taylor<4, std::vector<real>>>();
 			m = std::make_shared<std::vector<real>>();
             com = std::make_shared<std::array<std::array<real, G_N3>, NDIM>>();
-            for (std::array<real, G_N3>& a : *com)
-                std::fill(a.begin(), a.end(), ZERO);
+            //for (std::array<real, G_N3>& a : *com)
+            //    std::fill(a.begin(), a.end(), ZERO);
 		}
 	}
 	template<class Archive>

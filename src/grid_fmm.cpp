@@ -1414,13 +1414,13 @@ multipole_pass_type grid::compute_multipoles(
     mon_ptr = std::make_shared<std::vector<real>>();
     if (com1_ptr == nullptr) { // FIXME: Should this only be allocated if type == RHO? [Bryce]
         com1_ptr = std::make_shared<std::array<std::array<real, G_N3 / 8>, NDIM>>();
-        for (std::array<real, G_N3 / 8>& a : *com1_ptr)
-            std::fill(a.begin(), a.end(), ZERO);
+        //for (std::array<real, G_N3 / 8>& a : *com1_ptr)
+        //    std::fill(a.begin(), a.end(), ZERO);
     }
     if (type == RHO) { // FIXME: Should this only be allocated if com0_ptr != nullptr? [Bryce]
         com0_ptr = std::make_shared<std::array<std::array<real, G_N3>, NDIM>>();
-        for (std::array<real, G_N3>& a : *com0_ptr)
-            std::fill(a.begin(), a.end(), ZERO);
+        //for (std::array<real, G_N3>& a : *com0_ptr)
+        //    std::fill(a.begin(), a.end(), ZERO);
     }
     auto& M = *M_ptr;
     auto& mon = *mon_ptr;
