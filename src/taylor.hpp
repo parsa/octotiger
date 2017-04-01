@@ -73,8 +73,10 @@ class taylor
 {
 private:
     static constexpr integer my_size = taylor_sizes[N - 1];
-    hpx::util::array<T, my_size> data;
-
+public:
+    using container_type = hpx::util::array<T, my_size>;
+private:
+    container_type data;
 public:
     OCTOTIGER_FORCEINLINE constexpr T& operator[](integer i) {
         return data[i];
@@ -82,9 +84,29 @@ public:
     OCTOTIGER_FORCEINLINE constexpr const T& operator[](integer i) const {
         return data[i];
     }
+
     OCTOTIGER_FORCEINLINE static constexpr decltype(my_size) size() {
         return my_size;
     }
+
+    OCTOTIGER_FORCEINLINE constexpr typename container_type::iterator begin() noexcept
+    {
+        return data.begin();
+    }
+    OCTOTIGER_FORCEINLINE constexpr typename container_type::const_iterator begin() const noexcept
+    {
+        return data.begin();
+    }
+
+    OCTOTIGER_FORCEINLINE constexpr typename container_type::iterator end() noexcept
+    {
+        return data.end();
+    }
+    OCTOTIGER_FORCEINLINE constexpr typename container_type::const_iterator end() const noexcept
+    {
+        return data.end();
+    }
+
     constexpr taylor() = default;
     ~taylor() = default;
     constexpr taylor(const taylor<N, T>&) = default;

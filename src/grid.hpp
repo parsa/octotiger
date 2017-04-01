@@ -219,8 +219,11 @@ private:
 	std::vector<v4sd> G;
 	std::shared_ptr<taylor<4, std::vector<real>>> M_ptr;
 	std::shared_ptr<std::vector<real>> mon_ptr;
-	std::vector<expansion> L;
-	std::vector<space_vector> L_c;
+    #warning Next step, make em fixed-size
+	//std::vector<expansion> L;
+	taylor<4, std::vector<real>> L_PLACEHOLDER;
+	//std::vector<space_vector> L_c;
+	std::array<std::vector<real>, NDIM> L_c_PLACEHOLDER; 
 	std::vector<real> dphi_dt;
 #ifdef USE_GRAV_PAR
     std::unique_ptr<hpx::lcos::local::spinlock> L_mtx;

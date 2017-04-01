@@ -1345,8 +1345,8 @@ void grid::allocate() {
 		}
 	}
 	Ua = U;
-	L.resize(G_N3);
-	L_c.resize(G_N3);
+	for (auto& a : L_PLACEHOLDER) a.resize(G_N3);
+	for (auto& a : L_c_PLACEHOLDER) a.resize(G_N3);
 	integer nlevel = 0;
 
 	set_coordinates();

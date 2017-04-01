@@ -19,12 +19,12 @@
 
 inline void grid::compute_interactions_initialize_L_c(std::true_type) noexcept
 {
-    #if defined(HPX_HAVE_DATAPAR)
-        hpx::parallel::fill(hpx::parallel::execution::dataseq,
-                            L_c.begin(), L_c.end(), ZERO);
-    #else
-        std::fill(std::begin(L_c), std::end(L_c), ZERO);
-    #endif
+    for (auto& a : L_c_PLACEHOLDER)
+        #if defined(HPX_HAVE_DATAPAR)
+            hpx::parallel::fill(hpx::parallel::execution::dataseq, a.begin(), a.end(), ZERO);
+        #else
+            std::fill(a.begin(), a.end(), ZERO);
+        #endif
 
     //s.add_fp_memstores(L_c.size());
 }
@@ -458,8 +458,8 @@ inline void grid::store_to_L_c(
             integer const iii0 = (*IList)[i].first;                             // 1 INT LOAD FROM MEM (indirect addressing)
             integer const iii1 = (*IList)[i].second;                            // 1 INT LOAD FROM MEM (indirect addressing)
 
-            L_c[iii0][j] += B0j[ti];                                            // 1 FP LOAD FROM TILE, 1 FP LOAD FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM; FIXME INEFFICIENT ACCESS
-            L_c[iii1][j] += B1j[ti];                                            // 1 FP LOAD FROM TILE, 1 FP LOAD FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM; FIXME INEFFICIENT ACCESS
+            L_c_PLACEHOLDER[j][iii0] += B0j[ti];                                            // 1 FP LOAD FROM TILE, 1 FP LOAD FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM; FIXME INEFFICIENT ACCESS
+            L_c_PLACEHOLDER[j][iii1] += B1j[ti];                                            // 1 FP LOAD FROM TILE, 1 FP LOAD FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM; FIXME INEFFICIENT ACCESS
 
             s.add_fp_tileloads( 2);
             s.add_fp_cacheloads(2);
@@ -1122,8 +1122,8 @@ inline void grid::compute_interactions_non_leaf_tiled(
             integer const iii0 = (*IList)[i].first;                             // 1 INT LOAD FROM MEM (indirect addressing)
             integer const iii1 = (*IList)[i].second;                            // 1 INT LOAD FROM MEM (indirect addressing)
 
-            L[iii0][j] += A0j[ti];                                              // 1 FP LOAD FROM TILE, 1 FP LOAD FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM; FIXME INEFFICIENT ACCESS
-            L[iii1][j] += A1j[ti];                                              // 1 FP LOAD FROM TILE, 1 FP LOAD FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM; FIXME INEFFICIENT ACCESS
+            L_PLACEHOLDER[j][iii0] += A0j[ti];                                              // 1 FP LOAD FROM TILE, 1 FP LOAD FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM; FIXME INEFFICIENT ACCESS
+            L_PLACEHOLDER[j][iii1] += A1j[ti];                                              // 1 FP LOAD FROM TILE, 1 FP LOAD FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM; FIXME INEFFICIENT ACCESS
 
             s.add_fp_tileloads( 2);
             s.add_fp_cacheloads(2);
@@ -1152,12 +1152,12 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
 
     // L stores the gravitational potential.
     // #10 in the paper ([Bryce] FIXME: Link to the paper) [Dominic].
-    #if defined(HPX_HAVE_DATAPAR)
-        hpx::parallel::fill(hpx::parallel::execution::dataseq,
-                            L.begin(), L.end(), ZERO);
-    #else
-        std::fill(std::begin(L), std::end(L), ZERO);
-    #endif
+    for (auto& a : L_PLACEHOLDER)
+        #if defined(HPX_HAVE_DATAPAR)
+            hpx::parallel::fill(hpx::parallel::execution::dataseq, a.begin(), a.end(), ZERO);
+        #else
+            std::fill(a.begin(), a.end(), ZERO);
+        #endif
 
     // L_c stores the correction for angular momentum.
     // #20 in the paper ([Bryce] FIXME: Link to the paper) [Dominic].

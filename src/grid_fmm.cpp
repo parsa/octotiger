@@ -269,9 +269,12 @@ void grid::compute_interactions_legacy(gsolve_type type) {
     // L should be L, (10) in the paper
     // L_c stores the correction for angular momentum
     // L_c, (20) in the paper (Dominic)
-    std::fill(std::begin(L), std::end(L), ZERO);
+    for (auto& a : L_PLACEHOLDER)
+        std::fill(a.begin(), a.end(), ZERO);
+
     if (opts.ang_con) {
-        std::fill(std::begin(L_c), std::end(L_c), ZERO);
+        for (auto& a : L_c_PLACEHOLDER)
+            std::fill(a.begin(), a.end(), ZERO);
     }
 
     // Non-leaf nodes use taylor expansion
@@ -495,21 +498,16 @@ void grid::compute_interactions_legacy(gsolve_type type) {
                     const integer iii0 = this_ilist[li + i].first;
                     const integer iii1 = this_ilist[li + i].second;
 
-                    expansion tmp1, tmp2;
 #pragma GCC ivdep
                     for (integer j = 0; j != taylor_sizes[3]; ++j) {
-                        tmp1[j] = A0[j][i];
-                        tmp2[j] = A1[j][i];
+                        L_PLACEHOLDER[j][iii0] += A0[j][i];
+                        L_PLACEHOLDER[j][iii1] += A1[j][i];
                     }
-                    L[iii0] += tmp1;
-                    L[iii1] += tmp2;
 
                     if (type == RHO && opts.ang_con) {
-                        space_vector& L_ciii0 = L_c[iii0];
-                        space_vector& L_ciii1 = L_c[iii1];
                         for (integer j = 0; j != NDIM; ++j) {
-                            L_ciii0[j] += B0[j][i];
-                            L_ciii1[j] += B1[j][i];
+                            L_c_PLACEHOLDER[j][iii0] += B0[j][i];
+                            L_c_PLACEHOLDER[j][iii1] += B1[j][i];
                         }
                     }
                 }
@@ -570,16 +568,34 @@ void grid::compute_interactions_legacy(gsolve_type type) {
 #ifdef USE_GRAV_PAR
             std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
 #endif
-            L[iii0] += m0 * ele.four * d0;
-            L[iii1] += m1 * ele.four * d1;
+            //L[iii0] += m0 * ele.four * d0;
+            //L[iii1] += m1 * ele.four * d1;
+            for (integer x = 0; x != 4; ++x)
+            {
+                L_PLACEHOLDER[x][iii0] += m0[x] * ele.four[x] * d0[x];
+                L_PLACEHOLDER[x][iii1] += m1[x] * ele.four[x] * d1[x];
+            }
 #else
 #ifdef USE_GRAV_PAR
             std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
 #endif
             // fetch both interacting bodies (monopoles) (David)
             // broadcasts a single value
-            L[iii0] += mon[iii1] * ele.four * d0;
-            L[iii1] += mon[iii0] * ele.four * d1;
+
+            // Originally: L[iii0]           +=  mon[iii1] * ele.four          * d0
+            //             L[iii1]           +=  mon[iii0] * ele.four          * d1
+            //
+            //             expansion         +=  double    * v4sd              * v4sd
+            //             expansion         += (double    * v4sd            ) * v4sd                [Precedence]
+            //             taylor<4, double> += (double    * v4sd            ) * v4sd
+            //             array<double, 20> += (double    * array<double, 4>) * array<double, 4>
+            //             array<double, 20> += (array<double, 4>            ) * array<double, 4>    [Evaluate #1]
+            //             array<double, 20> += array<double, 4>                                     [Evaluate #2]
+            for (integer x = 0; x != 4; ++x)
+            {
+                L_PLACEHOLDER[x][iii0] += mon[iii1] * ele.four[x] * d0[x];
+                L_PLACEHOLDER[x][iii1] += mon[iii0] * ele.four[x] * d1[x];
+            }
 #endif
         }
     }
@@ -751,20 +767,16 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
 #endif
                 for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
                     const integer iii0 = bnd.first[li + i];
-                    expansion& Liii0 = L[iii0];
 
-                    expansion tmp;
 #pragma GCC ivdep
                     for (integer j = 0; j != taylor_sizes[3]; ++j) {
-                        tmp[j] = A0[j][i];
+                        L_PLACEHOLDER[j][iii0] += A0[j][i];
                     }
-                    Liii0 += tmp;
 
                     if (type == RHO && opts.ang_con) {
-                        space_vector& L_ciii0 = L_c[iii0];
 #pragma GCC ivdep
                         for (integer j = 0; j != NDIM; ++j) {
-                            L_ciii0[j] += B0[j][i];
+                            L_c_PLACEHOLDER[j][iii0] += B0[j][i];
                         }
                     }
                 }
@@ -893,16 +905,14 @@ void grid::compute_boundary_interactions_multipole_monopole(gsolve_type type,
 #endif
                 for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
                     const integer iii0 = bnd.first[li + i];
-                    expansion& Liii0 = L[iii0];
 #pragma GCC ivdep
                     for (integer j = 0; j != 4; ++j) {
-                        Liii0[j] += A0[j][i];
+                        L_PLACEHOLDER[j][iii0] += A0[j][i];
                     }
                     if (type == RHO && opts.ang_con) {
-                        space_vector& L_ciii0 = L_c[iii0];
 #pragma GCC ivdep
                         for (integer j = 0; j != NDIM; ++j) {
-                            L_ciii0[j] += B0[j][i];
+                            L_c_PLACEHOLDER[j][iii0] += B0[j][i];
                         }
                     }
                 }
@@ -1012,18 +1022,15 @@ void grid::compute_boundary_interactions_monopole_multipole(gsolve_type type,
                 for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
                     const integer iii0 = bnd.first[li + i];
 
-                    expansion tmp;
 #pragma GCC ivdep
                     for (integer j = 0; j != taylor_sizes[3]; ++j) {
-                        tmp[j] = A0[j][i];
+                        L_PLACEHOLDER[j][iii0] += A0[j][i];
                     }
-                    L[iii0] += tmp;
 
                     if (type == RHO && opts.ang_con) {
-                        space_vector& L_ciii0 = L_c[iii0];
 #pragma GCC ivdep
                         for (integer j = 0; j != NDIM; ++j) {
-                            L_ciii0[j] += B0[j][i];
+                            L_c_PLACEHOLDER[j][iii0] += B0[j][i];
                         }
                     }
                 }
@@ -1073,10 +1080,9 @@ void grid::compute_boundary_interactions_monopole_monopole(gsolve_type type,
             for (integer li = 0; li < dsize; ++li) {
                 const integer iii0 = bnd.first[li];
                 auto tmp1 = m0 * bnd.four[li];
-                expansion& Liii0 = L[iii0];
 #pragma GCC ivdep
-                for (integer i = 0; i != 4; ++i) {
-                    Liii0[i] += tmp1[i];
+                for (integer x = 0; x != 4; ++x) {
+                    L_PLACEHOLDER[x][iii0] += tmp1[x];
                 }
             }
         });
@@ -1341,16 +1347,14 @@ expansion_pass_type grid::compute_expansions(
                 l <<= dX;
                 for (integer ci = 0; ci != NCHILD; ++ci) {
                     const integer iiic = child_index(ip, jp, kp, ci);
-                    expansion& Liiic = L[iiic];
                     for (integer j = 0; j != 20; ++j) {
-                        Liiic[j] += l[j][ci];
+                        L_PLACEHOLDER[j][iiic] += l[j][ci];
                     }
 
-                    space_vector& L_ciiic = L_c[iiic];
                     if (opts.ang_con) {
                         if (type == RHO && opts.ang_con) {
                             for (integer j = 0; j != NDIM; ++j) {
-                                L_ciiic[j] += lc[j][ci];
+                                L_c_PLACEHOLDER[j][iiic] += lc[j][ci];
                             }
                         }
                     }
@@ -1358,12 +1362,12 @@ expansion_pass_type grid::compute_expansions(
                     if (!is_leaf) {
                         integer index = child_index(ip, jp, kp, ci, 0);
                         for (integer j = 0; j != 20; ++j) {
-                            exp_ret.first[index][j] = Liiic[j];
+                            exp_ret.first[index][j] = L_PLACEHOLDER[j][iiic];
                         }
 
                         if (type == RHO && opts.ang_con) {
                             for (integer j = 0; j != 3; ++j) {
-                                exp_ret.second[index][j] = L_ciiic[j];
+                                exp_ret.second[index][j] = L_c_PLACEHOLDER[j][iiic];
                             }
                         }
                     }
@@ -1380,16 +1384,16 @@ expansion_pass_type grid::compute_expansions(
 					const integer iii0 = h0index(i, j, k);
 					const integer iiih = hindex(i + H_BW, j + H_BW, k + H_BW);
 					if (type == RHO) {
-						G[iii][phi_i] = physcon.G * L[iii]();
+						G[iii][phi_i] = physcon.G * L_PLACEHOLDER()[iii];
 						for (integer d = 0; d < NDIM; ++d) {
-							G[iii][gx_i + d] = -physcon.G * L[iii](d);
+							G[iii][gx_i + d] = -physcon.G * L_PLACEHOLDER(d)[iii];
 							if (opts.ang_con == true) {
-								G[iii][gx_i + d] -= physcon.G * L_c[iii][d];
+								G[iii][gx_i + d] -= physcon.G * L_c_PLACEHOLDER[d][iii];
 							}
 						}
 						U[pot_i][iiih] = G[iii][phi_i] * U[rho_i][iiih];
 					} else {
-						dphi_dt[iii0] = physcon.G * L[iii]();
+						dphi_dt[iii0] = physcon.G * L_PLACEHOLDER()[iii];
 					}
 				}
 			}
