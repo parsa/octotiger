@@ -62,7 +62,7 @@ void grid::compute_interactions(gsolve_type type) {
             // dX is distance between X and Y
             // X and Y are the two cells interacting
             // X and Y store the 3D center of masses (per simd element, SoA style)
-            std::array<simd_vector, NDIM> dX;
+
             std::array<simd_vector, NDIM> X;
             std::array<simd_vector, NDIM> Y;
 
@@ -85,6 +85,7 @@ void grid::compute_interactions(gsolve_type type) {
             for (integer i = 0; i != simd_len && integer(li + i) < list_size; ++i) {
                 const integer iii0 = interaction_list[li + i].first;
                 const integer iii1 = interaction_list[li + i].second;
+		// std::cout << "first: " << iii0 << " second: " << interaction_list[li + i].second << std::endl;
                 space_vector const& com0iii0 = com0[iii0];
                 space_vector const& com0iii1 = com0[iii1];
                 for (integer d = 0; d < NDIM; ++d) {
@@ -127,6 +128,7 @@ void grid::compute_interactions(gsolve_type type) {
             }
 
 // distance between cells in all dimensions
+	    std::array<simd_vector, NDIM> dX;
 #pragma GCC ivdep
             for (integer d = 0; d < NDIM; ++d) {
                 dX[d] = X[d] - Y[d];
