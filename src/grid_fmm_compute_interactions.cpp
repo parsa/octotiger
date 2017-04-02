@@ -89,6 +89,9 @@ void grid::compute_interactions_inner(gsolve_type type) {
     // 	std::cout << "li: " << li << " first: " << interaction_list[li].first << " second: " << interaction_list[li].second << " inner_loop_stop: " << interaction_list[li].inner_loop_stop << std::endl;
     // }
 
+    // std::cout << "init lasts to 0...: " << std::endl;
+    // taylor<4, simd_vector> A0_last, A1_last;
+
     // std::cout << "list_size:" << list_size << std::endl;
     size_t interaction_first_index = 0;
     while (interaction_first_index < list_size) { // simd_len
@@ -103,7 +106,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
 	// TODO: ask Dominic about padding
 	// load variables from the same first multipole into all vector registers
 	// TODO: can possibly be replaced by a single vector register
-	for (integer simd_index = 0; simd_index != simd_len < list_size; ++simd_index) {
+	for (integer simd_index = 0; simd_index != simd_len; ++simd_index) { //  && interaction_first_index + simd_index < list_size
 	    const integer iii0 = interaction_list[interaction_first_index].first;
 	    // std::cout << "first: " << iii0 << " second: " << interaction_list[li + i].second << std::endl;
 	    space_vector const& com0iii0 = com0[iii0];
@@ -125,7 +128,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
 	// to a simd-sized step in the sublist of the interaction list where the outer multipole is same
 	// TODO: there is a possible out-of-bounds here, needs padding
 	// for (size_t interaction_second_index = interaction_first_index; interaction_second_index < inner_loop_stop; interaction_second_index += simd_len) {
-	for (size_t interaction_second_index = interaction_first_index; interaction_second_index < inner_loop_stop; interaction_second_index += 1) {
+	for (size_t interaction_second_index = interaction_first_index; interaction_second_index < inner_loop_stop; interaction_second_index += simd_len) {
 	    // std::cout << "    -> interaction_second_index: " << interaction_second_index << std::endl;
 	
 	    std::array<simd_vector, NDIM> Y;
@@ -147,6 +150,29 @@ void grid::compute_interactions_inner(gsolve_type type) {
 		    m0[j][i] = Miii1[j];
 		}
 	    }
+
+	    // for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	std::cout << "B" << i << " Y: ";
+	    // 	for (integer j = 0; j < 3; ++j) {
+	    // 	    std::cout << Y[j][i] << ", ";
+	    // 	}
+	    // 	if (i == 1 && interaction_second_index + 1 >= inner_loop_stop) {
+	    // 	    std::cout << " bounds!";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // }
+	    
+	    // for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	std::cout << "B" << i << " m0: ";
+	    // 	for (integer j = 0; j < 5; ++j) {
+	    // 	    std::cout << m0[j][i] << ", ";
+	    // 	}
+	    // 	if (i == 1 && interaction_second_index + 1 >= inner_loop_stop) {
+	    // 	    std::cout << " bounds!";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // }
+
 
 	    taylor<4, simd_vector> n1;
 	    // n angular momentum of the cells
@@ -179,6 +205,50 @@ void grid::compute_interactions_inner(gsolve_type type) {
 		    }
 		}
 	    }
+
+	    // for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	std::cout << "B" << i << " n1: ";
+	    // 	for (integer j = 0; j < 5; ++j) {
+	    // 	    std::cout << n1[j][i] << ", ";
+	    // 	}
+	    // 	if (i == 1 && interaction_second_index + 1 >= inner_loop_stop) {
+	    // 	    std::cout << " bounds!";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // }
+
+	    // for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	std::cout << "A" << i << " m1: ";
+	    // 	for (integer j = 0; j < 5; ++j) {
+	    // 	    std::cout << m1[j][i] << ", ";
+	    // 	}
+	    // 	if (i == 1 && interaction_second_index + 1 >= inner_loop_stop) {
+	    // 	    std::cout << " bounds!";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // }
+	    
+	    // for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	std::cout << "A" << i << " n0: ";
+	    // 	for (integer j = 0; j < 5; ++j) {
+	    // 	    std::cout << n0[j][i] << ", ";
+	    // 	}
+	    // 	if (i == 1 && interaction_second_index + 1 >= inner_loop_stop) {
+	    // 	    std::cout << " bounds!";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // }
+
+	    // for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	std::cout << "A" << i << " X: ";
+	    // 	for (integer j = 0; j < 3; ++j) {
+	    // 	    std::cout << X[j][i] << ", ";
+	    // 	}
+	    // 	if (i == 1 && interaction_second_index + 1 >= inner_loop_stop) {
+	    // 	    std::cout << " bounds!";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // }
 
 	    // distance between cells in all dimensions
 	    std::array<simd_vector, NDIM> dX;
@@ -279,8 +349,9 @@ void grid::compute_interactions_inner(gsolve_type type) {
 	    /////////////////////////////////////////////////////////////////////////
 	    // potential and correction have been computed, now scatter the results
 	    /////////////////////////////////////////////////////////////////////////
+
 	    // for (integer i = 0; i != simd_len && i + interaction_second_index < inner_loop_stop; ++i) {
-	    for (integer i = 0; i < 1; ++i) { //TODO: for debugging
+	    for (integer i = 0; i < simd_len && i + interaction_second_index < inner_loop_stop; ++i) { //TODO: for debugging
 		const integer iii1 = interaction_list[interaction_second_index + i].second;
 
 		expansion tmp2;
@@ -298,7 +369,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
 		}
 	    }
 	    // for (integer i = 0; i != simd_len; ++i) {
-	    for (integer i = 0; i < 1; ++i) { //TODO: for debugging
+	    for (integer i = 0; i < simd_len; ++i) { //TODO: for debugging
 		const integer iii0 = interaction_list[interaction_first_index].first;
 
 		expansion tmp1;
@@ -315,6 +386,74 @@ void grid::compute_interactions_inner(gsolve_type type) {
 		    }
 		}
 	    }
+
+	    // // for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // bool check = true;
+	    // for (integer j = 0; j != taylor_sizes[3]; ++j) {
+	    // 	if (interaction_first_index != interaction_second_index && A0[j][0] != A0_last[j][1]) {
+	    // 	    check = false;		   
+	    // 	    break;
+	    // 	} 
+	    // }
+
+	    // // std::cout << "check: " << check << std::endl;
+	    // if (!check) {
+	    // 	std::cout << "f: " << interaction_first_index << " s: " << interaction_second_index << std::endl;
+	    // 	std::cout << "reference:";
+	    // 	for (integer j = 0; j != 5; ++j) {
+	    // 	    std::cout << A0[j][0] << ", ";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // 	std::cout << "last rou1:";
+	    // 	for (integer j = 0; j != 5; ++j) {
+	    // 	    std::cout << A0_last[j][1] << ", ";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // 	if (interaction_second_index >= inner_loop_stop) {
+	    // 	    std::cout << " bounds!";
+	    // 	}
+	    // }
+	    
+	    	// std::cout << "this interaction B" << i << "<-A" << ": ";
+	    	// for (integer j = 0; j != 5; ++j) {
+	    	//     std::cout << A1[j][i] << ", ";
+	    	// }
+	    	// std::cout << std::endl;
+	    // }
+	    
+	    // for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	std::cout << "this interaction A<-B" << i << ": ";
+	    // 	for (integer j = 0; j != 5; ++j) {
+	    // 	    std::cout << A0[j][i] << ", ";
+	    // 	}
+	    // 	if (i == 1 && interaction_second_index + 1 >= inner_loop_stop) {
+	    // 	    std::cout << " bounds!";
+	    // 	}
+	    // 	std::cout << std::endl;
+	    // }
+
+	    // if (type == RHO && opts.ang_con) {
+	    // 	for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	    std::cout << "this interaction B1-" << i << "<-A" << ": ";
+	    // 	    for (integer j = 0; j != 3; ++j) {
+	    // 		std::cout << B1[j][i] << ", ";
+	    // 	    }
+	    // 	    std::cout << std::endl;
+	    // 	}
+	    
+	    // 	for (integer i = 0; i < 2; ++i) { //TODO: for debugging
+	    // 	    std::cout << "this interaction A<-B0-" << i << ": ";
+	    // 	    for (integer j = 0; j != 3; ++j) {
+	    // 		std::cout << B0[j][i] << ", ";
+	    // 	    }
+	    // 	    if (i == 1 && interaction_second_index + 1 >= inner_loop_stop) {
+	    // 		std::cout << " bounds!";
+	    // 	    }
+	    // 	    std::cout << std::endl;
+	    // 	}
+	    // }
+	    // A0_last = A0;
+	    // A1_last = A1;
 	}
 	interaction_first_index = inner_loop_stop;
     }
