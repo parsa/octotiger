@@ -90,28 +90,32 @@ void grid::compute_interactions_inner(gsolve_type type) {
     // }
 
     // std::cout << "list_size:" << list_size << std::endl;
-    for (size_t interaction_first_index = 0; interaction_first_index < list_size; interaction_first_index += simd_len) {
-
+    size_t interaction_first_index = 0;
+    while (interaction_first_index < list_size) { // simd_len
+	// std::cout << "interaction_first_index: " << interaction_first_index << std::endl;
+	
 	std::array<simd_vector, NDIM> X;
 	taylor<4, simd_vector> m1;
 
 	auto& M = *M_ptr;       
 
 	// TODO: only uses first 10 coefficients? ask Dominic
-	// load variables for the first multipole
-	for (integer i = 0; i != simd_len && integer(interaction_first_index + i) < list_size; ++i) {
-	    const integer iii0 = interaction_list[interaction_first_index + i].first;
+	// TODO: ask Dominic about padding
+	// load variables from the same first multipole into all vector registers
+	// TODO: can possibly be replaced by a single vector register
+	for (integer simd_index = 0; simd_index != simd_len < list_size; ++simd_index) {
+	    const integer iii0 = interaction_list[interaction_first_index].first;
 	    // std::cout << "first: " << iii0 << " second: " << interaction_list[li + i].second << std::endl;
 	    space_vector const& com0iii0 = com0[iii0];
 	    for (integer d = 0; d < NDIM; ++d) {
 		// load the 3D center of masses
-		X[d][i] = com0iii0[d];
+		X[d][simd_index] = com0iii0[d];
 	    }
 
 	    // cell specific taylor series coefficients
 	    multipole const& Miii0 = M[iii0];
 	    for (integer j = 0; j != taylor_sizes[3]; ++j) {
-    		m1[j][i] = Miii0[j];
+    		m1[j][simd_index] = Miii0[j];
 	    }
 	}
 
@@ -119,15 +123,18 @@ void grid::compute_interactions_inner(gsolve_type type) {
 	size_t inner_loop_stop = interaction_list[interaction_first_index].inner_loop_stop;
 
 	// to a simd-sized step in the sublist of the interaction list where the outer multipole is same
-	// TODO: fix loop bound
-	for (size_t interaction_second_index = 0; interaction_second_index < 1; interaction_second_index += 4) {
+	// TODO: there is a possible out-of-bounds here, needs padding
+	// for (size_t interaction_second_index = interaction_first_index; interaction_second_index < inner_loop_stop; interaction_second_index += simd_len) {
+	for (size_t interaction_second_index = interaction_first_index; interaction_second_index < inner_loop_stop; interaction_second_index += 1) {
+	    // std::cout << "    -> interaction_second_index: " << interaction_second_index << std::endl;
 	
 	    std::array<simd_vector, NDIM> Y;
 	    taylor<4, simd_vector> m0;
-	
-	    // load variables for the second multipole
-	    for (integer i = 0; i != simd_len && integer(interaction_first_index + i) < list_size; ++i) {
-		const integer iii1 = interaction_list[interaction_first_index + i].second;
+
+	    // TODO: this is the one remaining expensive gather step, needed Bryces gather approach here
+	    // load variables for the second multipoles, one in each vector lane
+	    for (integer i = 0; i != simd_len && integer(interaction_second_index + i) < inner_loop_stop; ++i) {
+		const integer iii1 = interaction_list[interaction_second_index + i].second;
 		space_vector const& com0iii1 = com0[iii1];
 		for (integer d = 0; d < NDIM; ++d) {
 		    // load the 3D center of masses
@@ -145,8 +152,8 @@ void grid::compute_interactions_inner(gsolve_type type) {
 	    // n angular momentum of the cells
 	    taylor<4, simd_vector> n0;
 	
-	    // Initalize moments
-	    for (integer i = 0; i != simd_len && integer(interaction_first_index + i) < list_size; ++i) {
+	    // Initalize moments and momentum
+	    for (integer i = 0; i != simd_len && integer(interaction_second_index + i) < inner_loop_stop; ++i) {
 		if (type != RHO) {
 		    //TODO: Can we avoid that?
 #pragma GCC ivdep
@@ -156,8 +163,8 @@ void grid::compute_interactions_inner(gsolve_type type) {
 		    }
 		} else {
 		    //TODO: let's hope this is enter rarely
-		    const integer iii0 = interaction_list[interaction_first_index + i].first;
-		    const integer iii1 = interaction_list[interaction_first_index + i].second;
+		    const integer iii0 = interaction_list[interaction_first_index].first;
+		    const integer iii1 = interaction_list[interaction_second_index + i].second;
 		    multipole const& Miii0 = M[iii0];
 		    multipole const& Miii1 = M[iii1];
 		    // this branch computes the angular momentum correction, (20) in the paper
@@ -269,26 +276,12 @@ void grid::compute_interactions_inner(gsolve_type type) {
 	    std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
 #endif
 
+	    /////////////////////////////////////////////////////////////////////////
 	    // potential and correction have been computed, now scatter the results
-	    for (integer i = 0; i != simd_len && i + interaction_first_index < list_size; ++i) {
-		const integer iii0 = interaction_list[interaction_first_index + i].first;
-
-		expansion tmp1;
-#pragma GCC ivdep
-		for (integer j = 0; j != taylor_sizes[3]; ++j) {
-		    tmp1[j] = A0[j][i];
-		}
-		L[iii0] += tmp1;
-
-		if (type == RHO && opts.ang_con) {
-		    space_vector& L_ciii0 = L_c[iii0];
-		    for (integer j = 0; j != NDIM; ++j) {
-			L_ciii0[j] += B0[j][i];
-		    }
-		}
-	    }	
-	    for (integer i = 0; i != simd_len && i + interaction_first_index < list_size; ++i) {
-		const integer iii1 = interaction_list[interaction_first_index + i].second;
+	    /////////////////////////////////////////////////////////////////////////
+	    // for (integer i = 0; i != simd_len && i + interaction_second_index < inner_loop_stop; ++i) {
+	    for (integer i = 0; i < 1; ++i) { //TODO: for debugging
+		const integer iii1 = interaction_list[interaction_second_index + i].second;
 
 		expansion tmp2;
 #pragma GCC ivdep
@@ -304,7 +297,26 @@ void grid::compute_interactions_inner(gsolve_type type) {
 		    }
 		}
 	    }
+	    // for (integer i = 0; i != simd_len; ++i) {
+	    for (integer i = 0; i < 1; ++i) { //TODO: for debugging
+		const integer iii0 = interaction_list[interaction_first_index].first;
+
+		expansion tmp1;
+#pragma GCC ivdep
+		for (integer j = 0; j != taylor_sizes[3]; ++j) {
+		    tmp1[j] = A0[j][i];
+		}
+		L[iii0] += tmp1;
+
+		if (type == RHO && opts.ang_con) {
+		    space_vector& L_ciii0 = L_c[iii0];
+		    for (integer j = 0; j != NDIM; ++j) {
+			L_ciii0[j] += B0[j][i];
+		    }
+		}
+	    }
 	}
+	interaction_first_index = inner_loop_stop;
     }
 
     auto end = std::chrono::high_resolution_clock::now();
