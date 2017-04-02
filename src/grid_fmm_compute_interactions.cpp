@@ -74,29 +74,28 @@ void grid::compute_interactions_inner(gsolve_type type) {
     size_t cur_index = interaction_list[0].first;
     size_t cur_index_start = 0;
     for (size_t li = 0; li < list_size; li += 1) {
+	// std::cout << interaction_list[li].first << " ?? " << cur_index << std::endl;
 	if (interaction_list[li].first != cur_index) {
+	    // std::cout << "in here" << std::endl;
 	    interaction_list[cur_index_start].inner_loop_stop = li;
 	    cur_index = interaction_list[li].first;
+	    cur_index_start = li;
 	}
     }
     // make sure the last element is handled correctly as well
     interaction_list[cur_index_start].inner_loop_stop = list_size;
 
+    // for (size_t li = 0; li < list_size; li += 1) {
+    // 	std::cout << "li: " << li << " first: " << interaction_list[li].first << " second: " << interaction_list[li].second << " inner_loop_stop: " << interaction_list[li].inner_loop_stop << std::endl;
+    // }
+
     // std::cout << "list_size:" << list_size << std::endl;
     for (size_t interaction_first_index = 0; interaction_first_index < list_size; interaction_first_index += simd_len) {
-	// dX is distance between X and Y
-	// X and Y are the two cells interacting
-	// X and Y store the 3D center of masses (per simd element, SoA style)
 
 	std::array<simd_vector, NDIM> X;
-	// m multipole moments of the cells
 	taylor<4, simd_vector> m1;
 
 	auto& M = *M_ptr;       
-
-	// vector of multipoles (== taylor<4>s)
-	// here the multipoles are used as a storage of expansion coefficients
-
 
 	// TODO: only uses first 10 coefficients? ask Dominic
 	// load variables for the first multipole
