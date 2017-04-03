@@ -292,21 +292,31 @@ void grid::compute_interactions_inner(gsolve_type type) {
                     }
                 }
             }
-            // for (integer i = 0; i != simd_len; ++i) {
+            // for (integer i = 0; i != simd_len; ++i) {            
             const integer iii0 = interaction_list[interaction_first_index].first;
             multipole& Liii0 = L[iii0];
-            for (integer i = 0; i < simd_len; ++i) {    // TODO: for debugging
-                for (integer j = 0; j != taylor_sizes[3]; ++j) {
-                    Liii0[j] += A0[j][i];
-                }
+            // now add up the simd lanes
+            
+            // for (integer i = 0; i < simd_len; ++i) {
+            for (integer j = 0; j != taylor_sizes[3]; ++j) {
+#if Vc_IS_VERSION_2 == 0
+                Liii0[j] += A0[j].sum();
+#else
+                Liii0[j] += Vc::reduce(A0[j]);
+#endif
             }
+            // }
             if (type == RHO && opts.ang_con) {
                 space_vector& L_ciii0 = L_c[iii0];
-                for (integer i = 0; i < simd_len; ++i) {    // TODO: for debugging
-                    for (integer j = 0; j != NDIM; ++j) {
-                        L_ciii0[j] += B0[j][i];
-                    }
+                // for (integer i = 0; i < simd_len; ++i) {
+                for (integer j = 0; j != NDIM; ++j) {
+#if Vc_IS_VERSION_2 == 0                    
+                    L_ciii0[j] += B0[j].sum();
+#else
+                    L_ciii0[j] += Vc::reduce(B0[j]);
+#endif
                 }
+                // }
             }
         }
         interaction_first_index = inner_loop_stop;
