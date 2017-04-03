@@ -75,15 +75,6 @@ inline void grid::compute_interactions_initialize_n_ang_mom(
         double const sM_0 = M_[iii0];
         __m512d const M_0 = _mm512_set1_pd(sM_0);
 
-/*
-        std::cout << "ilist_1st_idx_begin:                 " << ilist_1st_idx_begin << std::endl;
-        std::cout << "(*IList)[ilist_1st_idx_begin].first: " << (*IList)[ilist_1st_idx_begin].first << std::endl;
-        std::cout << "sM_0: " << sM_0 << std::endl;
-        std::cout << "M_0:  ";
-        for (int k = 0; k < 8; ++k) std::cout << M_0[k] << " ";
-        std::cout << "\n";
-*/
-
         for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; i += 8)
         {
             integer const ti = i - ilist_2nd_idx_begin;
