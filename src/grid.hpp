@@ -129,6 +129,7 @@ struct interaction_type {
 	std::uint16_t second;
 	space_vector x;
 	v4sd four;
+	std::uint16_t inner_loop_stop;
 };
 
 struct boundary_interaction_type {

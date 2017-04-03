@@ -1283,6 +1283,47 @@ void compute_ilist() {
             assert(found);
         }
     }
+    {
+        std::int32_t cur_index = ilist_r[0].first;
+        std::int32_t cur_index_start = 0;
+        for (std::int32_t li = 0; li != ilist_r.size(); ++li) {
+            if (ilist_r[li].first != cur_index) {
+                ilist_r[cur_index_start].inner_loop_stop = li;
+                cur_index = ilist_r[li].first;
+                cur_index_start = li;
+            }
+        }
+        // make sure the last element is handled correctly as well
+        ilist_r[cur_index_start].inner_loop_stop = ilist_r.size();
+    }
+
+    {
+        std::int32_t cur_index = ilist_n[0].first;
+        std::int32_t cur_index_start = 0;
+        for (std::int32_t li = 0; li != ilist_n.size(); ++li) {
+            if (ilist_n[li].first != cur_index) {
+                ilist_n[cur_index_start].inner_loop_stop = li;
+                cur_index = ilist_n[li].first;
+                cur_index_start = li;
+            }
+        }
+        // make sure the last element is handled correctly as well
+        ilist_n[cur_index_start].inner_loop_stop = ilist_n.size();
+    }
+
+    {
+        std::int32_t cur_index = ilist_d[0].first;
+        std::int32_t cur_index_start = 0;
+        for (std::int32_t li = 0; li != ilist_d.size(); ++li) {
+            if (ilist_d[li].first != cur_index) {
+                ilist_d[cur_index_start].inner_loop_stop = li;
+                cur_index = ilist_d[li].first;
+                cur_index_start = li;
+            }
+        }
+        // make sure the last element is handled correctly as well
+        ilist_d[cur_index_start].inner_loop_stop = ilist_d.size();
+    }
 }
 
 expansion_pass_type grid::compute_expansions(
