@@ -1283,7 +1283,7 @@ void compute_ilist() {
             assert(found);
         }
     }
-/*
+
     {
         std::int32_t cur_index = ilist_r[0].first;
         std::int32_t cur_index_start = 0;
@@ -1325,7 +1325,7 @@ void compute_ilist() {
         // make sure the last element is handled correctly as well
         ilist_d[cur_index_start].inner_loop_end = ilist_d.size();
     }
-*/
+
 }
 
 expansion_pass_type grid::compute_expansions(

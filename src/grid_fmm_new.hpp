@@ -485,14 +485,24 @@ inline void grid::store_to_L_c(
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <std::size_t TileWidth>
+template <
+    std::vector<interaction_type> const* __restrict__ IList 
+  , std::size_t TileWidth
+    >
 inline void 
 set_basis(
-    taylor<5, std::array<real, TileWidth>>& A
-  , std::array<std::array<real, TileWidth>, NDIM> const& X
+    integer ilist_1st_idx_begin
+  , integer ilist_2nd_idx_begin
+  , taylor<5, std::array<real, TileWidth>>& A
+  //, std::array<std::array<real, TileWidth>, NDIM> const& X
+  , std::array<std::array<real, G_N3>, NDIM> const& com0
   , compute_interactions_stats_t& s
     ) noexcept
 {
+    integer const ilist_2nd_idx_end = ilist_2nd_idx_begin + TileWidth;
+    
+    integer const iii0 = (*IList)[ilist_1st_idx_begin].first;
+
     alignas(128) std::array<real, TileWidth> d0_array;
     alignas(128) std::array<real, TileWidth> d1_array;
     alignas(128) std::array<real, TileWidth> d2_array;
@@ -508,20 +518,35 @@ set_basis(
     BOOST_ASSUME_ALIGNED(d3, 64);
 
     real* __restrict__       A0 = A[0].data();
-    real const* __restrict__ X0 = X[0].data();
-    real const* __restrict__ X1 = X[1].data();
-    real const* __restrict__ X2 = X[2].data();
     BOOST_ASSUME_ALIGNED(A0, 64);
+
+    real const* __restrict__ X0 = com0[0].data();
+    real const* __restrict__ X1 = com0[1].data();
+    real const* __restrict__ X2 = com0[2].data();
     BOOST_ASSUME_ALIGNED(X0, 64);
     BOOST_ASSUME_ALIGNED(X1, 64);
     BOOST_ASSUME_ALIGNED(X2, 64);
 
+    real const* __restrict__ Y0 = com0[0].data();
+    real const* __restrict__ Y1 = com0[1].data();
+    real const* __restrict__ Y2 = com0[2].data();
+    BOOST_ASSUME_ALIGNED(Y0, 64);
+    BOOST_ASSUME_ALIGNED(Y1, 64);
+    BOOST_ASSUME_ALIGNED(Y2, 64);
+
     #pragma omp simd 
-    for (integer ti = 0; ti < TileWidth; ++ti)                                  // TRIP COUNT: TileWidth; UNIT STRIDE
+    for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)           // TRIP COUNT: TileWidth; UNIT STRIDE
     {
-        real const r2 = sqr(X0[ti]) + sqr(X1[ti]) + sqr(X2[ti]);                // 3 FP LOADS FROM TILE, 1 FP MUL, 2 FP FMA
+        integer const ti = i - ilist_2nd_idx_begin;
+
+        integer const iii1 = (*IList)[i].second;                                // 1 INT LOAD FROM MEM (for indirect addressing)
+
+        real const r2 = sqr(X0[iii0] - Y0[iii1])
+                      + sqr(X1[iii0] - Y1[iii1])
+                      + sqr(X2[iii0] - Y2[iii1]);                                   // 3 FP LOADS FROM TILE, 3 FP ADDS, 1 FP MUL, 2 FP FMAS
 
         s.add_fp_tileloads(3);
+        s.add_fp_adds(     3);
         s.add_fp_muls(     1);
         s.add_fp_fmas(     2);
 
@@ -549,19 +574,27 @@ set_basis(
 
     for (integer j = taylor_sizes[0], a = 0; a != NDIM; ++a, ++j)               // TRIP COUNT: 3
     {
-        real const* __restrict__ Xa = X[a].data();
+        real const* __restrict__ Xa = com0[a].data();
         BOOST_ASSUME_ALIGNED(Xa, 64);
+
+        real const* __restrict__ Ya = com0[a].data();
+        BOOST_ASSUME_ALIGNED(Ya, 64);
 
         real* __restrict__ Aj = A[j].data();
         BOOST_ASSUME_ALIGNED(Aj, 64);
 
         #pragma omp simd 
-        for (integer ti = 0; ti < TileWidth; ++ti)                              // TRIP COUNT: 3 * TileWidth; UNIT STRIDE
+        for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)       // TRIP COUNT: 3 * TileWidth; UNIT STRIDE
         {
-            Aj[ti] = Xa[ti] * d1[ti];                                           // 1 FP LOAD FROM CACHE, 2 FP LOADS FROM TILE, 1 FP MUL, 1 FP STORE TO TILE
+            integer const ti = i - ilist_2nd_idx_begin;
+
+            integer const iii1 = (*IList)[i].second;                            // 1 INT LOAD FROM MEM (for indirect addressing)
+
+            Aj[ti] = (Xa[iii0] - Ya[iii1]) * d1[ti];                            // 1 FP LOAD FROM CACHE, 2 FP LOADS FROM MEM, 1 FP ADD, 1 FP MUL, 1 FP STORE TO TILE
 
             s.add_fp_cacheloads(1);
-            s.add_fp_tileloads( 2);
+            s.add_fp_memloads(  2);
+            s.add_fp_adds(      1);
             s.add_fp_muls(      1);
             s.add_fp_tilestores(1);
         }
@@ -569,24 +602,35 @@ set_basis(
 
     for (integer j = taylor_sizes[1], a = 0; a != NDIM; ++a)                    // TRIP COUNT: 3
     {
-        real const* __restrict__ Xa = X[a].data();
+        real const* __restrict__ Xa = com0[a].data();
         BOOST_ASSUME_ALIGNED(Xa, 64);
+
+        real const* __restrict__ Ya = com0[a].data();
+        BOOST_ASSUME_ALIGNED(Ya, 64);
 
         for (integer b = a; b != NDIM; ++b, ++j)                                // TRIP COUNT: 6
         {
-            real const* __restrict__ Xb = X[b].data();
+            real const* __restrict__ Xb = com0[b].data();
             BOOST_ASSUME_ALIGNED(Xb, 64);
+
+            real const* __restrict__ Yb = com0[b].data();
+            BOOST_ASSUME_ALIGNED(Yb, 64);
 
             real* __restrict__ Aj = A[j].data();
             BOOST_ASSUME_ALIGNED(Aj, 64);
 
             #pragma omp simd
-            for (integer ti = 0; ti < TileWidth; ++ti)                          // TRIP COUNT: TileWidth; UNIT STRIDE
+            for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)   // TRIP COUNT: 6 * TileWidth; UNIT STRIDE
             {
-                Aj[ti] = Xa[ti] * Xb[ti] * d2[ti];                              // 1 FP LOAD FROM CACHE, 3 FP LOADS FROM TILE, 2 FP MUL, 1 FP STORE TO TILE
+                integer const ti = i - ilist_2nd_idx_begin;
 
-                s.add_fp_cacheloads(1);
-                s.add_fp_tileloads( 3);
+                integer const iii1 = (*IList)[i].second;                        // 1 INT LOAD FROM MEM (for indirect addressing)
+
+                Aj[ti] = (Xa[iii0] - Ya[iii1]) * (Xb[iii0] - Yb[iii1]) * d2[ti];// 3 FP LOADS FROM CACHE, 2 FP LOADS FROM MEM, 2 FP ADDS, 2 FP MULS, 1 FP STORE TO TILE
+
+                s.add_fp_cacheloads(3);
+                s.add_fp_memloads(  2);
+                s.add_fp_adds(      2);
                 s.add_fp_muls(      2);
                 s.add_fp_tilestores(1);
             }
@@ -595,29 +639,45 @@ set_basis(
 
     for (integer j = taylor_sizes[2], a = 0; a != NDIM; ++a)                    // TRIP COUNT: 3
     {
-        real const* __restrict__ Xa = X[a].data();
+        real const* __restrict__ Xa = com0[a].data();
         BOOST_ASSUME_ALIGNED(Xa, 64);
+
+        real const* __restrict__ Ya = com0[a].data();
+        BOOST_ASSUME_ALIGNED(Ya, 64);
 
         for (integer b = a; b != NDIM; ++b)                                     // TRIP COUNT: 6
         {
-            real const* __restrict__ Xb = X[b].data();
+            real const* __restrict__ Xb = com0[b].data();
             BOOST_ASSUME_ALIGNED(Xb, 64);
+
+            real const* __restrict__ Yb = com0[b].data();
+            BOOST_ASSUME_ALIGNED(Yb, 64);
 
             for (integer c = b; c != NDIM; ++c, ++j)                            // TRIP COUNT: 10
             {
-                real const* __restrict__ Xc = X[c].data();
+                real const* __restrict__ Xc = com0[c].data();
                 BOOST_ASSUME_ALIGNED(Xc, 64);
+
+                real const* __restrict__ Yc = com0[c].data();
+                BOOST_ASSUME_ALIGNED(Yc, 64);
 
                 real* __restrict__ Aj = A[j].data();
                 BOOST_ASSUME_ALIGNED(Aj, 64);
 
                 #pragma omp simd
-                for (integer ti = 0; ti < TileWidth; ++ti)                      // TRIP COUNT: 10 * TileWidth; UNIT STRIDE
+                for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)// TRIP COUNT: 10 * TileWidth; UNIT STRIDE
                 {
-                    Aj[ti] = Xa[ti] * Xb[ti] * Xc[ti] * d3[ti];                 // 1 FP LOAD FROM CACHE, 4 FP LOADS FROM TILE, 3 FP MUL, 1 FP STORE TO TILE
-                    
-                    s.add_fp_cacheloads(1);
-                    s.add_fp_tileloads( 4);
+                    integer const ti = i - ilist_2nd_idx_begin;
+
+                    integer const iii1 = (*IList)[i].second;                    // 1 INT LOAD FROM MEM (for indirect addressing)
+
+                    Aj[ti] = (Xa[iii0] - Ya[iii1])
+                           * (Xb[iii0] - Yb[iii1])
+                           * (Xc[iii0] - Yc[iii1]) * d3[ti];                    // 5 FP LOADS FROM CACHE, 2 FP LOADS FROM MEM, 3 FP ADDS, 3 FP MULS, 1 FP STORE TO TILE
+
+                    s.add_fp_cacheloads(5);
+                    s.add_fp_memloads(  2);
+                    s.add_fp_adds(      3);
                     s.add_fp_muls(      3);
                     s.add_fp_tilestores(1);
                 }
@@ -641,8 +701,11 @@ set_basis(
 
     for (integer a = 0; a != NDIM; ++a)                                         // TRIP COUNT: 3
     {
-        real const* __restrict__ Xa = X[a].data();
+        real const* __restrict__ Xa = com0[a].data();
         BOOST_ASSUME_ALIGNED(Xa, 64);
+
+        real const* __restrict__ Ya = com0[a].data();
+        BOOST_ASSUME_ALIGNED(Ya, 64);
 
         real* __restrict__ Aaa   = A(a, a).data();
         real* __restrict__ Aaaa  = A(a, a, a).data();
@@ -652,20 +715,24 @@ set_basis(
         BOOST_ASSUME_ALIGNED(Aaaaa, 64);
 
         #pragma omp simd 
-        for (integer ti = 0; ti < TileWidth; ++ti)                              // TRIP COUNT: 3 * TileWidth; UNIT STRIDE
+        for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)       // TRIP COUNT: 3 * TileWidth; UNIT STRIDE
         {
-            auto const d1ti = d1[ti];                                           // 1 FP LOAD FROM CACHE
-            auto const d2ti = d2[ti];                                           // 1 FP LOAD FROM CACHE
-            auto const d3ti = d3[ti];                                           // 1 FP LOAD FROM CACHE
-            auto const Xati = Xa[ti];                                           // 1 FP LOAD FROM TILE
+            integer const ti = i - ilist_2nd_idx_begin;
+
+            integer const iii1 = (*IList)[i].second;                            // 1 INT LOAD FROM MEM (for indirect addressing)
+
+            auto const d1ti  = d1[ti];                                          // 1 FP LOAD FROM CACHE
+            auto const d2ti  = d2[ti];                                          // 1 FP LOAD FROM CACHE
+            auto const d3ti  = d3[ti];                                          // 1 FP LOAD FROM CACHE
+            auto const XYati = Xa[iii0] - Ya[iii1];                             // 2 FP LOAD FROM CACHE, 1 FP ADD
 
             Aaa[ti]   += d1ti;                                                  // 1 FP LOAD FROM TILE, 1 FP ADD, 1 FP STORE TO TILE
-            Aaaa[ti]  += Xati * d2ti;                                           // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
-            Aaaaa[ti] += Xati * Xati * d3ti + 2.0 * d2ti;                       // 1 FP LOAD FROM TILE, 2 FP FMA, 1 FP STORE TO TILE 
+            Aaaa[ti]  += XYati * d2ti;                                          // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
+            Aaaaa[ti] += XYati * XYati * d3ti + 2.0 * d2ti;                     // 1 FP LOAD FROM TILE, 2 FP FMA, 1 FP STORE TO TILE 
 
-            s.add_fp_cacheloads(3);
-            s.add_fp_tileloads( 4);
-            s.add_fp_adds(      1);
+            s.add_fp_cacheloads(5);
+            s.add_fp_tileloads( 3);
+            s.add_fp_adds(      2);
             s.add_fp_muls(      1);
             s.add_fp_fmas(      3);
             s.add_fp_tilestores(3);
@@ -674,13 +741,19 @@ set_basis(
 
     for (integer a = 0; a != NDIM; ++a)                                         // TRIP COUNT: 3
     {
-        real const* __restrict__ Xa = X[a].data();
+        real const* __restrict__ Xa = com0[a].data();
         BOOST_ASSUME_ALIGNED(Xa, 64);
+
+        real const* __restrict__ Ya = com0[a].data();
+        BOOST_ASSUME_ALIGNED(Ya, 64);
 
         for (integer b = a; b != NDIM; ++b)                                     // TRIP COUNT: 6
         {
-            real const* __restrict__ Xb = X[b].data();
+            real const* __restrict__ Xb = com0[b].data();
             BOOST_ASSUME_ALIGNED(Xb, 64);
+
+            real const* __restrict__ Yb = com0[b].data();
+            BOOST_ASSUME_ALIGNED(Yb, 64);
 
             real* __restrict__ Aaab  = A(a, a, b).data();
             real* __restrict__ Aabb  = A(a, b, b).data();
@@ -694,24 +767,28 @@ set_basis(
             BOOST_ASSUME_ALIGNED(Aaabb, 64);
 
             #pragma omp simd 
-            for (integer ti = 0; ti < TileWidth; ++ti)                          // TRIP COUNT: 6 * TileWidth; UNIT STRIDE
+            for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)   // TRIP COUNT: 6 * TileWidth; UNIT STRIDE
             {
-                auto const d2ti = d2[ti];                                       // 1 FP LOAD FROM CACHE
-                auto const d3ti = d3[ti];                                       // 1 FP LOAD FROM CACHE
-                auto const Xati = Xa[ti];                                       // 1 FP LOAD FROM TILE
-                auto const Xbti = Xb[ti];                                       // 1 FP LOAD FROM TILE
+                integer const ti = i - ilist_2nd_idx_begin;
 
-                auto const Xabd3 = Xati * Xbti * d3ti;                          // 2 FP MULS
+                integer const iii1 = (*IList)[i].second;                        // 1 INT LOAD FROM MEM (for indirect addressing)
 
-                Aaab[ti]  += Xbti * d2ti;                                       // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
-                Aabb[ti]  += Xati * d2ti;                                       // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
-                Aaaab[ti] += Xabd3;                                             // 1 FP LOAD FROM TILE, 1 FP ADD, 1 FP STORE TO TILE
-                Aabbb[ti] += Xabd3;                                             // 1 FP LOAD FROM TILE, 1 FP ADD, 1 FP STORE TO TILE
+                auto const d2ti  = d2[ti];                                      // 1 FP LOAD FROM CACHE
+                auto const d3ti  = d3[ti];                                      // 1 FP LOAD FROM CACHE
+                auto const XYati = Xa[iii0] - Ya[iii1];                         // 2 FP LOAD FROM CACHE, 1 FP ADD
+                auto const XYbti = Xb[iii0] - Yb[iii1];                         // 2 FP LOAD FROM CACHE, 1 FP ADD
+
+                auto const XYabd3 = XYati * XYbti * d3ti;                       // 2 FP MULS
+
+                Aaab[ti]  += XYbti * d2ti;                                      // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
+                Aabb[ti]  += XYati * d2ti;                                      // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
+                Aaaab[ti] += XYabd3;                                            // 1 FP LOAD FROM TILE, 1 FP ADD, 1 FP STORE TO TILE
+                Aabbb[ti] += XYabd3;                                            // 1 FP LOAD FROM TILE, 1 FP ADD, 1 FP STORE TO TILE
                 Aaabb[ti] += d2ti;                                              // 1 FP LOAD FROM TILE, 1 FP ADD, 1 FP STORE TO TILE
 
-                s.add_fp_cacheloads(2);
-                s.add_fp_tileloads( 7);
-                s.add_fp_adds(      3);
+                s.add_fp_cacheloads(6);
+                s.add_fp_tileloads( 5);
+                s.add_fp_adds(      5);
                 s.add_fp_muls(      2);
                 s.add_fp_fmas(      2);
                 s.add_fp_tilestores(5);
@@ -721,18 +798,27 @@ set_basis(
 
     for (integer a = 0; a != NDIM; ++a)                                         // TRIP COUNT: 3
     {
-        real const* __restrict__ Xa = X[a].data();
+        real const* __restrict__ Xa = com0[a].data();
         BOOST_ASSUME_ALIGNED(Xa, 64);
+
+        real const* __restrict__ Ya = com0[a].data();
+        BOOST_ASSUME_ALIGNED(Ya, 64);
 
         for (integer b = a; b != NDIM; ++b)                                     // TRIP COUNT: 6
         {
-            real const* __restrict__ Xb = X[b].data();
+            real const* __restrict__ Xb = com0[b].data();
             BOOST_ASSUME_ALIGNED(Xb, 64);
+
+            real const* __restrict__ Yb = com0[b].data();
+            BOOST_ASSUME_ALIGNED(Yb, 64);
 
             for (integer c = b; c != NDIM; ++c)                                 // TRIP COUNT: 10
             {
-                real const* __restrict__ Xc = X[c].data();
+                real const* __restrict__ Xc = com0[c].data();
                 BOOST_ASSUME_ALIGNED(Xc, 64);
+
+                real const* __restrict__ Yc = com0[c].data();
+                BOOST_ASSUME_ALIGNED(Yc, 64);
 
                 real* __restrict__ Aaabc = A(a, a, b, c).data();
                 real* __restrict__ Aabbc = A(a, b, b, c).data();
@@ -742,21 +828,26 @@ set_basis(
                 BOOST_ASSUME_ALIGNED(Aabcc, 64);
 
                 #pragma omp simd 
-                for (integer ti = 0; ti < TileWidth; ++ti)                      // TRIP COUNT: 10 * TileWidth; UNIT STRIDE
+                for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)// TRIP COUNT: 10 * TileWidth; UNIT STRIDE
                 {
-                    auto const d3ti = d3[ti];                                   // 1 FP LOAD FROM CACHE
-                    auto const Xati = Xa[ti];                                   // 1 FP LOAD FROM TILE
-                    auto const Xbti = Xb[ti];                                   // 1 FP LOAD FROM TILE
-                    auto const Xcti = Xc[ti];                                   // 1 FP LOAD FROM TILE
+                    integer const ti = i - ilist_2nd_idx_begin;
 
-                    auto const Xbd3 = Xbti * d3ti;                              // 1 FP MUL
+                    integer const iii1 = (*IList)[i].second;                    // 1 INT LOAD FROM MEM (for indirect addressing)
 
-                    Aaabc[ti] += Xbd3 * Xcti;                                   // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
-                    Aabbc[ti] += Xati * Xcti * d3ti;                            // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP MUL, 1 FP STORE TO TILE
-                    Aabcc[ti] += Xati * Xbd3;                                   // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
+                    auto const d3ti  = d3[ti];                                  // 1 FP LOAD FROM CACHE
+                    auto const XYati = Xa[iii0] - Ya[iii1];                     // 2 FP LOADS FROM CACHE, 1 FP ADD 
+                    auto const XYbti = Xb[iii0] - Yb[iii1];                     // 2 FP LOADS FROM CACHE, 1 FP ADD
+                    auto const XYcti = Xc[iii0] - Yc[iii1];                     // 2 FP LOADS FROM CACHE, 1 FP ADD
 
-                    s.add_fp_cacheloads(1);
-                    s.add_fp_tileloads( 6);
+                    auto const XYbd3 = XYbti * d3ti;                            // 1 FP MUL
+
+                    Aaabc[ti] += XYbd3 * XYcti;                                 // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
+                    Aabbc[ti] += XYati * XYcti * d3ti;                          // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP MUL, 1 FP STORE TO TILE
+                    Aabcc[ti] += XYati * XYbd3;                                 // 1 FP LOAD FROM TILE, 1 FP FMA, 1 FP STORE TO TILE
+
+                    s.add_fp_cacheloads(7);
+                    s.add_fp_tileloads( 3);
+                    s.add_fp_adds(      3);
                     s.add_fp_muls(      2);
                     s.add_fp_fmas(      3);
                     s.add_fp_tilestores(3);
@@ -804,6 +895,7 @@ inline void grid::compute_interactions_non_leaf_tiled(
     ///////////////////////////////////////////////////////////////////////
     // GATHER 
 
+/*
     for (integer j = 0; j != NDIM; ++j)                                         // TRIP COUNT: 3
     {
         real* __restrict__ dXj = t.dX[j].data();
@@ -825,6 +917,7 @@ inline void grid::compute_interactions_non_leaf_tiled(
             s.add_fp_tilestores(1);
         }
     }
+*/
 
     for (integer j = 0; j != taylor_sizes[3]; ++j)                              // TRIP COUNT: 20
     {
@@ -879,7 +972,7 @@ inline void grid::compute_interactions_non_leaf_tiled(
     ///////////////////////////////////////////////////////////////////////
     // COMPUTE
 
-    set_basis(t.D, t.dX, s);
+    set_basis<IList>(ilist_1st_idx_begin, ilist_2nd_idx_begin, t.D, com0, s);
 
     real* __restrict__ m00 = t.m0[0].data();
     real* __restrict__ m10 = t.m1[0].data();
@@ -1181,6 +1274,7 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
 
     auto scalar_tile = tsb::make_aligned_array<compute_interactions_tile<1>>(128, 1);
 
+/*
     {
         std::int32_t cur_index = (*IList)[0].first;
         std::int32_t cur_index_start = 0;
@@ -1195,6 +1289,7 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
         // make sure the last element is handled correctly as well
         (*IList)[cur_index_start].inner_loop_end = (*IList).size();
     }
+*/
 
     integer ilist_1st_idx_begin = 0;
 
