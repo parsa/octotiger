@@ -70,20 +70,6 @@ void grid::compute_interactions_inner(gsolve_type type) {
     // hpx::parallel::for_loop_strided(for_loop_policy, 0, list_size, simd_len,
     //     [&com0, &interaction_list, list_size, type, this](std::size_t li) {
 
-    size_t cur_index = interaction_list[0].first;
-    size_t cur_index_start = 0;
-    for (size_t li = 0; li < list_size; li += 1) {
-        // std::cout << interaction_list[li].first << " ?? " << cur_index << std::endl;
-        if (interaction_list[li].first != cur_index) {
-            // std::cout << "in here" << std::endl;
-            interaction_list[cur_index_start].inner_loop_stop = li;
-            cur_index = interaction_list[li].first;
-            cur_index_start = li;
-        }
-    }
-    // make sure the last element is handled correctly as well
-    interaction_list[cur_index_start].inner_loop_stop = list_size;
-
     // for (size_t li = 0; li < list_size; li += 1) {
     //   std::cout << "li: " << li << " first: " << interaction_list[li].first << " second: " <<
     // interaction_list[li].second << " inner_loop_stop: " << interaction_list[li].inner_loop_stop
@@ -93,7 +79,8 @@ void grid::compute_interactions_inner(gsolve_type type) {
     // std::cout << "init lasts to 0...: " << std::endl;
     // taylor<4, simd_vector> A0_last, A1_last;
 
-    // std::cout << "list_size:" << list_size << std::endl;
+    //std::cout << "list_size:" << list_size << std::endl;
+
     size_t interaction_first_index = 0;
     while (interaction_first_index < list_size) {    // simd_len
         // std::cout << "interaction_first_index: " << interaction_first_index << std::endl;
