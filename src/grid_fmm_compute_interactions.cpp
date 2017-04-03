@@ -86,7 +86,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
         // std::cout << "interaction_first_index: " << interaction_first_index << std::endl;
 
         std::array<simd_vector, NDIM> X;
-        taylor<4, simd_vector> m1;
+        // taylor<4, simd_vector> m1;
 
         auto& M = *M_ptr;
 
@@ -101,10 +101,10 @@ void grid::compute_interactions_inner(gsolve_type type) {
         }
 
         // cell specific taylor series coefficients
-        multipole const& Miii0 = M[iii0];
-        for (integer j = 0; j != taylor_sizes[3]; ++j) {
-            m1[j] = Miii0[j];
-        }
+        // multipole const& Miii0 = M[iii0];
+        // for (integer j = 0; j != taylor_sizes[3]; ++j) {
+        //     m1[j] = Miii0[j];
+        // }
 
         taylor<4, simd_vector> A0;
         std::array<simd_vector, NDIM> B0 = {
@@ -146,7 +146,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
                 }
             }
 
-            taylor<4, simd_vector> n1;
+            // taylor<4, simd_vector> n1;
             // n angular momentum of the cells
             taylor<4, simd_vector> n0;
 
@@ -158,7 +158,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
 #pragma GCC ivdep
                     for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
                         n0[j] = ZERO;
-                        n1[j] = ZERO;
+                        // n1[j] = ZERO;
                     }
                 } else {
                     // TODO: let's hope this is enter rarely
@@ -174,7 +174,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
                     // the coefficients are calculated in (17) and (18)
                     for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
                         n0[j][i] = Miii1[j] - Miii0[j] * tmp1;
-                        n1[j][i] = Miii0[j] - Miii1[j] * tmp2;
+                        // n1[j][i] = Miii0[j] - Miii1[j] * tmp2;
                     }
                 }
             }
@@ -190,11 +190,11 @@ void grid::compute_interactions_inner(gsolve_type type) {
             // D is taylor expansion value for a given X expansion of the gravitational
             // potential (multipole expansion)
             taylor<5, simd_vector> D;
-            // A0, A1 are the contributions to L (for each cell)
-            taylor<4, simd_vector> A1;
-            // B0, B1 are the contributions to L_c (for each cell)
-            std::array<simd_vector, NDIM> B1 = {
-                simd_vector(ZERO), simd_vector(ZERO), simd_vector(ZERO)};
+            // // A0, A1 are the contributions to L (for each cell)
+            // taylor<4, simd_vector> A1;
+            // // B0, B1 are the contributions to L_c (for each cell)
+            // std::array<simd_vector, NDIM> B1 = {
+            //     simd_vector(ZERO), simd_vector(ZERO), simd_vector(ZERO)};
 
             // calculates all D-values, calculate all coefficients of 1/r (not the potential),
             // formula (6)-(9) and (19)
@@ -203,22 +203,22 @@ void grid::compute_interactions_inner(gsolve_type type) {
             // the following loops calculate formula (10), potential from A->B and B->A
             // (basically alternating)
             A0[0] += m0[0] * D[0];
-            A1[0] += m1[0] * D[0];
+            // A1[0] += m1[0] * D[0];
             if (type != RHO) {
                 for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
                     A0[0] -= m0[i] * D[i];
-                    A1[0] += m1[i] * D[i];
+                    // A1[0] += m1[i] * D[i];
                 }
             }
             for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
                 const auto tmp = D[i] * (factor[i] * HALF);
                 A0[0] += m0[i] * tmp;
-                A1[0] += m1[i] * tmp;
+                // A1[0] += m1[i] * tmp;
             }
             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
                 const auto tmp = D[i] * (factor[i] * SIXTH);
                 A0[0] -= m0[i] * tmp;
-                A1[0] += m1[i] * tmp;
+                // A1[0] += m1[i] * tmp;
             }
 
             for (integer a = 0; a < NDIM; ++a) {
@@ -226,16 +226,16 @@ void grid::compute_interactions_inner(gsolve_type type) {
                 int const* abc_idx_map = to_abc_idx_map3[a];
 
                 A0(a) += m0() * D(a);
-                A1(a) += -m1() * D(a);
+                // A1(a) += -m1() * D(a);
                 for (integer i = 0; i != 6; ++i) {
                     if (type != RHO && i < 3) {
                         A0(a) -= m0(a) * D[ab_idx_map[i]];
-                        A1(a) -= m1(a) * D[ab_idx_map[i]];
+                        // A1(a) -= m1(a) * D[ab_idx_map[i]];
                     }
                     const integer cb_idx = cb_idx_map[i];
                     const auto tmp1 = D[abc_idx_map[i]] * (factor[cb_idx] * HALF);
                     A0(a) += m0[cb_idx] * tmp1;
-                    A1(a) -= m1[cb_idx] * tmp1;
+                    // A1(a) -= m1[cb_idx] * tmp1;
                 }
             }
 
@@ -246,7 +246,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
                         const integer bcd_idx = bcd_idx_map[i];
                         const auto tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
                         B0[a] -= n0[bcd_idx] * tmp;
-                        B1[a] -= n1[bcd_idx] * tmp;
+                        // B1[a] -= n1[bcd_idx] * tmp;
                     }
                 }
             }
@@ -256,22 +256,19 @@ void grid::compute_interactions_inner(gsolve_type type) {
 
                 integer const ab_idx = ab_idx_map6[i];
                 A0[ab_idx] += m0() * D[ab_idx];
-                A1[ab_idx] += m1() * D[ab_idx];
+                // A1[ab_idx] += m1() * D[ab_idx];
                 for (integer c = 0; c < NDIM; ++c) {
                     const auto& tmp = D[abc_idx_map6[c]];
                     A0[ab_idx] -= m0(c) * tmp;
-                    A1[ab_idx] += m1(c) * tmp;
+                    // A1[ab_idx] += m1(c) * tmp;
                 }
             }
 
             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
                 const auto& tmp = D[i];
-                A1[i] += -m1[0] * tmp;
+                // A1[i] += -m1[0] * tmp;
                 A0[i] += m0[0] * tmp;
             }
-#ifdef USE_GRAV_PAR
-            std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
-#endif
 
             /////////////////////////////////////////////////////////////////////////
             // potential and correction have been computed, now scatter the results
@@ -279,21 +276,21 @@ void grid::compute_interactions_inner(gsolve_type type) {
 
             // for (integer i = 0; i != simd_len && i + interaction_second_index < inner_loop_stop;
             // ++i) {
-            for (integer i = 0; i < simd_len && i + interaction_second_index < inner_loop_stop;
-                 ++i) {    // TODO: for debugging
-                const integer iii1 = interaction_list[interaction_second_index + i].second;
+            // for (integer i = 0; i < simd_len && i + interaction_second_index < inner_loop_stop;
+            //      ++i) {    // TODO: for debugging
+            //     const integer iii1 = interaction_list[interaction_second_index + i].second;
 
-                for (integer j = 0; j != taylor_sizes[3]; ++j) {
-                    L[iii1][j] += A1[j][i];
-                }
+            //     for (integer j = 0; j != taylor_sizes[3]; ++j) {
+            //         L[iii1][j] += A1[j][i];
+            //     }
 
-                if (type == RHO && opts.ang_con) {
-                    space_vector& L_ciii1 = L_c[iii1];
-                    for (integer j = 0; j != NDIM; ++j) {
-                        L_ciii1[j] += B1[j][i];
-                    }
-                }
-            }
+            //     if (type == RHO && opts.ang_con) {
+            //         space_vector& L_ciii1 = L_c[iii1];
+            //         for (integer j = 0; j != NDIM; ++j) {
+            //             L_ciii1[j] += B1[j][i];
+            //         }
+            //     }
+            // }
         }
 
         // for (integer i = 0; i != simd_len; ++i) {

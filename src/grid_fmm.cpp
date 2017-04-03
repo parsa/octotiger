@@ -789,9 +789,9 @@ void compute_ilist() {
                                 np.x[YDIM] = j1;
                                 np.x[ZDIM] = k1;
                                 if (interior(i1, j1, k1) && interior(i0, j0, k0)) {
-                                    if (iii1 > iii0) {
+                                    // if (iii1 > iii0) {
                                         ilist_n0.push_back(np);
-                                    }
+                                    // }
                                 } else if (interior(i0, j0, k0)) {
                                     ilist_n0_bnd[neighbor_dir(i1, j1, k1)].push_back(np);
                                 }
@@ -820,9 +820,9 @@ void compute_ilist() {
                                 np.x[ZDIM] = k1;
                                 np.four = four;
                                 if (interior(i1, j1, k1) && interior(i0, j0, k0)) {
-                                    if (iii1 > iii0) {
+                                    // if (iii1 > iii0) {
                                         ilist_r0.push_back(np);
-                                    }
+                                    // }
                                 }
                             }
                         }
