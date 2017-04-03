@@ -125,16 +125,16 @@ public:
 };
 
 struct interaction_type {
-	std::uint16_t first;
-	std::uint16_t second;
+	std::uint32_t first;
+	std::uint32_t second;
 	space_vector x;
 	v4sd four;
-	std::uint16_t inner_loop_stop;
+	std::uint32_t inner_loop_end;
 };
 
 struct boundary_interaction_type {
-	std::uint16_t second;
-	std::vector<std::uint16_t> first;
+	std::uint32_t second;
+	std::vector<std::uint32_t> first;
 	std::vector<v4sd> four;
 	space_vector x;
 };
@@ -525,7 +525,7 @@ public:
         );
 
     template <
-        std::vector<interaction_type> const* __restrict__ IList /* lol C# */
+        std::vector<interaction_type>* __restrict__ IList /* lol C# */
       , std::size_t TileWidth
       , ang_con_type AngConKind
       , gsolve_type SolveKind
