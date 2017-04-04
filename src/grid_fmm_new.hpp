@@ -1438,12 +1438,12 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
 
     auto scalar_tile = tsb::make_aligned_array<compute_interactions_tile<1>>(128, 1);
 
+/*
     {
         std::int32_t cur_index = (*IList)[0].first;
         std::int32_t cur_index_start = 0;
         for (std::int32_t li = 0; li != (*IList).size(); ++li) {
             if ((*IList)[li].first != cur_index) {
-//                std::cout << "[" << cur_index_start << ", " << li << "]\n";
                 (*IList)[cur_index_start].inner_loop_end = li;
                 cur_index = (*IList)[li].first;
                 cur_index_start = li;
@@ -1452,6 +1452,7 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
         // make sure the last element is handled correctly as well
         (*IList)[cur_index_start].inner_loop_end = (*IList).size();
     }
+*/
 
     integer ilist_1st_idx_begin = 0;
 
@@ -1463,20 +1464,6 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
     
         integer const ilist_1st_idx_primary_end = (ilist_1st_idx_end / TileWidth) * TileWidth;
 
-/*
-        std::cout << "pre-loop ilist_1st_idx_begin("
-                  << ilist_1st_idx_begin
-                  << ") ilist_1st_idx_range_size("
-                  << ilist_1st_idx_range_size
-                  << ") ilist_1st_idx_primary_end("
-                  << ilist_1st_idx_primary_end
-                  << ") ilist_1st_idx_end("
-                  << ilist_1st_idx_end
-                  << ") IList->size()("
-                  << IList->size()
-                  << ")\n";
-*/
-
         // Vector primary loop.
         if (ilist_1st_idx_begin + TileWidth <= ilist_1st_idx_primary_end)
         {
@@ -1487,17 +1474,6 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
                 ; ilist_2nd_idx_begin += TileWidth, ilist_1st_idx_begin += TileWidth
                 )
             {
-/*
-                std::cout << "vector_tile, ilist_1st_idx_begin("
-                          << ilist_1st_idx_begin
-                          << ") ilist_2nd_idx_begin("
-                          << ilist_2nd_idx_begin
-                          << ") ilist_1st_idx_end("
-                          << ilist_1st_idx_end
-                          << ") ilist_1st_idx_primary_end("
-                          << ilist_1st_idx_primary_end
-                          << ")\n";
-*/
                 compute_interactions_non_leaf_tiled<
                     IList, TileWidth, AngConKind, SolveKind
                 >(
@@ -1516,37 +1492,12 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
             ; ilist_2nd_idx_begin += 1, ilist_1st_idx_begin += 1
             )
         {
-/*
-            std::cout << "scalar_tile, ilist_1st_idx_begin("
-                      << ilist_1st_idx_begin
-                      << ") ilist_2nd_idx_begin("
-                      << ilist_2nd_idx_begin
-                      << ") ilist_1st_idx_end("
-                      << ilist_1st_idx_end
-                      << ") ilist_1st_idx_primary_end("
-                      << ilist_1st_idx_primary_end
-                      << ")\n";
-*/
             compute_interactions_non_leaf_tiled<
                 IList, 1, AngConKind, SolveKind
             >(
                 ilist_1st_idx_begin, ilist_2nd_idx_begin, *scalar_tile, dummy
             );
         }
-
-/*
-        std::cout << "post-loop ilist_1st_idx_begin("
-                  << ilist_1st_idx_begin
-                  << ") ilist_1st_idx_range_size("
-                  << ilist_1st_idx_range_size
-                  << ") ilist_1st_idx_primary_end("
-                  << ilist_1st_idx_primary_end
-                  << ") ilist_1st_idx_end("
-                  << ilist_1st_idx_end
-                  << ") IList->size()("
-                  << IList->size()
-                  << ")\n";
-*/
     }
 
     return s;
