@@ -8,7 +8,7 @@
 
 #include <hpx/include/parallel_for_loop.hpp>
 
-#include <chrono>
+// #include <chrono>
 #include <cstddef>
 #include <utility>
 
@@ -36,7 +36,7 @@ void grid::compute_interactions(gsolve_type type) {
 }
 
 void grid::compute_interactions_inner(gsolve_type type) {
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
     // double accumulated_set_taylor = 0.0;
 
     // calculating the contribution of all the inner cells
@@ -329,8 +329,8 @@ void grid::compute_interactions_inner(gsolve_type type) {
         interaction_first_index = inner_loop_stop;
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    std::cout << "compute_interactions_inner duration (ms): " << duration.count() << std::endl;
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double, std::milli> duration = end - start;
+    // std::cout << "compute_interactions_inner duration (ms): " << duration.count() << std::endl;
     // std::cout << "--------------------> accumulated_set_taylor duration (ms): " << accumulated_set_taylor << std::endl;
 }
