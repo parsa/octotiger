@@ -96,6 +96,7 @@ set(source_files ${source_files}
     src/grid.cpp
     src/grid_fmm.cpp
     src/grid_fmm_compute_interactions.cpp
+    src/grid_fmm_compute_interactions_boundary.cpp
     src/grid_fmm_compute_interactions_leaf.cpp
     src/grid_output.cpp
     src/grid_scf.cpp
