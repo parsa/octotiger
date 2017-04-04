@@ -1254,6 +1254,9 @@ void compute_ilist() {
     ilist_n = std::vector<interaction_type>(ilist_n0.begin(), ilist_n0.end());
     ilist_d = std::vector<interaction_type>(ilist_d0.begin(), ilist_d0.end());
     ilist_r = std::vector<interaction_type>(ilist_r0.begin(), ilist_r0.end());
+    std::cout << "ilist_n.size() == " << ilist_n.size() << std::endl;
+    std::cout << "ilist_d.size() == " << ilist_d.size() << std::endl;
+    std::cout << "ilist_r.size() == " << ilist_r.size() << std::endl;
     for (auto& dir : geo::direction::full_set()) {
         auto& d = ilist_d_bnd[dir];
         auto& d0 = ilist_d0_bnd[dir];

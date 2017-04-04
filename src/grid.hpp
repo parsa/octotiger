@@ -387,8 +387,8 @@ public:
       , std::size_t TileWidth
         >
     void compute_interactions_load_n0_n1(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , std::true_type
@@ -399,8 +399,8 @@ public:
       , std::size_t TileWidth
         >
     void compute_interactions_load_n0_n1(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , std::true_type
@@ -411,8 +411,8 @@ public:
       , std::size_t TileWidth
         >
     void compute_interactions_load_n0_n1(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , std::false_type
@@ -423,8 +423,8 @@ public:
       , std::size_t TileWidth
         >
     void compute_interactions_load_n0_n1(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , std::false_type
@@ -436,8 +436,8 @@ public:
       , std::size_t TileWidth
         >
     void compute_interactions_load_m0_m1(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , vector_function_tag
@@ -447,8 +447,8 @@ public:
       , std::size_t TileWidth
         >
     void compute_interactions_load_m0_m1(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , scalar_function_tag
@@ -516,8 +516,8 @@ public:
       , std::size_t TileWidth
         >
     void store_to_L_c(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , std::true_type
@@ -527,8 +527,8 @@ public:
       , std::size_t TileWidth
         >
     void store_to_L_c(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , std::false_type
@@ -539,8 +539,8 @@ public:
       , std::size_t TileWidth
         >
     void store_to_L(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , vector_function_tag 
@@ -550,8 +550,8 @@ public:
       , std::size_t TileWidth
         >
     void store_to_L(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , scalar_function_tag
@@ -564,9 +564,21 @@ public:
       , gsolve_type SolveKind
         >
     void compute_interactions_non_leaf_tiled(
-        integer i_begin
-      , integer i_end
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_tile<TileWidth>& t
+      , compute_interactions_stats_t& s
+        );
+
+    template <
+        std::vector<interaction_type> const* __restrict__ IList
+      , typename RealDatapar
+      , typename IndexDatapar
+      , std::size_t TileWidth
+        >
+    void compute_interactions_leaf_tiled(
+        integer ilist_1st_idx_begin
+      , integer ilist_2nd_idx_begin
       , compute_interactions_stats_t& s
         );
 

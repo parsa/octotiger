@@ -1333,6 +1333,74 @@ inline void grid::compute_interactions_non_leaf_tiled(
 }
 
 template <
+    std::vector<interaction_type> const* __restrict__ IList
+  , typename RealDatapar
+  , typename IndexDatapar
+  , std::size_t TileWidth
+    >
+inline void grid::compute_interactions_leaf_tiled(
+    integer ilist_1st_idx_begin
+  , integer ilist_2nd_idx_begin
+  , compute_interactions_stats_t& s
+    )
+{
+    auto& mon = *mon_ptr;
+
+    integer const ilist_2nd_idx_end = ilist_2nd_idx_begin + TileWidth;
+
+    integer const iii0 = (*IList)[ilist_1st_idx_begin].first;
+
+    std::array<RealDatapar, 4> const d0 =
+    { 
+        1.0 / dx, +1.0 / sqr(dx), +1.0 / sqr(dx), +1.0 / sqr(dx)
+    };
+
+    std::array<RealDatapar, 4> const d1 =
+    { 
+        1.0 / dx, -1.0 / sqr(dx), -1.0 / sqr(dx), -1.0 / sqr(dx)
+    };
+
+    std::array<RealDatapar, 4> const m0 =
+    {
+        mon[iii0], mon[iii0], mon[iii0], mon[iii0]
+    };
+
+    for (integer x = 0; x != 4; ++x)
+    {
+        std::vector<real>& Lx = L_PLACEHOLDER[x];
+
+        RealDatapar const& d0x = d0[x];
+        RealDatapar const& d1x = d1[x];
+
+        real Lxiii0 = 0.0;
+
+        // Assumes that TileWidth is a multiple of Datapar::size().
+        for ( integer i = ilist_2nd_idx_begin
+            ; i < ilist_2nd_idx_end
+            ; i += RealDatapar::size()) 
+        {
+            IndexDatapar const iii1([=](std::size_t i) { return (*IList)[i].second; });
+
+            // Gather constructor.
+            RealDatapar Lxiii1(Lx.data(), Vc::flags::vector_aligned, iii1);
+
+            // Gather constructor.
+            RealDatapar const m1(mon.data(), Vc::flags::vector_aligned, iii1);
+
+            // FIXME: Inefficient, SoA layout.
+            RealDatapar const four([=](std::size_t i) { return (*IList)[i].four[x]; });
+
+            Lxiii0 += Vc::reduce(m1 * four * d0x);
+            Lxiii1 += m0 * four * d1x;
+
+            Lxiii1.scatter(Lx.data(), iii1);
+        }
+
+        Lx[iii0] += Lxiii0;
+    }
+}
+
+template <
     std::vector<interaction_type>* __restrict__ IList /* lol C# */
   , std::size_t TileWidth
   , ang_con_type AngConKind
