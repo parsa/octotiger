@@ -27,7 +27,7 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
     const std::vector<boundary_interaction_type>& ilist_n_bnd,
     const gravity_boundary_type& mpoles) {
     PROF_BEGIN;
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
     auto& M = *M_ptr;
     auto& mon = *mon_ptr;
 
@@ -147,21 +147,19 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
                 A0[i] = m0[0] * D[i];
             }
 
-#ifdef USE_GRAV_PAR
-            std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
-#endif
             for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
                 const integer iii0 = bnd.first[li + i];
                 expansion& Liii0 = L[iii0];
 
-                expansion tmp;
 #pragma GCC ivdep
                 for (integer j = 0; j != taylor_sizes[3]; ++j) {
-                    tmp[j] = A0[j][i];
+                    Liii0[j] += A0[j][i];
                 }
-                Liii0 += tmp;
+            }
 
-                if (type == RHO && opts.ang_con) {
+            if (type == RHO && opts.ang_con) {
+                for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
+                    const integer iii0 = bnd.first[li + i];
                     space_vector& L_ciii0 = L_c[iii0];
 #pragma GCC ivdep
                     for (integer j = 0; j != NDIM; ++j) {
@@ -172,8 +170,8 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
         }
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    std::cout << "boundary compute_interactions_inner duration (ms): " << duration.count() << std::endl;
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double, std::milli> duration = end - start;
+    // std::cout << "boundary compute_interactions_inner duration (ms): " << duration.count() << std::endl;
     PROF_END;
 }

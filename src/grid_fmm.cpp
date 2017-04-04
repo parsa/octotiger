@@ -7,11 +7,10 @@
 #include "grid.hpp"
 #include "grid_flattened_indices.hpp"
 #include "options.hpp"
+#include "physcon.hpp"
 #include "profiler.hpp"
 #include "simd.hpp"
 #include "taylor.hpp"
-#include "physcon.hpp"
-
 
 #include <hpx/include/parallel_for_loop.hpp>
 
@@ -254,17 +253,18 @@ void grid::compute_boundary_interactions_multipole_monopole(gsolve_type type,
                     A0[0] -= m0[i] * D[i] * (factor[i] * SIXTH);
                 }
 
-//                 for (integer a = 0; a < NDIM; ++a) {
-//                     A0(a) = m0() * D(a);
-//                     for (integer b = 0; b < NDIM; ++b) {
-//                         if (type != RHO) {
-//                             A0(a) -= m0(a) * D(a, b);
-//                         }
-//                         for (integer c = b; c < NDIM; ++c) {
-//                             A0(a) += m0(c, b) * D(a, b, c) * (factor(b, c) * HALF);
-//                         }
-//                     }
-//                 }
+                //                 for (integer a = 0; a < NDIM; ++a) {
+                //                     A0(a) = m0() * D(a);
+                //                     for (integer b = 0; b < NDIM; ++b) {
+                //                         if (type != RHO) {
+                //                             A0(a) -= m0(a) * D(a, b);
+                //                         }
+                //                         for (integer c = b; c < NDIM; ++c) {
+                //                             A0(a) += m0(c, b) * D(a, b, c) * (factor(b, c) *
+                //                             HALF);
+                //                         }
+                //                     }
+                //                 }
                 for (integer a = 0; a < NDIM; ++a) {
                     int const* ab_idx_map = to_ab_idx_map3[a];
                     int const* abc_idx_map = to_abc_idx_map3[a];
@@ -280,16 +280,17 @@ void grid::compute_boundary_interactions_multipole_monopole(gsolve_type type,
                 }
 
                 if (type == RHO) {
-//                     for (integer a = 0; a < NDIM; ++a) {
-//                         for (integer b = 0; b < NDIM; ++b) {
-//                             for (integer c = b; c < NDIM; ++c) {
-//                                 for (integer d = c; d < NDIM; ++d) {
-//                                     const auto tmp = D(a, b, c, d) * (factor(b, c, d) * SIXTH);
-//                                     B0[a] -= n0(b, c, d) * tmp;
-//                                 }
-//                             }
-//                         }
-//                     }
+                    //                     for (integer a = 0; a < NDIM; ++a) {
+                    //                         for (integer b = 0; b < NDIM; ++b) {
+                    //                             for (integer c = b; c < NDIM; ++c) {
+                    //                                 for (integer d = c; d < NDIM; ++d) {
+                    //                                     const auto tmp = D(a, b, c, d) *
+                    //                                     (factor(b, c, d) * SIXTH);
+                    //                                     B0[a] -= n0(b, c, d) * tmp;
+                    //                                 }
+                    //                             }
+                    //                         }
+                    //                     }
                     for (integer a = 0; a < NDIM; ++a) {
                         int const* abcd_idx_map = to_abcd_idx_map3[a];
                         for (integer i = 0; i != 10; ++i) {
@@ -400,16 +401,17 @@ void grid::compute_boundary_interactions_monopole_multipole(gsolve_type type,
                 }
 
                 if (type == RHO) {
-//                     for (integer a = 0; a != NDIM; ++a) {
-//                         for (integer b = 0; b != NDIM; ++b) {
-//                             for (integer c = b; c != NDIM; ++c) {
-//                                 for (integer d = c; d != NDIM; ++d) {
-//                                     const auto tmp = D(a, b, c, d) * (factor(b, c, d) * SIXTH);
-//                                     B0[a] -= n0(b, c, d) * tmp;
-//                                 }
-//                             }
-//                         }
-//                     }
+                    //                     for (integer a = 0; a != NDIM; ++a) {
+                    //                         for (integer b = 0; b != NDIM; ++b) {
+                    //                             for (integer c = b; c != NDIM; ++c) {
+                    //                                 for (integer d = c; d != NDIM; ++d) {
+                    //                                     const auto tmp = D(a, b, c, d) *
+                    //                                     (factor(b, c, d) * SIXTH);
+                    //                                     B0[a] -= n0(b, c, d) * tmp;
+                    //                                 }
+                    //                             }
+                    //                         }
+                    //                     }
                     for (integer a = 0; a != NDIM; ++a) {
                         int const* abcd_idx_map = to_abcd_idx_map3[a];
                         for (integer i = 0; i != 10; ++i) {
@@ -464,8 +466,7 @@ void grid::compute_boundary_interactions_monopole_monopole(gsolve_type type,
 #endif
 #endif
     hpx::parallel::for_loop(
-        for_loop_policy, 0, ilist_n_bnd.size(),
-        [&mpoles, &ilist_n_bnd, &d0, this](std::size_t si) {
+        for_loop_policy, 0, ilist_n_bnd.size(), [&mpoles, &ilist_n_bnd, &d0, this](std::size_t si) {
 
             boundary_interaction_type const& bnd = ilist_n_bnd[si];
             const integer dsize = bnd.first.size();
@@ -618,7 +619,7 @@ void compute_ilist() {
                                 np.x[ZDIM] = k1;
                                 if (interior(i1, j1, k1) && interior(i0, j0, k0)) {
                                     // if (iii1 > iii0) {
-                                        ilist_n0.push_back(np);
+                                    ilist_n0.push_back(np);
                                     // }
                                 } else if (interior(i0, j0, k0)) {
                                     ilist_n0_bnd[neighbor_dir(i1, j1, k1)].push_back(np);
@@ -649,7 +650,7 @@ void compute_ilist() {
                                 np.four = four;
                                 if (interior(i1, j1, k1) && interior(i0, j0, k0)) {
                                     // if (iii1 > iii0) {
-                                        ilist_r0.push_back(np);
+                                    ilist_r0.push_back(np);
                                     // }
                                 }
                             }
@@ -661,7 +662,7 @@ void compute_ilist() {
         }
     }
 
-//     printf("# direct = %i\n", int(max_d));
+    //     printf("# direct = %i\n", int(max_d));
     ilist_n = std::vector<interaction_type>(ilist_n0.begin(), ilist_n0.end());
     ilist_d = std::vector<interaction_type>(ilist_d0.begin(), ilist_d0.end());
     ilist_r = std::vector<interaction_type>(ilist_r0.begin(), ilist_r0.end());
@@ -708,13 +709,13 @@ void compute_ilist() {
         std::int32_t cur_index = ilist_r[0].first;
         std::int32_t cur_index_start = 0;
         for (std::int32_t li = 0; li != ilist_r.size(); ++li) {
-        // std::cout << ilist_r[li].first << " ?? " << cur_index << std::endl;
-        if (ilist_r[li].first != cur_index) {
-            // std::cout << "range size: " << (li - cur_index_start) << std::endl;
-            ilist_r[cur_index_start].inner_loop_stop = li;
-            cur_index = ilist_r[li].first;
-            cur_index_start = li;
-        }
+            // std::cout << ilist_r[li].first << " ?? " << cur_index << std::endl;
+            if (ilist_r[li].first != cur_index) {
+                // std::cout << "range size: " << (li - cur_index_start) << std::endl;
+                ilist_r[cur_index_start].inner_loop_stop = li;
+                cur_index = ilist_r[li].first;
+                cur_index_start = li;
+            }
         }
         // make sure the last element is handled correctly as well
         ilist_r[cur_index_start].inner_loop_stop = ilist_r.size();
@@ -724,13 +725,13 @@ void compute_ilist() {
         std::int32_t cur_index = ilist_n[0].first;
         std::int32_t cur_index_start = 0;
         for (std::int32_t li = 0; li != ilist_n.size(); ++li) {
-        // std::cout << ilist_n[li].first << " ?? " << cur_index << std::endl;
-        if (ilist_n[li].first != cur_index) {
-            // std::cout << "range size: " << (li - cur_index_start) << std::endl;
-            ilist_n[cur_index_start].inner_loop_stop = li;
-            cur_index = ilist_n[li].first;
-            cur_index_start = li;
-        }
+            // std::cout << ilist_n[li].first << " ?? " << cur_index << std::endl;
+            if (ilist_n[li].first != cur_index) {
+                // std::cout << "range size: " << (li - cur_index_start) << std::endl;
+                ilist_n[cur_index_start].inner_loop_stop = li;
+                cur_index = ilist_n[li].first;
+                cur_index_start = li;
+            }
         }
         // make sure the last element is handled correctly as well
         ilist_n[cur_index_start].inner_loop_stop = ilist_n.size();
@@ -740,17 +741,34 @@ void compute_ilist() {
         std::int32_t cur_index = ilist_d[0].first;
         std::int32_t cur_index_start = 0;
         for (std::int32_t li = 0; li != ilist_d.size(); ++li) {
-        // std::cout << ilist_d[li].first << " ?? " << cur_index << std::endl;
-        if (ilist_d[li].first != cur_index) {
-            // std::cout << "range size: " << (li - cur_index_start) << std::endl;
-            ilist_d[cur_index_start].inner_loop_stop = li;
-            cur_index = ilist_d[li].first;
-            cur_index_start = li;
-        }
+            // std::cout << ilist_d[li].first << " ?? " << cur_index << std::endl;
+            if (ilist_d[li].first != cur_index) {
+                // std::cout << "range size: " << (li - cur_index_start) << std::endl;
+                ilist_d[cur_index_start].inner_loop_stop = li;
+                cur_index = ilist_d[li].first;
+                cur_index_start = li;
+            }
         }
         // make sure the last element is handled correctly as well
         ilist_d[cur_index_start].inner_loop_stop = ilist_d.size();
     }
+
+    // // change for boundary
+    // {
+    //     std::int32_t cur_index = ilist_n_bnd[0].first;
+    //     std::int32_t cur_index_start = 0;
+    //     for (std::int32_t li = 0; li != ilist_n_bnd.size(); ++li) {
+    //         // std::cout << ilist_d[li].first << " ?? " << cur_index << std::endl;
+    //         if (ilist_n_bnd[li].first != cur_index) {
+    //             // std::cout << "range size: " << (li - cur_index_start) << std::endl;
+    //             ilist_n_bnd[cur_index_start].inner_loop_stop = li;
+    //             cur_index = ilist_n_bnd[li].first;
+    //             cur_index_start = li;
+    //         }
+    //     }
+    //     // make sure the last element is handled correctly as well
+    //     ilist_n_bnd[cur_index_start].inner_loop_stop = ilist_n_bnd.size();
+    // }
 }
 
 expansion_pass_type grid::compute_expansions(
@@ -845,29 +863,30 @@ expansion_pass_type grid::compute_expansions(
         }
     }
 
-	if (is_leaf) {
-		for (integer i = 0; i != G_NX; ++i) {
-			for (integer j = 0; j != G_NX; ++j) {
-				for (integer k = 0; k != G_NX; ++k) {
-					const integer iii = gindex(i, j, k);
-					const integer iii0 = h0index(i, j, k);
-					const integer iiih = hindex(i + H_BW, j + H_BW, k + H_BW);
-					if (type == RHO) {
-						G[iii][phi_i] = physcon.G * L[iii]();
-						for (integer d = 0; d < NDIM; ++d) {
-							G[iii][gx_i + d] = -physcon.G * L[iii](d);
-							if (opts.ang_con == true) {
-								G[iii][gx_i + d] -= physcon.G * L_c[iii][d];
-							}
-						}
-						U[pot_i][iiih] = G[iii][phi_i] * U[rho_i][iiih];
-					} else {
-						dphi_dt[iii0] = physcon.G * L[iii]();
-					}
-				}
-			}
-		}
-	} PROF_END;
+    if (is_leaf) {
+        for (integer i = 0; i != G_NX; ++i) {
+            for (integer j = 0; j != G_NX; ++j) {
+                for (integer k = 0; k != G_NX; ++k) {
+                    const integer iii = gindex(i, j, k);
+                    const integer iii0 = h0index(i, j, k);
+                    const integer iiih = hindex(i + H_BW, j + H_BW, k + H_BW);
+                    if (type == RHO) {
+                        G[iii][phi_i] = physcon.G * L[iii]();
+                        for (integer d = 0; d < NDIM; ++d) {
+                            G[iii][gx_i + d] = -physcon.G * L[iii](d);
+                            if (opts.ang_con == true) {
+                                G[iii][gx_i + d] -= physcon.G * L_c[iii][d];
+                            }
+                        }
+                        U[pot_i][iiih] = G[iii][phi_i] * U[rho_i][iiih];
+                    } else {
+                        dphi_dt[iii0] = physcon.G * L[iii]();
+                    }
+                }
+            }
+        }
+    }
+    PROF_END;
     return exp_ret;
 }
 
@@ -875,9 +894,9 @@ multipole_pass_type grid::compute_multipoles(
     gsolve_type type, const multipole_pass_type* child_poles) {
     //	if( int(*Muse_counter) > 0)
     //	printf( "%i\n", int(*Muse_counter));
-//	printf( "%\n", scaling_factor);
-	//if( dx  > 1.0e+12)
-//	printf( "+-00000--------++++++++++++++++++++++++++++ %e \n", dx);
+    //	printf( "%\n", scaling_factor);
+    // if( dx  > 1.0e+12)
+    //	printf( "+-00000--------++++++++++++++++++++++++++++ %e \n", dx);
 
     PROF_BEGIN;
     integer lev = 0;
@@ -909,8 +928,9 @@ multipole_pass_type grid::compute_multipoles(
                     com0iii[0] = x0[0] + i * dx;
                     com0iii[1] = x0[1] + j * dx;
                     com0iii[2] = x0[2] + k * dx;
-               //     if( std::abs(com0iii[0]) > 1.0e+12)
-              //      printf( "!!!!!!!!!!!!!  %e  %i %e %e  !!!!!!!!!!!!1111 \n", x0[0], int(i), dx, com0iii[0]);
+                    //     if( std::abs(com0iii[0]) > 1.0e+12)
+                    //      printf( "!!!!!!!!!!!!!  %e  %i %e %e  !!!!!!!!!!!!1111 \n", x0[0],
+                    //      int(i), dx, com0iii[0]);
                 }
             }
         }
@@ -988,8 +1008,8 @@ multipole_pass_type grid::compute_multipoles(
                         const space_vector& Y = (*(com_ptr[lev]))[iiip];
                         for (integer d = 0; d < NDIM; ++d) {
                             dx[d] = x[d] - simd_vector(Y[d]);
-                 //           if( std::abs(x[d][0]) > 5.0 )
-                   //         printf( "%e %e ---\n", x[d][0], Y[d]);
+                            //           if( std::abs(x[d][0]) > 5.0 )
+                            //         printf( "%e %e ---\n", x[d][0], Y[d]);
                         }
                         mp = mc >> dx;
                         for (integer j = 0; j != 20; ++j) {
