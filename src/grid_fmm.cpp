@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <utility>
 
-constexpr integer TILE_WIDTH = 64;
+constexpr integer TILE_WIDTH = 32;
 
 #ifdef USE_GRAV_PAR
 const auto for_loop_policy = hpx::parallel::execution::par;
@@ -174,15 +174,15 @@ compute_interactions_stats_t grid::compute_interactions(gsolve_type type) {
                     return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_ON, RHO>();
                 else
                     // Non-leaf, root, ANG_CON_OFF, RHO
-                    return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_OFF, NON_RHO>();
+                    return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_OFF, RHO>();
             }
             else
             {
                 if (opts.ang_con)
-                    // Non-leaf, root, non-ANG_CON_ON, RHO
+                    // Non-leaf, root, non-ANG_CON_ON, NON_RHO
                     return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_ON, NON_RHO>();
                 else
-                    // Non-leaf, root, non-ANG_CON_OFF, RHO
+                    // Non-leaf, root, non-ANG_CON_OFF, NON_RHO
                     return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_OFF, NON_RHO>();
             }
         }
@@ -200,10 +200,10 @@ compute_interactions_stats_t grid::compute_interactions(gsolve_type type) {
             else
             {
                 if (opts.ang_con)
-                    // Non-leaf, non-root, non-ANG_CON_ON, RHO
+                    // Non-leaf, non-root, non-ANG_CON_ON, NON_RHO
                     return compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_ON, NON_RHO>();
                 else
-                    // Non-leaf, non-root, non-ANG_CON_OFF, RHO
+                    // Non-leaf, non-root, non-ANG_CON_OFF, NON_RHO
                     return compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_OFF, NON_RHO>();
             }
         }
@@ -500,8 +500,17 @@ void grid::compute_interactions_legacy(gsolve_type type) {
 
 #pragma GCC ivdep
                     for (integer j = 0; j != taylor_sizes[3]; ++j) {
+                        std::cout << "         A0[" << j << "][" << li << "][" << i << "]: " << A0[j][i] << std::endl;
+                        std::cout << "         A1[" << j << "][" << li << "][" << i << "]: " << A1[j][i] << std::endl;
+
+                        std::cout << "Pre-Add: L0[" << j << "][" << li << "][" << iii0 << "]: " << L_PLACEHOLDER[j][iii0] << std::endl;
+                        std::cout << "Pre-Add: L1[" << j << "][" << li << "][" << iii1 << "]: " << L_PLACEHOLDER[j][iii1] << std::endl;
+
                         L_PLACEHOLDER[j][iii0] += A0[j][i];
                         L_PLACEHOLDER[j][iii1] += A1[j][i];
+
+                        std::cout << "         L0[" << j << "][" << li << "][" << iii0 << "]: " << L_PLACEHOLDER[j][iii0] << std::endl;
+                        std::cout << "         L1[" << j << "][" << li << "][" << iii1 << "]: " << L_PLACEHOLDER[j][iii1] << std::endl;
                     }
 
                     if (type == RHO && opts.ang_con) {

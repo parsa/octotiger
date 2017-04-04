@@ -386,7 +386,7 @@ public:
         std::vector<interaction_type> const* __restrict__ IList 
       , std::size_t TileWidth
         >
-    void compute_interactions_initialize_n_ang_mom(
+    void compute_interactions_load_n0_n1(
         integer i_begin
       , integer i_end
       , compute_interactions_tile<TileWidth>& t
@@ -398,7 +398,7 @@ public:
         std::vector<interaction_type> const* __restrict__ IList
       , std::size_t TileWidth
         >
-    void compute_interactions_initialize_n_ang_mom(
+    void compute_interactions_load_n0_n1(
         integer i_begin
       , integer i_end
       , compute_interactions_tile<TileWidth>& t
@@ -410,7 +410,7 @@ public:
         std::vector<interaction_type> const* __restrict__ IList 
       , std::size_t TileWidth
         >
-    void compute_interactions_initialize_n_ang_mom(
+    void compute_interactions_load_n0_n1(
         integer i_begin
       , integer i_end
       , compute_interactions_tile<TileWidth>& t
@@ -422,12 +422,35 @@ public:
         std::vector<interaction_type> const* __restrict__ IList
       , std::size_t TileWidth
         >
-    void compute_interactions_initialize_n_ang_mom(
+    void compute_interactions_load_n0_n1(
         integer i_begin
       , integer i_end
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , std::false_type
+      , scalar_function_tag
+        ) noexcept;
+
+    template <
+        std::vector<interaction_type> const* __restrict__ IList 
+      , std::size_t TileWidth
+        >
+    void compute_interactions_load_m0_m1(
+        integer i_begin
+      , integer i_end
+      , compute_interactions_tile<TileWidth>& t
+      , compute_interactions_stats_t& s
+      , vector_function_tag
+        ) noexcept;
+    template <
+        std::vector<interaction_type> const* __restrict__ IList
+      , std::size_t TileWidth
+        >
+    void compute_interactions_load_m0_m1(
+        integer i_begin
+      , integer i_end
+      , compute_interactions_tile<TileWidth>& t
+      , compute_interactions_stats_t& s
       , scalar_function_tag
         ) noexcept;
 
@@ -509,6 +532,29 @@ public:
       , compute_interactions_tile<TileWidth>& t
       , compute_interactions_stats_t& s
       , std::false_type
+        ) noexcept;
+
+    template <
+        std::vector<interaction_type> const* __restrict__ IList
+      , std::size_t TileWidth
+        >
+    void store_to_L(
+        integer i_begin
+      , integer i_end
+      , compute_interactions_tile<TileWidth>& t
+      , compute_interactions_stats_t& s
+      , vector_function_tag 
+        ) noexcept;
+    template <
+        std::vector<interaction_type> const* __restrict__ IList 
+      , std::size_t TileWidth
+        >
+    void store_to_L(
+        integer i_begin
+      , integer i_end
+      , compute_interactions_tile<TileWidth>& t
+      , compute_interactions_stats_t& s
+      , scalar_function_tag
         ) noexcept;
 
     template <

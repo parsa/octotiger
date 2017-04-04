@@ -13,6 +13,8 @@
 
 // TODO: Looks like only 10 elements of n0 and n1 are used (taylor_sizes[2] to taylor_sizes[3])
 
+#warning Rename Mj0, Mj1 etc to Mjiii0, Mjiii1, etc
+
 #pragma once
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,7 +39,7 @@ template <
     std::vector<interaction_type> const* __restrict__ IList 
   , std::size_t TileWidth
     >
-inline void grid::compute_interactions_initialize_n_ang_mom(
+inline void grid::compute_interactions_load_n0_n1(
     integer ilist_1st_idx_begin
   , integer ilist_2nd_idx_begin
   , compute_interactions_tile<TileWidth>& t
@@ -56,24 +58,21 @@ inline void grid::compute_interactions_initialize_n_ang_mom(
     {
         real* __restrict__    n0j  = t.n0[j].data();
         real* __restrict__    n1j  = t.n1[j].data();
-        __m512d* __restrict__ Vn0j = reinterpret_cast<__m512d* __restrict__>(t.n0[j].data());
-        __m512d* __restrict__ Vn1j = reinterpret_cast<__m512d* __restrict__>(t.n1[j].data());
-        BOOST_ASSUME_ALIGNED(Vn0j, 64);
-        BOOST_ASSUME_ALIGNED(Vn1j, 64);
-        BOOST_ASSUME_ALIGNED(Vn0j, 64);
-        BOOST_ASSUME_ALIGNED(Vn1j, 64);
+        BOOST_ASSUME_ALIGNED(n0j, 64);
+        BOOST_ASSUME_ALIGNED(n1j, 64);
 
         real const* __restrict__    M_  = M().data();
         real const* __restrict__    Mj  = M[j].data();
-        __m512d const* __restrict__ VM_ = reinterpret_cast<__m512d const* __restrict__>(M().data());
-        __m512d const* __restrict__ VMj = reinterpret_cast<__m512d const* __restrict__>(M[j].data());
         BOOST_ASSUME_ALIGNED(M_,  64);
         BOOST_ASSUME_ALIGNED(Mj,  64);
-        BOOST_ASSUME_ALIGNED(VM_, 64);
-        BOOST_ASSUME_ALIGNED(VMj, 64);
 
         double const sM_0 = M_[iii0];
         __m512d const M_0 = _mm512_set1_pd(sM_0);
+
+        double const sMj0 = Mj[iii0];
+        __m512d const Mj0 = _mm512_set1_pd(sMj0);
+
+        s.add_fp_memloads(2);
 
         for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; i += 8)
         {
@@ -92,7 +91,7 @@ inline void grid::compute_interactions_initialize_n_ang_mom(
 
             __m512d const M_1 = _mm512_i64gather_pd(iii1, M_, 8);
 
-            s.add_fp_memloads(1+1*8);
+            s.add_fp_memloads(1*8);
 
             // NOTE: Due to the order of iteration, these computations are
             // performed redundantly.
@@ -101,11 +100,9 @@ inline void grid::compute_interactions_initialize_n_ang_mom(
 
             s.add_fp_divs(2*8);
 
-            double const sMj0 = Mj[iii0];
-            __m512d const Mj0 = _mm512_set1_pd(sMj0);
             __m512d const Mj1 = _mm512_i64gather_pd(iii1, Mj, 8);
 
-            s.add_fp_memloads(1+1*8); 
+            s.add_fp_memloads(1*8); 
 
             __m512d const n0jrhs = _mm512_fnmadd_pd(Mj0, M_1divM_0, Mj1); // -(Mj0 * M_1divM_0) + Mj1
                                                                           // Mj1 - Mj0 * M_1divM_0
@@ -125,7 +122,7 @@ template <
     std::vector<interaction_type> const* __restrict__ IList 
   , std::size_t TileWidth
     >
-inline void grid::compute_interactions_initialize_n_ang_mom(
+inline void grid::compute_interactions_load_n0_n1(
     integer ilist_1st_idx_begin
   , integer ilist_2nd_idx_begin
   , compute_interactions_tile<TileWidth>& t
@@ -194,7 +191,7 @@ template <
     std::vector<interaction_type> const* __restrict__ IList
   , std::size_t TileWidth
     >
-inline void grid::compute_interactions_initialize_n_ang_mom(
+inline void grid::compute_interactions_load_n0_n1(
     integer ilist_1st_idx_begin
   , integer ilist_2nd_idx_begin
   , compute_interactions_tile<TileWidth>& t
@@ -205,17 +202,20 @@ inline void grid::compute_interactions_initialize_n_ang_mom(
 {
     for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j)
     {
-        __m512d* __restrict__ Vn0j = reinterpret_cast<__m512d* __restrict__>(t.n0[j].data());
-        __m512d* __restrict__ Vn1j = reinterpret_cast<__m512d* __restrict__>(t.n1[j].data());
-        BOOST_ASSUME_ALIGNED(Vn0j, 64);
-        BOOST_ASSUME_ALIGNED(Vn1j, 64);
+        real* __restrict__ n0j = t.n0[j].data();
+        real* __restrict__ n1j = t.n1[j].data();
+        BOOST_ASSUME_ALIGNED(n0j, 64);
+        BOOST_ASSUME_ALIGNED(n1j, 64);
 
         for (integer ti = 0; ti < TileWidth; ti += 8)
         {
-            *(Vn0j + ti) = _mm512_set1_pd(ZERO);
-            *(Vn1j + ti) = _mm512_set1_pd(ZERO);
+            __m512d const n0jrhs = _mm512_set1_pd(ZERO);
+            __m512d const n1jrhs = _mm512_set1_pd(ZERO);
 
-            s.add_fp_tilestores(2);
+            _mm512_store_pd(n0j + ti, n0jrhs);
+            _mm512_store_pd(n1j + ti, n1jrhs);
+
+            s.add_fp_tilestores(2*8);
         }
     }
 }
@@ -224,7 +224,7 @@ template <
     std::vector<interaction_type> const* __restrict__ IList
   , std::size_t TileWidth
     >
-inline void grid::compute_interactions_initialize_n_ang_mom(
+inline void grid::compute_interactions_load_n0_n1(
     integer ilist_1st_idx_begin
   , integer ilist_2nd_idx_begin
   , compute_interactions_tile<TileWidth>& t
@@ -246,6 +246,116 @@ inline void grid::compute_interactions_initialize_n_ang_mom(
             n0j[ti] = ZERO;                                                     // 1 FP STORE TO TILE
             n1j[ti] = ZERO;                                                     // 1 FP STORE TO TILE
 
+            s.add_fp_tilestores(2);
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+        
+template <
+    std::vector<interaction_type> const* __restrict__ IList 
+  , std::size_t TileWidth
+    >
+inline void grid::compute_interactions_load_m0_m1(
+    integer ilist_1st_idx_begin
+  , integer ilist_2nd_idx_begin
+  , compute_interactions_tile<TileWidth>& t
+  , compute_interactions_stats_t& s
+  , vector_function_tag 
+    ) noexcept
+{
+    auto& M = *M_ptr;
+
+    integer const ilist_2nd_idx_end = ilist_1st_idx_begin + TileWidth;
+
+    integer const iii0 = (*IList).at(ilist_1st_idx_begin).first;
+
+    for (integer j = 0; j != taylor_sizes[3]; ++j)                              // TRIP COUNT: 20
+    {
+        real* __restrict__ m0j = t.m0[j].data();
+        real* __restrict__ m1j = t.m1[j].data();
+        BOOST_ASSUME_ALIGNED(m0j, 64);
+        BOOST_ASSUME_ALIGNED(m1j, 64);
+
+        real const* __restrict__ Mj = M[j].data();
+        BOOST_ASSUME_ALIGNED(Mj, 64);
+
+        double const sMj0 = Mj[iii0];
+        __m512d const Mj0 = _mm512_set1_pd(sMj0);
+
+        s.add_fp_memloads(1);
+
+        for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; i += 8)
+        {
+            integer const ti = i - ilist_2nd_idx_begin;
+
+            __m512i const iii1 = {
+                (*IList)[i  ].second
+              , (*IList)[i+1].second
+              , (*IList)[i+2].second
+              , (*IList)[i+3].second
+              , (*IList)[i+4].second
+              , (*IList)[i+5].second
+              , (*IList)[i+6].second
+              , (*IList)[i+7].second
+            };
+
+            __m512d const Mj1 = _mm512_i64gather_pd(iii1, Mj, 8);
+
+            s.add_fp_memloads(1*8); 
+
+            _mm512_store_pd(m0j + ti, Mj1);
+            _mm512_store_pd(m1j + ti, Mj0);
+
+            s.add_fp_tilestores(2*8);
+        }
+    }
+}
+
+template <
+    std::vector<interaction_type> const* __restrict__ IList 
+  , std::size_t TileWidth
+    >
+inline void grid::compute_interactions_load_m0_m1(
+    integer ilist_1st_idx_begin
+  , integer ilist_2nd_idx_begin
+  , compute_interactions_tile<TileWidth>& t
+  , compute_interactions_stats_t& s
+  , scalar_function_tag 
+    ) noexcept
+{
+    auto& M = *M_ptr;
+
+    integer const ilist_2nd_idx_end = ilist_2nd_idx_begin + TileWidth;
+
+    integer const iii0 = (*IList)[ilist_1st_idx_begin].first;
+
+    for (integer j = 0; j != taylor_sizes[3]; ++j)                              // TRIP COUNT: 20
+    {
+        real* __restrict__ m0j = t.m0[j].data();
+        real* __restrict__ m1j = t.m1[j].data();
+        BOOST_ASSUME_ALIGNED(m0j, 64);
+        BOOST_ASSUME_ALIGNED(m1j, 64);
+
+        real const* __restrict__ Mj = M[j].data();
+        BOOST_ASSUME_ALIGNED(Mj, 64);
+
+        real const Mj0 = Mj[iii0];
+
+        s.add_fp_memloads(1);                                                   // 1 FP LOAD FROM MEM
+
+        #pragma omp simd
+        for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)       // TRIP COUNT: 20 * TileWidth; UNIT STRIDE
+        {
+            integer const ti = i - ilist_2nd_idx_begin;
+
+            integer const iii1 = (*IList)[i].second;                            // 1 INT LOAD FROM MEM (indirect addressing)
+
+            m0j[ti] = Mj[iii1];                                                 // 1 FP LOAD FROM MEM, 1 FP STORE TO TILE
+            m1j[ti] = Mj0;                                                      // 1 FP STORE TO TILE
+
+            s.add_fp_memloads(  1);
             s.add_fp_tilestores(2);
         }
     }
@@ -473,6 +583,135 @@ inline void grid::store_to_L_c(
   , std::false_type
     ) noexcept
 {}
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <
+    std::vector<interaction_type> const* __restrict__ IList
+  , std::size_t TileWidth
+    >
+inline void grid::store_to_L(
+    integer ilist_1st_idx_begin
+  , integer ilist_2nd_idx_begin
+  , compute_interactions_tile<TileWidth>& t
+  , compute_interactions_stats_t& s
+  , vector_function_tag 
+    ) noexcept
+{ 
+    integer const ilist_2nd_idx_end = ilist_2nd_idx_begin + TileWidth;
+    
+    integer const iii0 = (*IList)[ilist_1st_idx_begin].first;
+
+    for (integer j = 0; j != taylor_sizes[3]; ++j)
+    {
+        real const* __restrict__ A0j = t.A0[j].data();
+        real const* __restrict__ A1j = t.A1[j].data();
+        BOOST_ASSUME_ALIGNED(A0j, 64);
+        BOOST_ASSUME_ALIGNED(A1j, 64);
+
+        real* __restrict__ Lj = L_PLACEHOLDER[j].data();
+        BOOST_ASSUME_ALIGNED(Lj, 64);
+
+        double Ljgi0 = 0.0;
+
+        for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; i += 8)    // TRIP COUNT: 20 * TileWidth; UNIT STRIDE
+        {
+            integer const ti = i - ilist_2nd_idx_begin;
+
+            __m512i const gi1 = {
+                (*IList)[i  ].second
+              , (*IList)[i+1].second
+              , (*IList)[i+2].second
+              , (*IList)[i+3].second
+              , (*IList)[i+4].second
+              , (*IList)[i+5].second
+              , (*IList)[i+6].second
+              , (*IList)[i+7].second
+            };
+
+            __m512d const A0jti = _mm512_loadu_pd(A0j + ti);
+            __m512d const A1jti = _mm512_loadu_pd(A1j + ti);
+
+            s.add_fp_tileloads(2*8);
+
+            __m512d const Ljgi1 = _mm512_i64gather_pd(gi1, Lj, 8);
+
+            s.add_fp_memloads(2*8);
+
+            #pragma simd
+            for (int k = 0; k < 8; ++k) Ljgi0 += A0jti[k];
+
+            s.add_fp_adds(1*8);
+
+            __m512d const Ljgi1rhs = _mm512_add_pd(Ljgi1, A1jti);
+
+            s.add_fp_adds(1*8);
+
+            _mm512_i64scatter_pd(Lj, gi1, Ljgi1rhs, 8);
+
+            s.add_fp_memstores(1*8);
+        }
+
+        Lj[iii0] += Ljgi0;
+
+        s.add_fp_memloads( 1);
+        s.add_fp_adds(     1);
+        s.add_fp_memstores(1);
+    }
+}
+
+template <
+    std::vector<interaction_type> const* __restrict__ IList 
+  , std::size_t TileWidth
+    >
+inline void grid::store_to_L(
+    integer ilist_1st_idx_begin
+  , integer ilist_2nd_idx_begin
+  , compute_interactions_tile<TileWidth>& t
+  , compute_interactions_stats_t& s
+  , scalar_function_tag 
+    ) noexcept
+{
+    integer const ilist_2nd_idx_end = ilist_2nd_idx_begin + TileWidth;
+    
+    integer const iii0 = (*IList)[ilist_1st_idx_begin].first;
+
+    for (integer j = 0; j != taylor_sizes[3]; ++j)                              // TRIP COUNT: 20 
+    {
+        real const* __restrict__ A0j = t.A0[j].data();
+        real const* __restrict__ A1j = t.A1[j].data();
+        BOOST_ASSUME_ALIGNED(A0j, 64);
+        BOOST_ASSUME_ALIGNED(A1j, 64);
+
+        real* __restrict__ Lj = L_PLACEHOLDER[j].data();
+        BOOST_ASSUME_ALIGNED(Lj, 64);
+
+        double Ljiii0 = 0.0; 
+
+        #pragma omp simd 
+        for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)       // TRIP COUNT: 20 * TileWidth; UNIT STRIDE
+        {
+            integer const ti = i - ilist_2nd_idx_begin;
+
+            integer const iii1 = (*IList)[i].second;                            // 1 INT LOAD FROM MEM (for indirect addressing)
+
+            Ljiii0 += A0j[ti];                                                  // 1 FP LOAD FROM TILE, 1 FP ADD
+            L_PLACEHOLDER[j][iii1] += A1j[ti];                                  // 1 FP LOAD FROM TILE, 1 FP LOAD FROM MEM, 1 FP ADD, 1 FP STORE TO MEM (indirect addressing)
+
+            s.add_fp_tileloads(  2);
+            s.add_fp_memloads(   1);
+            s.add_fp_adds(       2);
+            s.add_fp_memstores(  1);
+            s.add_fp_cachestores(1);
+        }
+
+        Lj[iii0] += Ljiii0;                                                     // 1 FP LOAD FROM MEM, 1 FP ADD, 1 FP STORE TO MEM
+
+        s.add_fp_memloads( 1);
+        s.add_fp_adds(     1);
+        s.add_fp_memstores(1);
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -817,32 +1056,6 @@ inline void grid::compute_interactions_non_leaf_tiled(
         }
     }
 
-    for (integer j = 0; j != taylor_sizes[3]; ++j)                              // TRIP COUNT: 20
-    {
-        real* __restrict__ m0j = t.m0[j].data();
-        real* __restrict__ m1j = t.m1[j].data();
-        BOOST_ASSUME_ALIGNED(m0j, 64);
-        BOOST_ASSUME_ALIGNED(m1j, 64);
-
-        real const* __restrict__ Mj = M[j].data();
-        BOOST_ASSUME_ALIGNED(Mj, 64);
-
-        #pragma omp simd
-        for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)       // TRIP COUNT: 20 * TileWidth; UNIT STRIDE
-        {
-            integer const ti = i - ilist_2nd_idx_begin;
-
-            integer const iii1 = (*IList)[i].second;                            // 1 INT LOAD FROM MEM (indirect addressing)
-
-            m0j[ti] = Mj[iii1];                                                 // 1 FP LOAD FROM MEM, 1 FP STORE TO TILE
-            m1j[ti] = Mj[iii0];                                                 // 1 FP LOAD FROM CACHE, 1 FP STORE TO TILE
-
-            s.add_fp_cacheloads(1);
-            s.add_fp_memloads(  1);
-            s.add_fp_tilestores(2);
-        }
-    }
-
     for (integer a = 0; a != NDIM; ++a)                                         // TRIP COUNT: 10
     {
         real* __restrict__ B0a = t.B0[a].data();
@@ -862,7 +1075,12 @@ inline void grid::compute_interactions_non_leaf_tiled(
         }
     }
 
-    compute_interactions_initialize_n_ang_mom<IList, TileWidth>(
+    compute_interactions_load_m0_m1<IList, TileWidth>(
+        ilist_1st_idx_begin, ilist_2nd_idx_begin
+      , t, s, function_type
+    );
+
+    compute_interactions_load_n0_n1<IList, TileWidth>(
         ilist_1st_idx_begin, ilist_2nd_idx_begin
       , t, s, ang_con_is_on_and_is_rho_type, function_type
     );
@@ -1103,30 +1321,10 @@ inline void grid::compute_interactions_non_leaf_tiled(
     ///////////////////////////////////////////////////////////////////////
     // SCATTER: Store to L and L_c.
 
-    for (integer j = 0; j != taylor_sizes[3]; ++j)                              // TRIP COUNT: 20 
-    {
-        real* __restrict__ A0j = t.A0[j].data();
-        real* __restrict__ A1j = t.A1[j].data();
-        BOOST_ASSUME_ALIGNED(A0j, 64);
-        BOOST_ASSUME_ALIGNED(A1j, 64);
-
-        #pragma omp simd 
-        for (integer i = ilist_2nd_idx_begin; i < ilist_2nd_idx_end; ++i)       // TRIP COUNT: 20 * TileWidth; UNIT STRIDE
-        {
-            integer const ti = i - ilist_2nd_idx_begin;
-
-            integer const iii1 = (*IList)[i].second;                            // 1 INT LOAD FROM MEM (for indirect addressing)
-
-            L_PLACEHOLDER[j][iii0] += A0j[ti];                                              // 2 FP LOADS FROM CACHE, 1 FP ADD, 1 FP STORE TO MEM
-            L_PLACEHOLDER[j][iii1] += A1j[ti];                                              // 1 FP LOAD FROM TILE, 1 FP LOAD FROM MEM, 1 FP ADD, 1 FP STORE TO MEM (indirect addressing)
-
-            s.add_fp_cacheloads(2);
-            s.add_fp_tileloads( 1);
-            s.add_fp_memloads(  1);
-            s.add_fp_adds(      2);
-            s.add_fp_memstores( 2);
-        }
-    }
+    store_to_L<IList, TileWidth>(
+        ilist_1st_idx_begin, ilist_2nd_idx_begin
+      , t, s, function_type
+    );
 
     store_to_L_c<IList, TileWidth>(
         ilist_1st_idx_begin, ilist_2nd_idx_begin
