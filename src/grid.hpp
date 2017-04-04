@@ -589,6 +589,12 @@ public:
       , gsolve_type SolveKind
         >
     compute_interactions_stats_t compute_interactions_non_leaf();
+
+    template <
+        std::vector<interaction_type>* __restrict__ IList /* lol C# */
+      , std::size_t TileWidth
+        >
+    compute_interactions_stats_t compute_interactions_leaf();
 };
 
 struct grid::node_point {

@@ -163,54 +163,85 @@ std::pair<space_vector, space_vector> grid::find_axis() const {
 }
 
 compute_interactions_stats_t grid::compute_interactions(gsolve_type type) {
-    if (!is_leaf && !opts.compute_interactions_legacy)
+    if (!opts.compute_interactions_legacy)
     {
-        if (is_root)
+        if (!is_leaf)
         {
-            if (RHO == type)
+            if (is_root)
             {
-                if (opts.ang_con)
-                    // Non-leaf, root, ANG_CON_ON, RHO
-                    return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_ON, RHO>();
+                if (RHO == type)
+                {
+                    if (opts.ang_con)
+                    {
+                        // Non-leaf, root, ANG_CON_ON, RHO
+                        compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_ON, RHO>();
+                        return compute_interactions_stats_t{};
+                    }
+                    else
+                    {
+                        // Non-leaf, root, ANG_CON_OFF, RHO
+                        compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_OFF, RHO>();
+                        return compute_interactions_stats_t{};
+                    }
+                }
                 else
-                    // Non-leaf, root, ANG_CON_OFF, RHO
-                    return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_OFF, RHO>();
+                {
+                    if (opts.ang_con)
+                    {
+                        // Non-leaf, root, non-ANG_CON_ON, NON_RHO
+                        compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_ON, NON_RHO>();
+                        return compute_interactions_stats_t{};
+                    }
+                    else
+                    {
+                        // Non-leaf, root, non-ANG_CON_OFF, NON_RHO
+                        compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_OFF, NON_RHO>();
+                        return compute_interactions_stats_t{};
+                    }
+                }
             }
             else
             {
-                if (opts.ang_con)
-                    // Non-leaf, root, non-ANG_CON_ON, NON_RHO
-                    return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_ON, NON_RHO>();
+                if (RHO == type)
+                {
+                    if (opts.ang_con)
+                    {
+                        // Non-leaf, non-root, ANG_CON_ON, RHO
+                        compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_ON, RHO>();
+                        return compute_interactions_stats_t{};
+                    }
+                    else
+                    {
+                        // Non-leaf, non-root, ANG_CON_OFF, RHO
+                        compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_OFF, RHO>();
+                        return compute_interactions_stats_t{};
+                    }
+                }
                 else
-                    // Non-leaf, root, non-ANG_CON_OFF, NON_RHO
-                    return compute_interactions_non_leaf<&ilist_r, TILE_WIDTH, ANG_CON_OFF, NON_RHO>();
+                {
+                    if (opts.ang_con)
+                    {
+                        // Non-leaf, non-root, non-ANG_CON_ON, NON_RHO
+                        compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_ON, NON_RHO>();
+                        return compute_interactions_stats_t{};
+                    }
+                    else
+                    {
+                        // Non-leaf, non-root, non-ANG_CON_OFF, NON_RHO
+                        compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_OFF, NON_RHO>();
+                        return compute_interactions_stats_t{};
+                    }                                    
+                }
             }
         }
         else
         {
-            if (RHO == type)
-            {
-                if (opts.ang_con)
-                    // Non-leaf, non-root, ANG_CON_ON, RHO
-                    return compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_ON, RHO>();
-                else
-                    // Non-leaf, non-root, ANG_CON_OFF, RHO
-                    return compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_OFF, RHO>();
-            }
-            else
-            {
-                if (opts.ang_con)
-                    // Non-leaf, non-root, non-ANG_CON_ON, NON_RHO
-                    return compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_ON, NON_RHO>();
-                else
-                    // Non-leaf, non-root, non-ANG_CON_OFF, NON_RHO
-                    return compute_interactions_non_leaf<&ilist_n, TILE_WIDTH, ANG_CON_OFF, NON_RHO>();
-            }
+            // Leaf
+            return compute_interactions_leaf<&ilist_d, TILE_WIDTH>();
         }
     }
     else
     {
-        // Leaf
         compute_interactions_legacy(type);
         return compute_interactions_stats_t{};
     }

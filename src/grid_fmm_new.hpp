@@ -1360,10 +1360,11 @@ inline void grid::compute_interactions_leaf_tiled(
         1.0 / dx, -1.0 / sqr(dx), -1.0 / sqr(dx), -1.0 / sqr(dx)
     };
 
-    std::array<RealDatapar, 4> const m0 =
-    {
-        mon[iii0], mon[iii0], mon[iii0], mon[iii0]
-    };
+    RealDatapar const m0(mon[iii0]);
+
+    std::cout << "m0: ";
+    for (int k = 0; k < RealDatapar::size(); ++k) std::cout << m0[k] << " ";
+    std::cout << "\n";
 
     for (integer x = 0; x != 4; ++x)
     {
@@ -1379,21 +1380,50 @@ inline void grid::compute_interactions_leaf_tiled(
             ; i < ilist_2nd_idx_end
             ; i += RealDatapar::size()) 
         {
-            IndexDatapar const iii1([=](std::size_t i) { return (*IList)[i].second; });
+            IndexDatapar const iii1([=](auto k) -> typename IndexDatapar::value_type { return (*IList)[i+k].second; });
+
+            std::cout << "iii1: ";
+            for (int k = 0; k < RealDatapar::size(); ++k) std::cout << iii1[k] << " ";
+            std::cout << "\n";
 
             // Gather constructor.
             RealDatapar Lxiii1(Lx.data(), Vc::flags::vector_aligned, iii1);
 
+            std::cout << "Lxiii1 (pre-add): ";
+            for (int k = 0; k < RealDatapar::size(); ++k) std::cout << Lxiii1[k] << " ";
+            std::cout << "\n";
+
             // Gather constructor.
             RealDatapar const m1(mon.data(), Vc::flags::vector_aligned, iii1);
 
+            std::cout << "m1: ";
+            for (int k = 0; k < RealDatapar::size(); ++k) std::cout << m1[k] << " ";
+            std::cout << "\n";
+
             // FIXME: Inefficient, SoA layout.
-            RealDatapar const four([=](std::size_t i) { return (*IList)[i].four[x]; });
+            RealDatapar const four([=](auto k) -> typename RealDatapar::value_type { return (*IList)[i+k].four[x]; });
+
+            std::cout << "four: ";
+            for (int k = 0; k < RealDatapar::size(); ++k) std::cout << four[k] << " ";
+            std::cout << "\n";
 
             Lxiii0 += Vc::reduce(m1 * four * d0x);
             Lxiii1 += m0 * four * d1x;
 
-            Lxiii1.scatter(Lx.data(), iii1);
+            s.add_fp_muls(2*8);
+            s.add_fp_fmas(1*8);
+
+            std::cout << "Lxiii1 (post-add): ";
+            for (int k = 0; k < RealDatapar::size(); ++k) std::cout << Lxiii1[k] << " ";
+            std::cout << "\n";
+
+            Lxiii1.scatter(Lx.data(), Vc::flags::vector_aligned, iii1);
+
+            std::cout << "Lx[iii1] (post-add): ";
+            for (int k = 0; k < RealDatapar::size(); ++k) std::cout << Lx[iii1[k]] << " ";
+            std::cout << "\n";
+
+            std::cout << "Lxiii0 (post-add): " << Lxiii0 << "\n";
         }
 
         Lx[iii0] += Lxiii0;
@@ -1461,9 +1491,13 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
         integer const ilist_1st_idx_end = (*IList)[ilist_1st_idx_begin].inner_loop_end;
 
         integer const ilist_1st_idx_range_size = ilist_1st_idx_end - ilist_1st_idx_begin;
+
+        //if (0 > ilist_1st_idx_range_size)
+        //    abort_error();
     
         integer const ilist_1st_idx_primary_end = (ilist_1st_idx_end / TileWidth) * TileWidth;
 
+/*
         // Vector primary loop.
         if (ilist_1st_idx_begin + TileWidth <= ilist_1st_idx_primary_end)
         {
@@ -1484,6 +1518,7 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
 
             s.add_time(timer.elapsed());
         }
+*/
 
         // Scalar remainder loop.
         for ( integer ilist_2nd_idx_begin = ilist_1st_idx_begin
@@ -1496,6 +1531,77 @@ inline compute_interactions_stats_t grid::compute_interactions_non_leaf()
                 IList, 1, AngConKind, SolveKind
             >(
                 ilist_1st_idx_begin, ilist_2nd_idx_begin, *scalar_tile, dummy
+            );
+        }
+    }
+
+    return s;
+}
+
+template <
+    std::vector<interaction_type>* __restrict__ IList /* lol C# */
+  , std::size_t TileWidth
+    >
+inline compute_interactions_stats_t grid::compute_interactions_leaf()
+{
+    static_assert(0 < TileWidth, "TileWidth cannot be negative.");
+    static_assert(0 == (TileWidth % 16), "TileWidth must be a multiple of 16.");
+
+    // NOTE: It is assumed that the size of the interaction list is at least
+    // as large as the tile size.
+    auto const ilist_primary_loop_size = (IList->size() / TileWidth) * TileWidth;
+
+    compute_interactions_stats_t s, dummy;
+
+    integer ilist_1st_idx_begin = 0;
+
+    while (ilist_1st_idx_begin != IList->size())
+    {
+        integer const ilist_1st_idx_end = (*IList)[ilist_1st_idx_begin].inner_loop_end;
+
+        integer const ilist_1st_idx_range_size = ilist_1st_idx_end - ilist_1st_idx_begin;
+
+        //if (0 > ilist_1st_idx_range_size)
+        //    abort_error();
+    
+        integer const ilist_1st_idx_primary_end = (ilist_1st_idx_end / TileWidth) * TileWidth;
+
+        // Vector primary loop.
+        if (ilist_1st_idx_begin + TileWidth <= ilist_1st_idx_primary_end)
+        {
+            hpx::util::high_resolution_timer timer;
+
+            for ( integer ilist_2nd_idx_begin = ilist_1st_idx_begin
+                ; (ilist_2nd_idx_begin + TileWidth) <= ilist_1st_idx_primary_end
+                ; ilist_2nd_idx_begin += TileWidth, ilist_1st_idx_begin += TileWidth
+                )
+            {
+                using real_datapar = Vc::datapar<real, Vc::datapar_abi::native<real>>;
+                using index_datapar = Vc::datapar<integer, Vc::datapar_abi::native<integer>>;
+                compute_interactions_leaf_tiled<
+                    IList, real_datapar, index_datapar, TileWidth
+                >(
+                    ilist_1st_idx_begin, ilist_2nd_idx_begin, s
+                );
+
+            }
+
+            s.add_time(timer.elapsed());
+        }
+
+        // Scalar remainder loop.
+        for ( integer ilist_2nd_idx_begin = ilist_1st_idx_begin
+            ; ilist_2nd_idx_begin < ilist_1st_idx_end
+            // Needs to be <, not !=, in case we're already at the end of this range. 
+            ; ilist_2nd_idx_begin += 1, ilist_1st_idx_begin += 1
+            )
+        {
+            using real_datapar = Vc::datapar<real, Vc::datapar_abi::fixed_size<1>>;
+            using index_datapar = Vc::datapar<integer, Vc::datapar_abi::fixed_size<1>>;
+            compute_interactions_leaf_tiled<
+                IList, real_datapar, index_datapar, 1
+            >(
+                ilist_1st_idx_begin, ilist_2nd_idx_begin, dummy
             );
         }
     }
