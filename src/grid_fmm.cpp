@@ -1152,9 +1152,9 @@ void compute_ilist() {
                                 np.x[YDIM] = j1;
                                 np.x[ZDIM] = k1;
                                 if (interior(i1, j1, k1) && interior(i0, j0, k0)) {
-                                    if (iii1 > iii0) {
+                  //                  if (iii1 > iii0) {
                                         ilist_n0.push_back(np);
-                                    }
+                  //                  }
                                 } else if (interior(i0, j0, k0)) {
                                     ilist_n0_bnd[neighbor_dir(i1, j1, k1)].push_back(np);
                                 }
@@ -1183,9 +1183,9 @@ void compute_ilist() {
                                 np.x[ZDIM] = k1;
                                 np.four = four;
                                 if (interior(i1, j1, k1) && interior(i0, j0, k0)) {
-                                    if (iii1 > iii0) {
+                    //                if (iii1 > iii0) {
                                         ilist_r0.push_back(np);
-                                    }
+                    //                }
                                 }
                             }
                         }
@@ -1201,14 +1201,15 @@ void compute_ilist() {
     ilist_d = std::vector<interaction_type>(ilist_d0.begin(), ilist_d0.end());
     ilist_r = std::vector<interaction_type>(ilist_r0.begin(), ilist_r0.end());
     for (auto& dir : geo::direction::full_set()) {
-        auto& d = ilist_d_bnd[dir];
+
+    	auto& d = ilist_d_bnd[dir];
         auto& d0 = ilist_d0_bnd[dir];
         auto& n = ilist_n_bnd[dir];
         auto& n0 = ilist_n0_bnd[dir];
         for (auto i0 : d0) {
             bool found = false;
             for (auto& i : d) {
-                if (i.second == i0.second) {
+                if (i.second[0] == i0.second) {
                     i.first.push_back(i0.first);
                     i.four.push_back(i0.four);
                     found = true;
@@ -1217,26 +1218,32 @@ void compute_ilist() {
             }
             if (!found) {
                 boundary_interaction_type i;
-                i.second = i0.second;
+                i.second.resize(1);
+                i.second[0] = i0.second;
                 i.x = i0.x;
-                n.push_back(i);
                 i.first.push_back(i0.first);
                 i.four.push_back(i0.four);
                 d.push_back(i);
             }
         }
-        for (auto i0 : n0) {
+        for (auto i0 : d0) {
             bool found = false;
-            for (auto& i : n) {
-                if (i.second == i0.second) {
-                    i.first.push_back(i0.first);
-                    i.four.push_back(i0.four);
+            for (auto& i : d) {
+                if (i.first[0] == i0.first) {
+                    i.second.push_back(i0.second);
                     found = true;
                     break;
                 }
             }
-            assert(found);
+            if (!found) {
+                boundary_interaction_type i;
+                i.first.resize(1);
+                i.first[0] = i0.first;
+                i.second.push_back(i0.second);
+                n.push_back(i);
+            }
         }
+
     }
 }
 
