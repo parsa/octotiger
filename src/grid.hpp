@@ -73,29 +73,33 @@ public:
 
 HPX_IS_BITWISE_SERIALIZABLE(analytic_t);
 
+typedef taylor<4, simd_vector> multipole;
+typedef taylor<4, simd_vector> expansion;
+typedef space_vector_gen<simd_vector> com_type;
+
 struct interaction_type {
 	std::uint16_t first;
 	std::uint16_t second;
-	space_vector x;
-	v4sd four;
+	com_type x;
+	std::array<simd_vector,NCHILD> mask;
+	//	v4sd four;
 };
 
 struct boundary_interaction_type {
 	std::uint16_t second;
 	std::vector<std::uint16_t> first;
-	std::vector<v4sd> four;
-	space_vector x;
+	std::vector<std::array<simd_vector,NCHILD>> mask;
+//	std::vector<v4sd> four;
+	com_type x;
 };
 
-typedef taylor<4, real> multipole;
-typedef taylor<4, real> expansion;
-typedef std::pair<std::vector<multipole>, std::vector<space_vector>> multipole_pass_type;
-typedef std::pair<std::vector<expansion>, std::vector<space_vector>> expansion_pass_type;
+typedef std::pair<std::vector<multipole>, std::vector<com_type>> multipole_pass_type;
+typedef std::pair<std::vector<expansion>, std::vector<com_type>> expansion_pass_type;
 
 struct gravity_boundary_type {
 	std::shared_ptr<std::vector<multipole>> M;
-	std::shared_ptr<std::vector<real>> m;
-	std::shared_ptr<std::vector<space_vector>> x;
+	std::shared_ptr<std::vector<simd_vector>> m;
+	std::shared_ptr<std::vector<com_type>> x;
 	bool is_local;
 	gravity_boundary_type() :
 		M(nullptr), m(nullptr), x(nullptr) {
@@ -103,8 +107,8 @@ struct gravity_boundary_type {
 	void allocate() {
 		if (M == nullptr) {
 			M = std::make_shared<std::vector<multipole> >();
-			m = std::make_shared<std::vector<real> >();
-			x = std::make_shared<std::vector<space_vector> >();
+			m = std::make_shared<std::vector<simd_vector> >();
+			x = std::make_shared<std::vector<com_type> >();
 		}
 	}
 	template<class Archive>
@@ -162,9 +166,9 @@ private:
 	std::vector<std::vector<real>> X;
 	std::vector<v4sd> G;
 	std::shared_ptr<std::vector<multipole>> M_ptr;
-	std::shared_ptr<std::vector<real>> mon_ptr;
+	std::shared_ptr<std::vector<simd_vector>> mon_ptr;
 	std::vector<expansion> L;
-	std::vector<space_vector> L_c;
+	std::vector<com_type> L_c;
 	std::vector<real> dphi_dt;
 #ifdef USE_GRAV_PAR
     std::unique_ptr<hpx::lcos::local::spinlock> L_mtx;
@@ -178,7 +182,7 @@ private:
 	std::array<real, NDIM> xmin;
 	std::vector<real> U_out;
 	std::vector<real> U_out0;
-	std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr;
+	std::vector<std::shared_ptr<std::vector<com_type>>> com_ptr;
 	static bool xpoint_eq(const xpoint& a, const xpoint& b);
 	void compute_boundary_interactions_multipole_multipole(gsolve_type type, const std::vector<boundary_interaction_type>&, const gravity_boundary_type&);
 	void compute_boundary_interactions_monopole_monopole(gsolve_type type, const std::vector<boundary_interaction_type>&, const gravity_boundary_type&);

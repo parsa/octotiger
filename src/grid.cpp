@@ -1043,6 +1043,7 @@ space_vector grid::center_of_mass() const {
 	auto& mon = *mon_ptr;
 	PROF_BEGIN;
 	space_vector this_com;
+	/***********CONSTRUCTION ZONE******************
 	this_com[0] = this_com[1] = this_com[2] = ZERO;
 	real m = ZERO;
 	auto& com0 = *(com_ptr)[0];
@@ -1064,6 +1065,8 @@ space_vector grid::center_of_mass() const {
 		}
 	}PROF_END;
 //	printf( "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk %e %e %e\n", this_com[0], this_com[1], this_com[2] );
+
+*/
 	return this_com;
 }
 

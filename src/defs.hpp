@@ -114,7 +114,7 @@ constexpr integer H_BW = 3;
 constexpr integer R_BW = 2;
 
 constexpr integer H_NX = 2 * H_BW + INX;
-constexpr integer G_NX = INX;
+constexpr integer G_NX = INX / 2;
 constexpr integer H_N3 = H_NX * H_NX * H_NX;
 constexpr integer F_N3 = ((INX+1)*(INX+1)*(INX+1));
 constexpr integer G_N3 = G_NX * G_NX * G_NX;

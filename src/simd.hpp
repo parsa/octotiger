@@ -55,6 +55,14 @@ class simd_vector {
 private:
 	__mxd v[SIMD_SIZE];
 public:
+	template<class Arc>
+	void serialize( Arc& arc, unsigned ) {
+		for (integer i = 0; i != SIMD_SIZE; ++i) {
+			for (integer j = 0; j != simd_len / SIMD_SIZE; ++j) {
+				arc & v[i][j];
+			}
+		}
+	}
 	simd_vector() {
 		*this = 0;
 	}

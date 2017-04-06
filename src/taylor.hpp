@@ -10,6 +10,7 @@
 
 #include "defs.hpp"
 #include "profiler.hpp"
+#include "space_vector.hpp"
 #include "simd.hpp"
 
 #include <algorithm>
@@ -93,13 +94,29 @@ public:
         return *this;
     }
 
-    OCTOTIGER_FORCEINLINE taylor<N, T>& operator+=(const taylor<N, T>& other) {
+/*    OCTOTIGER_FORCEINLINE taylor<N, T>& operator+=(const taylor<N, T>& other) {
 #pragma GCC ivdep
         for (integer i = 0; i != my_size; ++i) {
             data[i] += other.data[i];
         }
         return *this;
-    }
+    }*/
+
+	template<int M>
+	OCTOTIGER_FORCEINLINE taylor<N, T>& operator+=(const taylor<M, T>& other) {
+#pragma GCC ivdep
+		for (integer i = 0; i != taylor_sizes[M - 1]; ++i) {
+			data[i] += other.ptr()[i];
+		}
+		return *this;
+	}
+	OCTOTIGER_FORCEINLINE taylor<N, T>& operator+=(const space_vector_gen<T>& other) {
+#pragma GCC ivdep
+		for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
+			data[i] += other[i - taylor_sizes[0]];
+		}
+		return *this;
+	}
 
     OCTOTIGER_FORCEINLINE taylor<N, T>& operator-=(const taylor<N, T>& other) {
 #pragma GCC ivdep
