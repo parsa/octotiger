@@ -83,7 +83,7 @@ struct interaction_type
 
 struct boundary_interaction_type
 {
-    std::uint16_t second;
+    std::vector<std::uint16_t> second;
     std::vector<std::uint16_t> first;
     std::vector<v4sd> four;
     space_vector x;

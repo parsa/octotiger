@@ -41,7 +41,7 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
         space_vector Y;
 
         boundary_interaction_type const& bnd = ilist_n_bnd[si];
-        integer index = mpoles.is_local ? bnd.second : si;
+        integer index = mpoles.is_local ? bnd.second[0] : si;
 
         auto const& tmp1 = (*(mpoles.M))[index];
 #pragma GCC ivdep

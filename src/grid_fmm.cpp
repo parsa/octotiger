@@ -202,7 +202,7 @@ void grid::compute_boundary_interactions_multipole_monopole(gsolve_type type,
 
             boundary_interaction_type const& bnd = ilist_n_bnd[si];
             const integer list_size = bnd.first.size();
-            integer index = mpoles.is_local ? bnd.second : si;
+            integer index = mpoles.is_local ? bnd.second[0] : si;
             load_multipole(m0, Y, mpoles, index, false);
 
             std::array<simd_vector, NDIM> simdY = {
@@ -345,7 +345,7 @@ void grid::compute_boundary_interactions_monopole_multipole(gsolve_type type,
             std::array<simd_vector, NDIM> Y;
 
             boundary_interaction_type const& bnd = ilist_n_bnd[si];
-            integer index = mpoles.is_local ? bnd.second : si;
+            integer index = mpoles.is_local ? bnd.second[0] : si;
             const integer list_size = bnd.first.size();
 
 #pragma GCC ivdep
@@ -470,7 +470,7 @@ void grid::compute_boundary_interactions_monopole_monopole(gsolve_type type,
 
             boundary_interaction_type const& bnd = ilist_n_bnd[si];
             const integer dsize = bnd.first.size();
-            integer index = mpoles.is_local ? bnd.second : si;
+            integer index = mpoles.is_local ? bnd.second[0] : si;
 #if !defined(HPX_HAVE_DATAPAR)
             const auto tmp = (*(mpoles).m)[index];
             v4sd m0;
@@ -662,46 +662,55 @@ void compute_ilist() {
         }
     }
 
-    //     printf("# direct = %i\n", int(max_d));
-    ilist_n = std::vector<interaction_type>(ilist_n0.begin(), ilist_n0.end());
-    ilist_d = std::vector<interaction_type>(ilist_d0.begin(), ilist_d0.end());
-    ilist_r = std::vector<interaction_type>(ilist_r0.begin(), ilist_r0.end());
-    for (auto& dir : geo::direction::full_set()) {
-        auto& d = ilist_d_bnd[dir];
-        auto& d0 = ilist_d0_bnd[dir];
-        auto& n = ilist_n_bnd[dir];
-        auto& n0 = ilist_n0_bnd[dir];
-        for (auto i0 : d0) {
-            bool found = false;
-            for (auto& i : d) {
-                if (i.second == i0.second) {
-                    i.first.push_back(i0.first);
-                    i.four.push_back(i0.four);
-                    found = true;
+    ilist_n = std::vector<interaction_type>(ilist_n0);
+    ilist_d = std::vector<interaction_type>(ilist_d0);
+    ilist_r = std::vector<interaction_type>(ilist_r0);
+
+    // non_M2M d
+    // M2M n
+
+    // maybe 0 are temporaries without the innerlists aggregated?
+
+    for (auto& dir : geo::direction::full_set()) {    // iterate 26 neighbors
+        std::vector<boundary_interaction_type>& non_M2M = ilist_d_bnd[dir];
+        std::vector<interaction_type>& non_M2M_0 = ilist_d0_bnd[dir];
+        std::vector<boundary_interaction_type>& M2M = ilist_n_bnd[dir];
+        std::vector<interaction_type>& M2M_0 = ilist_n0_bnd[dir];
+
+	// add entry for every non-M2M boundary interaction
+        for (interaction_type& interaction_0 : non_M2M_0) {
+            boundary_interaction_type boundary_interaction;
+            boundary_interaction.second.push_back(interaction_0.second);
+            boundary_interaction.x = interaction_0.x;
+            non_M2M.push_back(boundary_interaction);
+        }
+	// fill up list of actual non-M2M boundary interactions
+        for (interaction_type& interaction_0 : non_M2M_0) {
+            for (boundary_interaction_type& boundary_interaction : non_M2M) {
+                if (boundary_interaction.second[0] == interaction_0.second) {
+                    boundary_interaction.first.push_back(interaction_0.first);
+                    boundary_interaction.four.push_back(interaction_0.four);
                     break;
                 }
-            }
-            if (!found) {
-                boundary_interaction_type i;
-                i.second = i0.second;
-                i.x = i0.x;
-                n.push_back(i);
-                i.first.push_back(i0.first);
-                i.four.push_back(i0.four);
-                d.push_back(i);
             }
         }
-        for (auto i0 : n0) {
-            bool found = false;
-            for (auto& i : n) {
-                if (i.second == i0.second) {
-                    i.first.push_back(i0.first);
-                    i.four.push_back(i0.four);
-                    found = true;
+
+	// add entry for every M2M boundary interaction
+        for (interaction_type& interaction_0 : M2M_0) {
+            boundary_interaction_type boundary_interaction;
+            boundary_interaction.second.push_back(interaction_0.second);
+            boundary_interaction.x = interaction_0.x;
+            M2M.push_back(boundary_interaction);
+        }
+	// fill up list of actual M2M boundary interactions
+        for (interaction_type& interaction_0 : M2M_0) {
+            for (boundary_interaction_type& boundary_interaction : M2M) {
+                if (boundary_interaction.second[0] == interaction_0.second) {
+                    boundary_interaction.first.push_back(interaction_0.first);
+                    boundary_interaction.four.push_back(interaction_0.four);
                     break;
                 }
             }
-            assert(found);
         }
     }
 
@@ -1065,14 +1074,14 @@ gravity_boundary_type grid::get_gravity_boundary(const geo::direction& dir, bool
         if (is_leaf) {
             data.m->reserve(list.size());
             for (auto i : list) {
-                const integer iii = i.second;
+                const integer iii = i.second[0];
                 data.m->push_back(mon[iii]);
             }
         } else {
             data.M->reserve(list.size());
             data.x->reserve(list.size());
             for (auto i : list) {
-                const integer iii = i.second;
+                const integer iii = i.second[0];
                 const integer top = M[iii].size();
                 data.M->push_back(M[iii]);
                 data.x->push_back((*(com_ptr[0]))[iii]);
