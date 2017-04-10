@@ -35,6 +35,7 @@ std::vector<interaction_type> ilist_d;
 std::vector<interaction_type> ilist_r;
 std::vector<std::vector<boundary_interaction_type>> ilist_d_bnd(geo::direction::count());
 std::vector<std::vector<boundary_interaction_type>> ilist_n_bnd(geo::direction::count());
+std::vector<std::vector<boundary_interaction_type>> ilist_n_bnd_new(geo::direction::count());
 taylor<4, real> factor;
 extern options opts;
 
@@ -170,7 +171,7 @@ void grid::compute_boundary_interactions(gsolve_type type, const geo::direction&
     bool is_monopole, const gravity_boundary_type& mpoles) {
     if (!is_leaf) {
         if (!is_monopole) {
-            compute_boundary_interactions_multipole_multipole(type, ilist_n_bnd[dir], mpoles);
+            compute_boundary_interactions_multipole_multipole(type, ilist_n_bnd_new[dir], mpoles);
         } else {
             compute_boundary_interactions_monopole_multipole(type, ilist_d_bnd[dir], mpoles);
         }
@@ -675,16 +676,17 @@ void compute_ilist() {
         std::vector<boundary_interaction_type>& non_M2M = ilist_d_bnd[dir];
         std::vector<interaction_type>& non_M2M_0 = ilist_d0_bnd[dir];
         std::vector<boundary_interaction_type>& M2M = ilist_n_bnd[dir];
+        std::vector<boundary_interaction_type>& M2M_new = ilist_n_bnd_new[dir];
         std::vector<interaction_type>& M2M_0 = ilist_n0_bnd[dir];
 
-	// add entry for every non-M2M boundary interaction
+        // add entry for every non-M2M boundary interaction
         for (interaction_type& interaction_0 : non_M2M_0) {
             boundary_interaction_type boundary_interaction;
             boundary_interaction.second.push_back(interaction_0.second);
             boundary_interaction.x = interaction_0.x;
             non_M2M.push_back(boundary_interaction);
         }
-	// fill up list of actual non-M2M boundary interactions
+        // fill up list of actual non-M2M boundary interactions
         for (interaction_type& interaction_0 : non_M2M_0) {
             for (boundary_interaction_type& boundary_interaction : non_M2M) {
                 if (boundary_interaction.second[0] == interaction_0.second) {
@@ -695,14 +697,24 @@ void compute_ilist() {
             }
         }
 
-	// add entry for every M2M boundary interaction
+        // add entry for every M2M boundary interaction
         for (interaction_type& interaction_0 : M2M_0) {
-            boundary_interaction_type boundary_interaction;
-            boundary_interaction.second.push_back(interaction_0.second);
-            boundary_interaction.x = interaction_0.x;
-            M2M.push_back(boundary_interaction);
+            {
+                boundary_interaction_type boundary_interaction;
+                boundary_interaction.second.push_back(interaction_0.second);
+                boundary_interaction.x = interaction_0.x;
+                M2M.push_back(boundary_interaction);
+            }
+
+            // {
+            //     // new version
+            //     boundary_interaction_type boundary_interaction;
+            //     boundary_interaction.first.push_back(interaction_0.first);
+            //     boundary_interaction.x = interaction_0.x;
+            //     M2M_new.push_back(boundary_interaction);
+            // }
         }
-	// fill up list of actual M2M boundary interactions
+        // fill up list of actual M2M boundary interactions
         for (interaction_type& interaction_0 : M2M_0) {
             for (boundary_interaction_type& boundary_interaction : M2M) {
                 if (boundary_interaction.second[0] == interaction_0.second) {
@@ -711,6 +723,21 @@ void compute_ilist() {
                     break;
                 }
             }
+
+            // new version
+            // for (boundary_interaction_type& boundary_interaction : M2M_new) {
+            //     if (boundary_interaction.first[0] == interaction_0.first) {
+            //         boundary_interaction.second.push_back(interaction_0.second);
+            //         boundary_interaction.four.push_back(interaction_0.four);
+            //         break;
+            //     }
+            // }
+            boundary_interaction_type boundary_interaction;
+            boundary_interaction.first.push_back(interaction_0.first);
+            boundary_interaction.four.push_back(interaction_0.four);
+            boundary_interaction.second.push_back(interaction_0.second);
+            boundary_interaction.x = interaction_0.x;
+            M2M_new.push_back(boundary_interaction);
         }
     }
 

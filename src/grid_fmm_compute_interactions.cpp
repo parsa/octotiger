@@ -199,12 +199,12 @@ void grid::compute_interactions_inner(gsolve_type type) {
 
             // calculates all D-values, calculate all coefficients of 1/r (not the potential),
             // formula (6)-(9) and (19)
-	    // auto set_basis_start = std::chrono::high_resolution_clock::now();
+            // auto set_basis_start = std::chrono::high_resolution_clock::now();
             D.set_basis(dX);
-	    // auto set_basis_end = std::chrono::high_resolution_clock::now();
-	    // std::chrono::duration<double, std::milli> set_basis_duration = set_basis_end - set_basis_start;
-	    // accumulated_set_taylor += set_basis_duration.count();
-	    
+            // auto set_basis_end = std::chrono::high_resolution_clock::now();
+            // std::chrono::duration<double, std::milli> set_basis_duration = set_basis_end -
+            // set_basis_start;
+            // accumulated_set_taylor += set_basis_duration.count();
 
             // the following loops calculate formula (10), potential from A->B and B->A
             // (basically alternating)
@@ -332,5 +332,6 @@ void grid::compute_interactions_inner(gsolve_type type) {
     // auto end = std::chrono::high_resolution_clock::now();
     // std::chrono::duration<double, std::milli> duration = end - start;
     // std::cout << "compute_interactions_inner duration (ms): " << duration.count() << std::endl;
-    // std::cout << "--------------------> accumulated_set_taylor duration (ms): " << accumulated_set_taylor << std::endl;
+    // std::cout << "--------------------> accumulated_set_taylor duration (ms): " <<
+    // accumulated_set_taylor << std::endl;
 }
