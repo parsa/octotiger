@@ -706,13 +706,13 @@ void compute_ilist() {
                 M2M.push_back(boundary_interaction);
             }
 
-            // {
-            //     // new version
-            //     boundary_interaction_type boundary_interaction;
-            //     boundary_interaction.first.push_back(interaction_0.first);
-            //     boundary_interaction.x = interaction_0.x;
-            //     M2M_new.push_back(boundary_interaction);
-            // }
+            {
+                // new version
+                boundary_interaction_type boundary_interaction;
+                boundary_interaction.first.push_back(interaction_0.first);
+                boundary_interaction.x = interaction_0.x;
+                M2M_new.push_back(boundary_interaction);
+            }
         }
         // fill up list of actual M2M boundary interactions
         for (interaction_type& interaction_0 : M2M_0) {
@@ -725,19 +725,19 @@ void compute_ilist() {
             }
 
             // new version
-            // for (boundary_interaction_type& boundary_interaction : M2M_new) {
-            //     if (boundary_interaction.first[0] == interaction_0.first) {
-            //         boundary_interaction.second.push_back(interaction_0.second);
-            //         boundary_interaction.four.push_back(interaction_0.four);
-            //         break;
-            //     }
-            // }
-            boundary_interaction_type boundary_interaction;
-            boundary_interaction.first.push_back(interaction_0.first);
-            boundary_interaction.four.push_back(interaction_0.four);
-            boundary_interaction.second.push_back(interaction_0.second);
-            boundary_interaction.x = interaction_0.x;
-            M2M_new.push_back(boundary_interaction);
+            for (boundary_interaction_type& boundary_interaction : M2M_new) {
+                if (boundary_interaction.first[0] == interaction_0.first) {
+                    boundary_interaction.second.push_back(interaction_0.second);
+                    boundary_interaction.four.push_back(interaction_0.four);
+                    break;
+                }
+            }
+            // boundary_interaction_type boundary_interaction;
+            // boundary_interaction.first.push_back(interaction_0.first);
+            // boundary_interaction.four.push_back(interaction_0.four);
+            // boundary_interaction.second.push_back(interaction_0.second);
+            // boundary_interaction.x = interaction_0.x;
+            // M2M_new.push_back(boundary_interaction);
         }
     }
 
