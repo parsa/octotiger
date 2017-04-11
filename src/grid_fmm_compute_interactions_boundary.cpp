@@ -26,24 +26,22 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
     std::vector<space_vector> const& com0 = *(com_ptr[0]);
     size_t list_size = ilist_n_bnd.size();
     for (size_t si = 0; si < list_size; si++) {
-        taylor<4, simd_vector> m0;
-        taylor<4, simd_vector> n0;
-        std::array<simd_vector, NDIM> dX;
+
         std::array<simd_vector, NDIM> X;
-        std::array<simd_vector, NDIM> Y;
+
         // space_vector Y;
 
         boundary_interaction_type const& bnd = ilist_n_bnd[si];
 
-        // TODO: remove after changes
-        if (bnd.first.size() == 0) {
-            continue;
-        }
+        // // TODO: remove after changes
+        // if (bnd.first.size() == 0) {
+        //     continue;
+        // }
 
-        // TODO: remove after changes
-        if (bnd.second.size() == 0) {
-            continue;
-        }
+        // // TODO: remove after changes
+        // if (bnd.second.size() == 0) {
+        //     continue;
+        // }
 
         for (integer i = 0; i < simd_len; ++i) {
             // const integer iii0 = bnd.first[0 + i];
@@ -54,10 +52,23 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
             }
         }
 
+        taylor<4, simd_vector> A0;
+        for (integer j = 0; j != taylor_sizes[3]; ++j) {
+            A0[j] = 0.0;
+        }
+        
+        std::array<simd_vector, NDIM> B0 = {
+            simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
+
         const integer list_size = bnd.second.size();    // TODO: changed as well!
         for (integer li = 0; li < list_size; li += simd_len) {
             // for (integer li = 0; li < list_size; li += 1) {
 
+            taylor<4, simd_vector> m0;
+            std::array<simd_vector, NDIM> Y;
+            taylor<4, simd_vector> n0;
+            std::array<simd_vector, NDIM> dX;
+            
             // for (integer i = 0; i < 1; ++i) {
             for (integer i = 0; i < simd_len && li + i < list_size; ++i) {
                 integer index = mpoles.is_local ? bnd.second[li + i] :
@@ -108,12 +119,9 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
             }
 
             taylor<5, simd_vector> D;
-            taylor<4, simd_vector> A0;
-            std::array<simd_vector, NDIM> B0 = {
-                simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
 
             D.set_basis(dX);
-            A0[0] = m0[0] * D[0];
+            A0[0] += m0[0] * D[0];
             if (type != RHO) {
                 for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
                     A0[0] -= m0[i] * D[i];
@@ -130,7 +138,7 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
                 int const* ab_idx_map = to_ab_idx_map3[a];
                 int const* abc_idx_map = to_abc_idx_map3[a];
 
-                A0(a) = m0() * D(a);
+                A0(a) += m0() * D(a);
                 for (integer i = 0; i != 6; ++i) {
                     if (type != RHO && i < 3) {
                         A0(a) -= m0(a) * D[ab_idx_map[i]];
@@ -156,17 +164,20 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
                 int const* abc_idx_map6 = to_abc_idx_map6[i];
 
                 integer const ab_idx = ab_idx_map6[i];
-                A0[ab_idx] = m0() * D[ab_idx];
+                A0[ab_idx] += m0() * D[ab_idx];
                 for (integer c = 0; c < NDIM; ++c) {
                     A0[ab_idx] -= m0(c) * D[abc_idx_map6[c]];
                 }
             }
 
             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
-                A0[i] = m0[0] * D[i];
+                A0[i] += m0[0] * D[i];
             }
 
-            for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
+        }
+
+            // for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
+        for (integer i = 0; i != simd_len; ++i) {
                 // for (integer i = 0; i < 1; ++i) {
                 // const integer iii0 = bnd.first[li + i];
                 const integer iii0 = bnd.first[0];
@@ -179,7 +190,8 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
             }
 
             if (type == RHO && opts.ang_con) {
-                for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
+                // for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
+                for (integer i = 0; i != simd_len; ++i) {
                     // for (integer i = 0; i < 1; ++i) {
                     // const integer iii0 = bnd.first[li + i];
                     const integer iii0 = bnd.first[0];
@@ -190,7 +202,8 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
                     }
                 }
             }
-        }
+
+        
     }
 
     // auto end = std::chrono::high_resolution_clock::now();
