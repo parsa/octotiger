@@ -23,25 +23,16 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
     auto& M = *M_ptr;
     auto& mon = *mon_ptr;
 
+    // always reinitialized in innermost loop
+    std::array<simd_vector, NDIM> dX;
+    taylor<5, simd_vector> D;
+    taylor<4, simd_vector> n0;
+    
     std::vector<space_vector> const& com0 = *(com_ptr[0]);
     size_t list_size = ilist_n_bnd.size();
     for (size_t si = 0; si < list_size; si++) {
-
         std::array<simd_vector, NDIM> X;
-
-        // space_vector Y;
-
         boundary_interaction_type const& bnd = ilist_n_bnd[si];
-
-        // // TODO: remove after changes
-        // if (bnd.first.size() == 0) {
-        //     continue;
-        // }
-
-        // // TODO: remove after changes
-        // if (bnd.second.size() == 0) {
-        //     continue;
-        // }
 
         for (integer i = 0; i < simd_len; ++i) {
             // const integer iii0 = bnd.first[0 + i];
@@ -53,49 +44,34 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
         }
 
         taylor<4, simd_vector> A0;
-        for (integer j = 0; j != taylor_sizes[3]; ++j) {
-            A0[j] = 0.0;
-        }
-        
-        std::array<simd_vector, NDIM> B0 = {
-            simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
+        std::array<simd_vector, NDIM> B0;
 
-        const integer list_size = bnd.second.size();    // TODO: changed as well!
+        const integer list_size = bnd.second.size();
         for (integer li = 0; li < list_size; li += simd_len) {
-            // for (integer li = 0; li < list_size; li += 1) {
-
             taylor<4, simd_vector> m0;
             std::array<simd_vector, NDIM> Y;
-            taylor<4, simd_vector> n0;
-            std::array<simd_vector, NDIM> dX;
-            
-            // for (integer i = 0; i < 1; ++i) {
+
+            // reset used range
+            for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
+                n0[j] = 0.0;
+            }
+
+
             for (integer i = 0; i < simd_len && li + i < list_size; ++i) {
                 integer index = mpoles.is_local ? bnd.second[li + i] :
                                                   li + i;    // TODO: can this line be removed?
                 auto const& tmp1 = (*(mpoles.M))[index];
-#pragma GCC ivdep
                 for (int j = 0; j != 20; ++j) {
                     m0[j][i] = tmp1[j];
                 }
                 auto const& tmp2 = (*(mpoles.x))[index];
-#pragma GCC ivdep
                 for (integer d = 0; d != NDIM; ++d) {
                     Y[d][i] = tmp2[d];
                 }
             }
 
-            // std::array<simd_vector, NDIM> simdY = {
-            //     simd_vector(real(Y[0])), simd_vector(real(Y[1])), simd_vector(real(Y[2])),
-            // };
-
             if (type == RHO) {
-                // for (integer i = 0; i < 1; ++i) {
-                for (integer i = 0; i < simd_len && li + i < list_size;
-                     ++i) {    // TODO: very convoluted, in all lanes the same?
-                    // for (integer i = 0; i < simd_len; ++i) { //TODO: very convoluted, in all
-                    // lanes the same?
-                    // const integer iii0 = bnd.first[0 + i];
+                for (integer i = 0; i < simd_len && li + i < list_size; ++i) {
                     const integer iii0 = bnd.first[0];
 
                     multipole const& Miii0 = M[iii0];
@@ -106,19 +82,9 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
                 }
             }
 
-            if (type != RHO) {
-#pragma GCC ivdep
-                for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                    n0[j] = ZERO;
-                }
-            }
-#pragma GCC ivdep
             for (integer d = 0; d < NDIM; ++d) {
-                // dX[d] = X[d] - simdY[d];
                 dX[d] = X[d] - Y[d];
             }
-
-            taylor<5, simd_vector> D;
 
             D.set_basis(dX);
             A0[0] += m0[0] * D[0];
@@ -173,37 +139,29 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
                 A0[i] += m0[0] * D[i];
             }
-
         }
 
-            // for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
-        for (integer i = 0; i != simd_len; ++i) {
-                // for (integer i = 0; i < 1; ++i) {
-                // const integer iii0 = bnd.first[li + i];
-                const integer iii0 = bnd.first[0];
-                expansion& Liii0 = L[iii0];
+        const integer iii0 = bnd.first[0];
+        expansion& Liii0 = L[iii0];
 
-#pragma GCC ivdep
-                for (integer j = 0; j != taylor_sizes[3]; ++j) {
-                    Liii0[j] += A0[j][i];
-                }
+        for (integer j = 0; j != taylor_sizes[3]; ++j) {
+#if Vc_IS_VERSION_2 == 0
+            Liii0[j] += A0[j].sum();
+#else
+            Liii0[j] += Vc::reduce(A0[j]);
+#endif
+        }
+
+        if (type == RHO && opts.ang_con) {
+            space_vector& L_ciii0 = L_c[iii0];
+            for (integer j = 0; j != NDIM; ++j) {
+#if Vc_IS_VERSION_2 == 0
+                L_ciii0[j] += B0[j].sum();
+#else
+                L_ciii0[j] += Vc::reduce(B0[j]);
+#endif
             }
-
-            if (type == RHO && opts.ang_con) {
-                // for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
-                for (integer i = 0; i != simd_len; ++i) {
-                    // for (integer i = 0; i < 1; ++i) {
-                    // const integer iii0 = bnd.first[li + i];
-                    const integer iii0 = bnd.first[0];
-                    space_vector& L_ciii0 = L_c[iii0];
-#pragma GCC ivdep
-                    for (integer j = 0; j != NDIM; ++j) {
-                        L_ciii0[j] += B0[j][i];
-                    }
-                }
-            }
-
-        
+        }
     }
 
     // auto end = std::chrono::high_resolution_clock::now();
