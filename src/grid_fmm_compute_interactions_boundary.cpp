@@ -19,7 +19,7 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
     const std::vector<boundary_interaction_type>& ilist_n_bnd,
     const gravity_boundary_type& mpoles) {
     PROF_BEGIN;
-    // auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     auto& M = *M_ptr;
     auto& mon = *mon_ptr;
 
@@ -46,16 +46,21 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
         taylor<4, simd_vector> A0;
         std::array<simd_vector, NDIM> B0;
 
+        taylor<4, simd_vector> m1;
+        if (type == RHO) {
+            const integer iii0 = bnd.first[0]; // this basically is m1!
+
+            multipole const& Miii0 = M[iii0];
+            m1[0] = Miii0[0];
+            for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
+                m1[j] = Miii0[j];
+            }
+        }
+
         const integer list_size = bnd.second.size();
         for (integer li = 0; li < list_size; li += simd_len) {
             taylor<4, simd_vector> m0;
             std::array<simd_vector, NDIM> Y;
-
-            // reset used range
-            for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                n0[j] = 0.0;
-            }
-
 
             for (integer i = 0; i < simd_len && li + i < list_size; ++i) {
                 integer index = mpoles.is_local ? bnd.second[li + i] :
@@ -71,14 +76,14 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
             }
 
             if (type == RHO) {
-                for (integer i = 0; i < simd_len && li + i < list_size; ++i) {
-                    const integer iii0 = bnd.first[0];
-
-                    multipole const& Miii0 = M[iii0];
-                    real const tmp = m0()[i] / Miii0();
-                    for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                        n0[j][i] = m0[j][i] - Miii0[j] * tmp;
-                    }
+                simd_vector tmp = m0[0] / m1[0];
+                for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
+                    n0[j] = m0[j] - m1[j] * tmp;
+                }
+            } else {
+                // reset used range
+                for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
+                    n0[j] = 0.0;
                 }
             }
 
@@ -164,9 +169,9 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
         }
     }
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double, std::milli> duration = end - start;
-    // std::cout << "boundary compute_interactions_inner duration (ms): " << duration.count() <<
-    // std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> duration = end - start;
+    std::cout << "boundary compute_interactions_inner duration (ms, branch): " << duration.count() <<
+    std::endl;
     PROF_END;
 }
