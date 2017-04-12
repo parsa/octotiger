@@ -48,7 +48,7 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
 
         taylor<4, simd_vector> m1;
         if (type == RHO) {
-            const integer iii0 = bnd.first[0]; // this basically is m1!
+            const integer iii0 = bnd.first[0];
 
             multipole const& Miii0 = M[iii0];
             m1[0] = Miii0[0];
@@ -67,8 +67,9 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
                                                   li + i;    // TODO: can this line be removed?
                 auto const& tmp1 = (*(mpoles.M))[index];
                 for (int j = 0; j != 20; ++j) {
-                    m0[j][i] = tmp1[j];
+                    m0[j][i] = tmp1[j];                    
                 }
+
                 auto const& tmp2 = (*(mpoles.x))[index];
                 for (integer d = 0; d != NDIM; ++d) {
                     Y[d][i] = tmp2[d];
