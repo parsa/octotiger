@@ -113,6 +113,8 @@ set(source_files ${source_files}
     src/stack_trace.cpp
     src/taylor.cpp
     src/util.cpp
+    src/compute_factor.cpp
+    src/compute_ilist.cpp
 )
 
 set(header_files

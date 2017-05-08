@@ -5,6 +5,8 @@
 #include "future.hpp"
 #include "problem.hpp"
 #include "options.hpp"
+#include "compute_factor.hpp"
+#include "compute_ilist.hpp"
 
 #include <chrono>
 #include <string>
@@ -29,8 +31,6 @@ bool hydro_on = true;
 HPX_PLAIN_ACTION(grid::set_pivot, set_pivot_action);
 HPX_REGISTER_BROADCAST_ACTION_DECLARATION(set_pivot_action)
 HPX_REGISTER_BROADCAST_ACTION(set_pivot_action)
-
-void compute_ilist();
 
 void initialize(options _opts, std::vector<hpx::id_type> const& localities)
 {
@@ -106,6 +106,7 @@ void initialize(options _opts, std::vector<hpx::id_type> const& localities)
 	}
 	node_server::set_gravity(gravity_on);
 	node_server::set_hydro(hydro_on);
+  compute_factor();
 	compute_ilist();
 }
 
