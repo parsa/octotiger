@@ -70,7 +70,8 @@ void compute_ilist() {
     std::array<std::vector<interaction_type>, geo::direction::count()> ilist_n0_bnd;
     std::array<std::vector<interaction_type>, geo::direction::count()> ilist_d0_bnd;
 
-    const real theta0 = opts.theta;    // TODO: verify that this is the radius of the sphere
+    // used to check the radiuses of the outer and inner sphere
+    const real theta0 = opts.theta;
     integer width = INX;
     // iterate node inner points
     for (integer i0 = 0; i0 != INX; ++i0) {
@@ -95,12 +96,12 @@ void compute_ilist() {
                             }
                             // in here: now i and j point to possible interaction partners
                             // calculate distance between inner nodes
-                            const real x = i0 - j0;
-                            const real y = i1 - j1;
-                            const real z = i2 - j2;
+                            const real d0 = i0 - j0;
+                            const real d1 = i1 - j1;
+                            const real d2 = i2 - j2;
 
                             // sqrt(0) cannot happen, as i != j
-                            const real r = std::sqrt(sqr(x) + sqr(y) + sqr(z));
+                            const real r = std::sqrt(sqr(d0) + sqr(d1) + sqr(d2));
                             const real r3 = r * r * r;
                             // TODO: what is the purpose of four (David), speculation:
                             // - precomputation for interaction calculation
@@ -108,9 +109,9 @@ void compute_ilist() {
                             v4sd four;
 
                             four[0] = -1.0 / r;
-                            four[1] = x / r3;
-                            four[2] = y / r3;
-                            four[3] = z / r3;
+                            four[1] = d0 / r3;
+                            four[2] = d1 / r3;
+                            four[3] = d2 / r3;
 
                             // speculation: could be the inner sphere cutoff?
                             // arithmetic for round towards negative infinitive (relevant for
@@ -155,6 +156,8 @@ void compute_ilist() {
                                 }
                             }
                             // not in inner sphere, and maybe not in outer sphere?
+                            // TODO: Why are the potentials calculated correctly, wouldn't that lead
+                            // to duplicate calcualtions?
                             if (theta_c > theta0) {
                                 dp.first = iii0;
                                 dp.second = iii1n;
@@ -173,6 +176,8 @@ void compute_ilist() {
                                 }
                             }
                             // in outer sphere, and maybe not in inner sphere
+                            // TODO: Why are the potentials calculated correctly, wouldn't that lead
+                            // to duplicate calcualtions?
                             if (theta_f <= theta0) {
                                 np.first = iii0;
                                 np.second = iii1n;
