@@ -84,7 +84,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
 
         taylor<4, simd_vector> A0;
         std::array<simd_vector, NDIM> B0 = {
-            simd_vector(ZERO), simd_vector(ZERO), simd_vector(ZERO)};
+            {simd_vector(ZERO), simd_vector(ZERO), simd_vector(ZERO)}};
 
         // stop index of the iteration -> points to first entry in interaction_list where the first
         // multipole doesn't match the current multipole
@@ -230,7 +230,7 @@ void grid::compute_interactions_inner(gsolve_type type) {
         }
 
         multipole& Liii0 = L[iii0];
-        
+
         // now add up the simd lanes
         for (integer j = 0; j != taylor_sizes[3]; ++j) {
 #if Vc_IS_VERSION_2 == 0

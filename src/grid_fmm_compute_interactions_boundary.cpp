@@ -21,7 +21,7 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
     PROF_BEGIN;
     auto start = std::chrono::high_resolution_clock::now();
     auto& M = *M_ptr;
-    auto& mon = *mon_ptr;
+    // auto& mon = *mon_ptr;
 
     // always reinitialized in innermost loop
     std::array<simd_vector, NDIM> dX;

@@ -70,6 +70,9 @@ void compute_ilist() {
     std::array<std::vector<interaction_type>, geo::direction::count()> ilist_n0_bnd;
     std::array<std::vector<interaction_type>, geo::direction::count()> ilist_d0_bnd;
 
+    uint64_t inner_interactions = 0;
+    uint64_t boundary_interactions = 0;
+
     // used to check the radiuses of the outer and inner sphere
     const real theta0 = opts.theta;
     integer width = INX;
@@ -148,8 +151,10 @@ void compute_ilist() {
                                 np.x[ZDIM] = j2;
                                 // TODO: i should always be in interior?
                                 if (is_interior(j0, j1, j2)) {
+                                    inner_interactions += 1;
                                     ilist_n.push_back(np);
                                 } else {
+                                    boundary_interactions += 1;
                                     integer neighbor_index =
                                         get_neighbor_dir(j0, j1, j2).flat_index();
                                     ilist_n0_bnd[neighbor_index].push_back(np);
@@ -196,6 +201,8 @@ void compute_ilist() {
         }
     }
 
+    std::cout << "inner_interactions: " << inner_interactions << " boundary_interactions: " << boundary_interactions << std::endl;
+    
     // non_M2M d
     // M2M n
 
