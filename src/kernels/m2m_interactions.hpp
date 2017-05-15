@@ -5,6 +5,7 @@
 
 #include "geometry.hpp"
 #include "grid.hpp"
+#include "node_server.hpp"
 #include "taylor.hpp"
 
 #include "interactions_constants.hpp"
@@ -94,14 +95,19 @@ namespace fmm {
     public:
         // at this point, uses the old datamembers of the grid class as input
         // and converts them to the new data structure
-        m2m_interactions(std::vector<multipole>& M_ptr,
-            std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr,
-            std::array<boundary_interaction_type, geo::direction::count()> neighbors);
+        m2m_interactions(grid& g, std::vector<node_server::neighbor_gravity_type>& neighbors);
 
         // dummy constructor for debugging
         m2m_interactions();
 
+        ~m2m_interactions() {
+            std::cout << "in destructor" << std::endl;
+        }
+
         void get_converted_local_expansions(std::vector<multipole>& M_ptr);
+
+        void get_converted_center_of_masses(
+            std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr);
 
         void get_converted_potential_expansions(std::vector<expansion>& L);
 

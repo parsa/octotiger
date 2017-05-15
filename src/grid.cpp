@@ -1063,7 +1063,7 @@ space_vector grid::center_of_mass() const {
 			this_com[dim] /= m;
 		}
 	}PROF_END;
-	printf( "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk %e %e %e\n", this_com[0], this_com[1], this_com[2] );
+	// printf( "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk %e %e %e\n", this_com[0], this_com[1], this_com[2] );
 	return this_com;
 }
 

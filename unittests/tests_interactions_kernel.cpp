@@ -25,16 +25,18 @@ void test_padded_grid_indexing() {
     //           << std::endl;
     // std::cout << "OUTER_CELLS: " << octotiger::fmm::OUTER_CELLS << std::endl;
 
-    std::cout << "PADDING_EDGE_SURFACE_SINGLE_DIRECTION: "
-              << octotiger::fmm::PADDING_EDGE_SURFACE_SINGLE_DIRECTION << std::endl;
+    // std::cout << "PADDING_EDGE_SURFACE_SINGLE_DIRECTION: "
+    //           << octotiger::fmm::PADDING_EDGE_SURFACE_SINGLE_DIRECTION << std::endl;
     std::cout << "PADDED_STRIDE: " << octotiger::fmm::PADDED_STRIDE << std::endl;
-    std::cout << "VERTICES: " << octotiger::fmm::VERTICES << std::endl;
+    // std::cout << "VERTICES: " << octotiger::fmm::VERTICES << std::endl;
 
-    std::cout << "EXPANSION_COUNT_PADDING: " << octotiger::fmm::EXPANSION_COUNT_PADDING
+    // std::cout << "EXPANSION_EDGE_COUNT: " << octotiger::fmm::EXPANSION_EDGE_COUNT << std::endl;
+    // std::cout << "EXPANSION_VERTICES_COUNT: " << octotiger::fmm::EXPANSION_VERTICES_COUNT
+    //           << std::endl;
+    std::cout << "EXPANSION_COUNT_PADDED: " << octotiger::fmm::EXPANSION_COUNT_PADDED
               << std::endl;
-    std::cout << "EXPANSION_COUNT_NOT_PADDED: " << octotiger::fmm::EXPANSION_COUNT_NOT_PADDED << std::endl;
-    std::cout << "EXPANSION_COUNT_PADDED: " << octotiger::fmm::EXPANSION_COUNT_PADDED << std::endl;
-
+    std::cout << "EXPANSION_COUNT_NOT_PADDED: " << octotiger::fmm::EXPANSION_COUNT_NOT_PADDED
+              << std::endl;
 
     // other_kernel_directory();
 }

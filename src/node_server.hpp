@@ -40,12 +40,12 @@ public:
     static void set_hydro(bool b) {
         hydro_on = b;
 }
-private:
     struct neighbor_gravity_type {
         gravity_boundary_type data;
         bool is_monopole;
         geo::direction direction;
-    };
+    };    
+private:
     struct sibling_hydro_type {
         std::vector<real> data;
         geo::direction direction;

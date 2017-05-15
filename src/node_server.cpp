@@ -12,6 +12,7 @@
 #include "options.hpp"
 #include "taylor.hpp"
 #include "set_locality_data.hpp"
+#include "kernels/m2m_interactions.hpp"
 
 #include <array>
 #include <streambuf>
@@ -484,13 +485,22 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
     }
     wait_all_and_propagate_exceptions(boundary_futs);
 #else
+    // all neighbors and placeholder for yourself
+    std::vector<neighbor_gravity_type> all_neighbor_interaction_data;
+    
      for (auto const& dir : geo::direction::full_set()) {
         if (!neighbors[dir].empty()) {
-            auto tmp = neighbor_gravity_channels[dir].get_future(gcycle).get();
+            neighbor_gravity_type tmp = neighbor_gravity_channels[dir].get_future(gcycle).get();
             grid_ptr->compute_boundary_interactions(type, tmp.direction, tmp.is_monopole, tmp.data);
+	    all_neighbor_interaction_data.push_back(tmp);
         }
     }
 #endif
+
+    //TODO(David): Add call for inner boundary and non-boundary here!
+     octotiger::fmm::m2m_interactions(*grid_ptr, all_neighbor_interaction_data);
+     std::cout << "after constructor" << std::endl;
+     
 	/************************************************************************************************/
 
     expansion_pass_type l_in;

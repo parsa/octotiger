@@ -209,6 +209,19 @@ private:
         const std::vector<boundary_interaction_type>&, const gravity_boundary_type&);
 
 public:
+
+    std::vector<multipole> &get_M() {
+	return *M_ptr;
+    }
+
+    std::vector<real> &get_mon() {
+	return *mon_ptr;
+    }
+
+    std::vector<std::shared_ptr<std::vector<space_vector>>> &get_com_ptr() {
+        return com_ptr;
+    }
+    
 #ifdef RADIATION
     std::shared_ptr<rad_grid> get_rad_grid() {
         return rad_grid_ptr;
