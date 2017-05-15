@@ -637,14 +637,14 @@ multipole_pass_type grid::compute_multipoles(
     if (type == RHO) {
         com_ptr[0] = std::make_shared<std::vector<space_vector>>(G_N3);
     }
-    auto& M = *M_ptr;
-    auto& mon = *mon_ptr;
+    // auto& M = *M_ptr;
+    // auto& mon = *mon_ptr;
     if (is_leaf) {
-        M.resize(0);
-        mon.resize(G_N3);
+        M_ptr->resize(0);
+        mon_ptr->resize(G_N3);
     } else {
-        M.resize(G_N3);
-        mon.resize(0);
+        M_ptr->resize(G_N3);
+        mon_ptr->resize(0);
     }
     if (type == RHO) {
         const integer iii0 = hindex(H_BW, H_BW, H_BW);
@@ -693,9 +693,9 @@ multipole_pass_type grid::compute_multipoles(
                             for (integer ci = 0; ci != NCHILD; ++ci) {
                                 const integer iiic = child_index(ip, jp, kp, ci);
                                 if (is_leaf) {
-                                    mc[ci] = mon[iiic];
+                                    mc[ci] = (*mon_ptr)[iiic];
                                 } else {
-                                    mc[ci] = M[iiic]();
+                                    mc[ci] = (*M_ptr)[iiic]();
                                 }
                                 for (integer d = 0; d < NDIM; ++d) {
                                     X[d][ci] = (*(com_ptr[0]))[iiic][d];
@@ -720,13 +720,13 @@ multipole_pass_type grid::compute_multipoles(
                             const integer iiic = child_index(ip, jp, kp, ci);
                             const space_vector& X = (*(com_ptr[lev - 1]))[iiic];
                             if (is_leaf) {
-                                mc()[ci] = mon[iiic];
+                                mc()[ci] = (*mon_ptr)[iiic];
                                 for (integer j = 1; j != 20; ++j) {
                                     mc.ptr()[j][ci] = 0.0;
                                 }
                             } else {
                                 for (integer j = 0; j != 20; ++j) {
-                                    mc.ptr()[j][ci] = M[iiic].ptr()[j];
+                                    mc.ptr()[j][ci] = (*M_ptr)[iiic].ptr()[j];
                                 }
                             }
                             for (integer d = 0; d < NDIM; ++d) {
@@ -752,12 +752,12 @@ multipole_pass_type grid::compute_multipoles(
                             const integer iiih = hindex(ip + H_BW, jp + H_BW, kp + H_BW);
                             const integer iii0 = h0index(ip, jp, kp);
                             if (type == RHO) {
-                                mon[iiip] = U[rho_i][iiih] * dx3;
+                                (*mon_ptr)[iiip] = U[rho_i][iiih] * dx3;
                             } else {
-                                mon[iiip] = dUdt[rho_i][iii0] * dx3;
+                                (*mon_ptr)[iiip] = dUdt[rho_i][iii0] * dx3;
                             }
                         } else {
-                            M[iiip] = child_poles->first[index];
+                            (*M_ptr)[iiip] = child_poles->first[index];
                             if (type == RHO) {
                                 (*(com_ptr)[lev])[iiip] = child_poles->second[index];
                             }
