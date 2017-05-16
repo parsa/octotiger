@@ -117,17 +117,35 @@ namespace fmm {
 
     void m2m_interactions::print_potential_expansions() {
         iterate_inner_cells_not_padded([this](multiindex& i, size_t flat_index) {
-            if (i.z % INNER_CELLS_PER_DIRECTION == 0) {
-                std::cout << "-------- next layer: " << i.z << "---------" << std::endl;
+            if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
+                std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
             }
-            std::cout << this->potential_expansions[flat_index];
-            if ((i.y + 1) % INNER_CELLS_PER_DIRECTION == 0) {
+            // std::cout << this->potential_expansions[flat_index];
+	    if (i.z % INNER_CELLS_PER_DIRECTION != 0) {
+		std::cout << ", ";
+	    }
+	    std::cout << " (" << i << ") =[0] " << this->potential_expansions[flat_index][0];
+            if ((i.z + 1) % INNER_CELLS_PER_DIRECTION == 0) {
                 std::cout << std::endl;
             }
         });
     }
 
-    void m2m_interactions::print_angular_corrections() {}
+    void m2m_interactions::print_angular_corrections() {
+        iterate_inner_cells_not_padded([this](multiindex& i, size_t flat_index) {
+            if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
+                std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
+            }
+            // std::cout << this->potential_expansions[flat_index];
+	    if (i.z % INNER_CELLS_PER_DIRECTION != 0) {
+		std::cout << ", ";
+	    }
+	    std::cout << " (" << i << ") = " << this->angular_corrections[flat_index];
+            if ((i.z + 1) % INNER_CELLS_PER_DIRECTION == 0) {
+                std::cout << std::endl;
+            }
+        });
+	}
 
 }    // namespace fmm
 }    // namespace octotiger

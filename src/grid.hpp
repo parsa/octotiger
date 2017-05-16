@@ -220,6 +220,14 @@ public:
     std::vector<std::shared_ptr<std::vector<space_vector>>> &get_com_ptr() {
         return com_ptr;
     }
+
+    std::vector<expansion> &get_L() {
+        return L;
+    }
+
+    std::vector<space_vector> &get_L_c() {
+        return L_c;
+    }        
     
 #ifdef RADIATION
     std::shared_ptr<rad_grid> get_rad_grid() {

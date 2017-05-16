@@ -376,12 +376,14 @@ typedef taylor<4, real> expansion;
 
 template <int N, class T = real>
 std::ostream& operator<<(std::ostream& os, const taylor<N, T>& t) {
+    std::cout << "(";
     for (size_t i = 0; i < t.size(); i++) {
         if (i > 0) {
-            std::cout << std::endl;
+            std::cout << ", ";
         }
         std::cout << t[i];
     }
+    std::cout << ")";
 }
 
 #endif /* TAYLOR_HPP_ */

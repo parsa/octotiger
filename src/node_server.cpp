@@ -482,14 +482,18 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
     //     }
     // }
 
-    //TODO(David): Probably need another special case for root node
+    // TODO(David): Probably need another special case for root node
     // // TODO(David): Add call for inner boundary and non-boundary here!
     if (!grid_ptr->get_leaf()) {
         octotiger::fmm::m2m_interactions kernel(*grid_ptr, all_neighbor_interaction_data, type);
-        kernel.compute_interactions(); // includes boundary
+        kernel.compute_interactions();    // includes boundary
 
+        std::cout << "potential_expansions:" << std::endl;
         kernel.print_potential_expansions();
-        
+
+        // std::cout << "angular_corrections:" << std::endl;
+        // kernel.print_angular_corrections();
+
         std::cout << "after constructor" << std::endl;
 
         grid_ptr->compute_interactions(type);
@@ -501,7 +505,29 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             }
         }
 
-        
+        std::vector<expansion>& L = grid_ptr->get_L();
+	std::cout << "potential_expansions (reference):" << std::endl;
+        for (size_t i0 = 0; i0 < INX; i0++) {
+            for (size_t i1 = 0; i1 < INX; i1++) {
+                for (size_t i2 = 0; i2 < INX; i2++) {
+		    octotiger::fmm::multiindex i(i0, i1, i2);
+                    size_t flat_index = i0 * INX * INX + i1 * INX + i2;
+                    if (i.y % INX == 0 &&
+                        i.z % INX == 0) {
+                        std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
+                    }
+                    // std::cout << this->potential_expansions[flat_index];
+                    if (i.z % INX != 0) {
+                        std::cout << ", ";
+                    }
+                    std::cout << " (" << i << ") =[0] " << L[flat_index][0];
+                    if ((i.z + 1) % INX == 0) {
+                        std::cout << std::endl;
+                    }
+                }
+            }
+        }
+
     } else {
         grid_ptr->compute_interactions(type);
         for (const geo::direction& dir : geo::direction::full_set()) {
