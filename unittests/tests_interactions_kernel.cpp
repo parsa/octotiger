@@ -2,9 +2,13 @@
 #include <iostream>
 #include <string>
 
-#include "../src/kernels/interactions_constants.hpp"
+#include "../src/kernels/interaction_constants.hpp"
 #include "../src/kernels/m2m_interactions.hpp"
+#include "../src/taylor.hpp"
 
+#include "../src/options.hpp"
+options opts; // dummy, because m2m kernel has a reference to it
+taylor<4, real> factor; // dummy, because m2m kernel has a reference to it
 namespace test_padded_grid_indexing {
 
 void test_padded_grid_indexingother_kernel_directory() {
@@ -21,18 +25,7 @@ void test_padded_grid_indexing() {
     std::cout << "INNER_CELLS: " << octotiger::fmm::INNER_CELLS << std::endl;
     std::cout << "INNER_CELLS_PADDING_DEPTH: " << octotiger::fmm::INNER_CELLS_PADDING_DEPTH
               << std::endl;
-    // std::cout << "OUTER_CELLS_PER_DIRECTION: " << octotiger::fmm::OUTER_CELLS_PER_DIRECTION
-    //           << std::endl;
-    // std::cout << "OUTER_CELLS: " << octotiger::fmm::OUTER_CELLS << std::endl;
-
-    // std::cout << "PADDING_EDGE_SURFACE_SINGLE_DIRECTION: "
-    //           << octotiger::fmm::PADDING_EDGE_SURFACE_SINGLE_DIRECTION << std::endl;
     std::cout << "PADDED_STRIDE: " << octotiger::fmm::PADDED_STRIDE << std::endl;
-    // std::cout << "VERTICES: " << octotiger::fmm::VERTICES << std::endl;
-
-    // std::cout << "EXPANSION_EDGE_COUNT: " << octotiger::fmm::EXPANSION_EDGE_COUNT << std::endl;
-    // std::cout << "EXPANSION_VERTICES_COUNT: " << octotiger::fmm::EXPANSION_VERTICES_COUNT
-    //           << std::endl;
     std::cout << "EXPANSION_COUNT_PADDED: " << octotiger::fmm::EXPANSION_COUNT_PADDED
               << std::endl;
     std::cout << "EXPANSION_COUNT_NOT_PADDED: " << octotiger::fmm::EXPANSION_COUNT_NOT_PADDED

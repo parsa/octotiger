@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cinttypes>
+
 namespace octotiger {
 
 namespace detail {

@@ -330,100 +330,58 @@ public:
 
     template <class Arc>
     void serialize(Arc& arc, const unsigned) {
-        arc & data;
+        arc& data;
     }
 };
 
-namespace hpx { namespace traits
-{
+namespace hpx {
+namespace traits {
     template <int N, class T>
-    struct is_bitwise_serializable<taylor<N, T> >
-      : is_bitwise_serializable<typename std::remove_const<T>::type>
+    struct is_bitwise_serializable<taylor<N, T>>
+        : is_bitwise_serializable<typename std::remove_const<T>::type>
     {};
-}}
+}
+}
 
 #include "space_vector.hpp"
 
 template <int N, class T>
 taylor_consts taylor<N, T>::tc;
 
-constexpr integer to_aa[] = {
-    -1,
-     4,  7,  9
-};
-constexpr integer to_aaa[] = {
-    -1,
-    10, 16, 19
-};
-constexpr integer to_aaaa[] = {
-    -1,
-    20, 30, 34
-};
+constexpr integer to_aa[] = {-1, 4, 7, 9};
+constexpr integer to_aaa[] = {-1, 10, 16, 19};
+constexpr integer to_aaaa[] = {-1, 20, 30, 34};
 
-constexpr integer to_aab[] = {
-    -1,
-    -1, -1, -1,
-    10, 11, 12, 16, 17, 19
-};
-constexpr integer to_abb[] = {
-    -1,
-    -1, -1, -1,
-    10, 13, 15, 16, 18, 19
-};
-constexpr integer to_aaab[] = {
-    -1,
-    -1, -1, -1,
-    20, 21, 22, 30, 31, 34
-};
-constexpr integer to_abbb[] = {
-    -1,
-    -1, -1, -1,
-    20, 26, 29, 30, 33, 34
-};
-constexpr integer to_aabb[] = {
-    -1,
-    -1, -1, -1,
-    20, 23, 25, 30, 32, 34
-};
+constexpr integer to_aab[] = {-1, -1, -1, -1, 10, 11, 12, 16, 17, 19};
+constexpr integer to_abb[] = {-1, -1, -1, -1, 10, 13, 15, 16, 18, 19};
+constexpr integer to_aaab[] = {-1, -1, -1, -1, 20, 21, 22, 30, 31, 34};
+constexpr integer to_abbb[] = {-1, -1, -1, -1, 20, 26, 29, 30, 33, 34};
+constexpr integer to_aabb[] = {-1, -1, -1, -1, 20, 23, 25, 30, 32, 34};
 
 constexpr integer to_aabc[] = {
-    -1,
-    -1, -1, -1,
-    -1, -1, -1, -1, -1, -1,
-    20, 21, 22, 23, 24, 25, 30, 31, 32, 34
-};
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 20, 21, 22, 23, 24, 25, 30, 31, 32, 34};
 constexpr integer to_abbc[] = {
-    -1,
-    -1, -1, -1,
-    -1, -1, -1, -1, -1, -1,
-    20, 21, 22, 26, 27, 29, 30, 31, 33, 34
-};
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 20, 21, 22, 26, 27, 29, 30, 31, 33, 34};
 constexpr integer to_abcc[] = {
-    -1,
-    -1, -1, -1,
-    -1, -1, -1, -1, -1, -1,
-    20, 23, 25, 26, 28, 29, 30, 32, 33, 34
-};
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 20, 23, 25, 26, 28, 29, 30, 32, 33, 34};
 
-constexpr integer to_a[] = {
-   -1,
-    0,  1,  2,
-    0,  0,  0,  1,  1,  2,
-    0,  0,  0,  0,  0,  0,  1,  1,  1,  2
-};
-constexpr integer to_b[] = {
-   -1,
-   -1, -1, -1,
-    0,  1,  2,  1,  2,  2,
-    0,  0,  0,  1,  1,  2,  1,  1,  2,  2
-};
-constexpr integer to_c[] = {
-   -1,
-   -1, -1, -1,
-   -1, -1, -1, -1, -1, -1,
-    0,  1,  2,  1,  2,  2,  1,  2,  2,  2
-};
+constexpr integer to_a[] = {-1, 0, 1, 2, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2};
+constexpr integer to_b[] = {-1, -1, -1, -1, 0, 1, 2, 1, 2, 2, 0, 0, 0, 1, 1, 2, 1, 1, 2, 2};
+constexpr integer to_c[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 1, 2, 2, 1, 2, 2, 2};
 
 #include "taylor_set_basis.hpp"
+
+typedef taylor<4, real> multipole;
+typedef taylor<4, real> expansion;
+
+template <int N, class T = real>
+std::ostream& operator<<(std::ostream& os, const taylor<N, T>& t) {
+    for (size_t i = 0; i < t.size(); i++) {
+        if (i > 0) {
+            std::cout << std::endl;
+        }
+        std::cout << t[i];
+    }
+}
 
 #endif /* TAYLOR_HPP_ */

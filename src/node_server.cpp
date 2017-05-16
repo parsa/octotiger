@@ -482,21 +482,26 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
     //     }
     // }
 
+    //TODO(David): Probably need another special case for root node
     // // TODO(David): Add call for inner boundary and non-boundary here!
     if (!grid_ptr->get_leaf()) {
+        octotiger::fmm::m2m_interactions kernel(*grid_ptr, all_neighbor_interaction_data, type);
+        kernel.compute_interactions(); // includes boundary
+
+        kernel.print_potential_expansions();
+        
+        std::cout << "after constructor" << std::endl;
+
         grid_ptr->compute_interactions(type);
         for (const geo::direction& dir : geo::direction::full_set()) {
             if (!neighbors[dir].empty()) {
-                //
-                // neighbor_gravity_channels[dir].get_future(gcycle).get();
                 neighbor_gravity_type& neighbor_data = all_neighbor_interaction_data[dir];
                 grid_ptr->compute_boundary_interactions(
                     type, neighbor_data.direction, neighbor_data.is_monopole, neighbor_data.data);
             }
         }
 
-        octotiger::fmm::m2m_interactions(*grid_ptr, all_neighbor_interaction_data);
-        std::cout << "after constructor" << std::endl;
+        
     } else {
         grid_ptr->compute_interactions(type);
         for (const geo::direction& dir : geo::direction::full_set()) {

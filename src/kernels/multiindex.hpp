@@ -8,9 +8,9 @@ namespace fmm {
     struct multiindex
     {
     public:
-        size_t x;
-        size_t y;
-        size_t z;
+        int64_t x;
+        int64_t y;
+        int64_t z;
 
         multiindex(size_t x, size_t y, size_t z)
           : x(x)

@@ -162,7 +162,7 @@ void compute_ilist() {
                             }
                             // not in inner sphere, and maybe not in outer sphere?
                             // TODO: Why are the potentials calculated correctly, wouldn't that lead
-                            // to duplicate calcualtions?
+                            // to duplicate calculations?
                             if (theta_c > theta0) {
                                 dp.first = iii0;
                                 dp.second = iii1n;
@@ -201,8 +201,9 @@ void compute_ilist() {
         }
     }
 
-    std::cout << "inner_interactions: " << inner_interactions << " boundary_interactions: " << boundary_interactions << std::endl;
-    
+    std::cout << "inner_interactions: " << inner_interactions
+              << " boundary_interactions: " << boundary_interactions << std::endl;
+
     // non_M2M d
     // M2M n
 

@@ -99,8 +99,6 @@ struct boundary_interaction_type
     space_vector x;
 };
 
-typedef taylor<4, real> multipole;
-typedef taylor<4, real> expansion;
 typedef std::pair<std::vector<multipole>, std::vector<space_vector>> multipole_pass_type;
 typedef std::pair<std::vector<expansion>, std::vector<space_vector>> expansion_pass_type;
 
