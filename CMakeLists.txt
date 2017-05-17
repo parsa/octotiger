@@ -119,6 +119,7 @@ set(source_files ${source_files}
     src/kernels/multiindex.cpp
     src/kernels/calculate_stencil.cpp
     src/kernels/m2m_kernel.cpp
+    src/kernels/compare_interaction_lists.cpp
 )
 
 set(header_files
@@ -149,6 +150,7 @@ set(header_files
     src/kernels/multiindex.hpp
     src/kernels/calculate_stencil.hpp
     src/kernels/m2m_kernel.hpp
+    src/kernels/compare_interaction_lists.hpp
 )
 
 add_hpx_executable(
@@ -163,33 +165,35 @@ add_hpx_executable(
 )
 
 
-# Octotiger executable
-set(source_files ${source_files_unittest}
-  unittests/tests_interactions_kernel.cpp
-  src/kernels/m2m_interactions.cpp
-  src/kernels/multiindex.cpp
-  src/kernels/calculate_stencil.cpp
-  src/kernels/m2m_kernel.cpp
-  src/taylor.cpp
-)
 
-set(header_files_unittests
-  src/kernels/interaction_constants.hpp
-  src/kernels/m2m_interactions.hpp
-  src/kernels/multiindex.hpp
-  src/kernels/calculate_stencil.hpp
-  src/kernels/m2m_kernel.hpp
-  src/taylor.hpp
-  src/taylor_set_basis.hpp
-)
+# set(source_files ${source_files_unittest}
+#   unittests/tests_interactions_kernel.cpp
+#   src/kernels/m2m_interactions.cpp
+#   src/kernels/multiindex.cpp
+#   src/kernels/calculate_stencil.cpp
+#   src/kernels/m2m_kernel.cpp
+#   src/kernels/compare_interaction_lists.cpp
+#   src/taylor.cpp
+# )
 
-add_hpx_executable(
-  octotiger_unittests
-  DEPENDENCIES
-    ${dependencies}
-  SOURCES
-    ${source_files}
-  HEADERS
-    ${header_files}
-  FOLDER  "Octotiger"
-)
+# set(header_files_unittests
+#   src/kernels/interaction_constants.hpp
+#   src/kernels/m2m_interactions.hpp
+#   src/kernels/multiindex.hpp
+#   src/kernels/calculate_stencil.hpp
+#   src/kernels/m2m_kernel.hpp
+#   src/taylor.hpp
+#   src/taylor_set_basis.hpp
+#   src/kernels/compare_interaction_lists.hpp
+# )
+
+# add_hpx_executable(
+#   octotiger_unittests
+#   DEPENDENCIES
+#     ${dependencies}
+#   SOURCES
+#     ${source_files}
+#   HEADERS
+#     ${header_files}
+#   FOLDER  "Octotiger"
+# )

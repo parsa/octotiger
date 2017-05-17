@@ -1,7 +1,8 @@
 #include "defs.hpp"
-#include "grid.hpp"
+#include "interaction_types.hpp"
 #include "options.hpp"
 #include "simd.hpp"
+#include "geometry.hpp"
 
 // non-root and non-leaf node (David)
 extern std::vector<interaction_type> ilist_n;
@@ -62,13 +63,14 @@ geo::direction get_neighbor_dir(const integer i, const integer j, const integer 
     return d;
 }
 
+// temporaries that store the boundary interactions in their non-converted form (see below)
+std::array<std::vector<interaction_type>, geo::direction::count()> ilist_n0_bnd;
+std::array<std::vector<interaction_type>, geo::direction::count()> ilist_d0_bnd;
+
 void compute_ilist() {
     // temporaries for insertion, why are there two of them?
     interaction_type np;    // M2M
     interaction_type dp;    // non-M2M
-    // temporaries that store the boundary interactions in their non-converted form (see below)
-    std::array<std::vector<interaction_type>, geo::direction::count()> ilist_n0_bnd;
-    std::array<std::vector<interaction_type>, geo::direction::count()> ilist_d0_bnd;
 
     uint64_t inner_interactions = 0;
     uint64_t boundary_interactions = 0;

@@ -13,6 +13,7 @@
 #include "options.hpp"
 #include "problem.hpp"
 #include "set_locality_data.hpp"
+#include "kernels/compare_interaction_lists.hpp"
 #include "taylor.hpp"
 
 #include <array>
@@ -605,16 +606,10 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
         ////////////////////////////////////////// end input comparisons /////////////////////////////////////////
 
-        // std::cout << "center_of_masses:" << std::endl;
-        // kernel.print_center_of_masses();
+        interactor.compute_interactions();    // includes boundary        
 
-        interactor.compute_interactions();    // includes boundary
-
-        // std::cout << "potential_expansions:" << std::endl;
-        // kernel.print_potential_expansions();
-
-        // std::cout << "angular_corrections:" << std::endl;
-        // kernel.print_angular_corrections();
+        // kernel call generated debugging ilist, compare it now
+        compare_interaction_lists();
 
         std::cout << "after constructor" << std::endl;
 
@@ -627,7 +622,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             }
         }
 
-        ////////////////////////////////////////// start output comparisons /////////////////////////////////////////
+        ///////////////////////////////////////// start output comparisons /////////////////////////////////////////
         {
             std::vector<expansion>& potential_expansions = interactor.get_potential_expansions();
             std::vector<expansion>& L = grid_ptr->get_L();
@@ -736,7 +731,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             } else {
                 std::cout << "comparison success!" << std::endl;
             }
-        }        
+        }
         ////////////////////////////////////////// end output comparisons /////////////////////////////////////////
 
     } else {

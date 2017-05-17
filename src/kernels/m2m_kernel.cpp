@@ -1,11 +1,15 @@
 #include "m2m_kernel.hpp"
 
+#include "defs.hpp"
 #include "grid_flattened_indices.hpp"
+#include "interaction_types.hpp"
 
 #include <array>
 #include <functional>
 
 extern taylor<4, real> factor;
+
+std::vector<interaction_type> ilist_debugging;
 
 namespace octotiger {
 namespace fmm {
@@ -19,6 +23,19 @@ namespace fmm {
             // TODO: need SoA for this access if vectorized
             X[d] = center_of_masses[cell_flat_index][d];
         }
+
+        const integer interaction_partner_flat_index_ilist_debugging = gindex(
+            (interaction_partner_index.x + INX) % INX, (interaction_partner_index.y + INX) % INX,
+            (interaction_partner_index.z + INX) % INX);
+
+        interaction_type current_interaction;
+        current_interaction.first = cell_flat_index_unpadded;
+        current_interaction.second = interaction_partner_flat_index_ilist_debugging;
+        current_interaction.four = {0};
+        current_interaction.x[0] = interaction_partner_index.x;
+        current_interaction.x[1] = interaction_partner_index.y;
+        current_interaction.x[2] = interaction_partner_index.z;
+        ilist_debugging.push_back(current_interaction);
 
         std::cout << "X: ";
         for (size_t d = 0; d < NDIM; d++) {
@@ -214,10 +231,7 @@ namespace fmm {
 
     void m2m_kernel::apply_stencil_element(multiindex& stencil_element) {
         // execute kernel for individual interactions for every inner cell
-        // auto bound_single_interaction = std::bind(detail::single_interaction, local_expansions,
-        //     center_of_masses, potential_expansions, angular_corrections, type,
-        //     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-        //     std::placeholders::_4, std::placeholders::_5, std::placeholders::_6);
+        // use this object as a functor for the iteration
         iterate_inner_cells_padded_stencil(stencil_element, *this);
 
         std::cout << "potential_expansions.size(): " << potential_expansions.size() << std::endl;
