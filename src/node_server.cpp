@@ -8,6 +8,7 @@
 #include "node_server.hpp"
 #include "defs.hpp"
 #include "future.hpp"
+#include "kernels/interactions_iterators.hpp"
 #include "kernels/m2m_interactions.hpp"
 #include "options.hpp"
 #include "problem.hpp"
@@ -485,11 +486,132 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
     // TODO(David): Probably need another special case for root node
     // // TODO(David): Add call for inner boundary and non-boundary here!
     if (!grid_ptr->get_leaf()) {
-        octotiger::fmm::m2m_interactions kernel(*grid_ptr, all_neighbor_interaction_data, type);
-        kernel.compute_interactions();    // includes boundary
+        octotiger::fmm::m2m_interactions interactor(*grid_ptr, all_neighbor_interaction_data, type);
 
-        std::cout << "potential_expansions:" << std::endl;
-        kernel.print_potential_expansions();
+        ////////////////////////////////////////// start input comparisons /////////////////////////////////////////
+        {
+            std::vector<expansion>& local_expansions = interactor.get_local_expansions();
+            std::vector<multipole>& M = grid_ptr->get_M();
+
+            std::cout << "comparing M, local_expansions:" << std::endl;
+            bool all_ok = octotiger::fmm::compare_padded_with_non_padded(
+                [M, local_expansions](const octotiger::fmm::multiindex& i, const size_t flat_index,
+                    const octotiger::fmm::multiindex& i_unpadded,
+                    const size_t flat_index_unpadded) -> bool {
+                    const expansion& ref = M[flat_index_unpadded];
+                    const expansion& mine = local_expansions[flat_index];
+                    if (ref.size() != mine.size()) {
+                        std::cout << "size of expansion doesn't match" << std::endl;
+                        return false;
+                    }
+                    for (size_t i = 0; i < mine.size(); i++) {
+                        if (mine[i] != ref[i]) {
+                            std::cout << "error: index padded: " << i << ", mine[" << i
+                                      << "] != ref[" << i << "] <=> " << mine[i] << " != " << ref[i]
+                                      << std::endl;
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            if (!all_ok) {
+                std::cout << "local_expansions:" << std::endl;
+                interactor.print_local_expansions();
+
+                std::cout << "local_expansions (reference):" << std::endl;
+                for (size_t i0 = 0; i0 < INX; i0++) {
+                    for (size_t i1 = 0; i1 < INX; i1++) {
+                        for (size_t i2 = 0; i2 < INX; i2++) {
+                            octotiger::fmm::multiindex i(i0, i1, i2);
+                            size_t flat_index = i0 * INX * INX + i1 * INX + i2;
+                            if (i.y % INX == 0 && i.z % INX == 0) {
+                                std::cout << "-------- next layer: " << i.x << "---------"
+                                          << std::endl;
+                            }
+                            if (i.z % INX != 0) {
+                                std::cout << ", ";
+                            }
+                            std::cout << " (" << i << ") = " << M[flat_index];
+                            if ((i.z + 1) % INX == 0) {
+                                std::cout << std::endl;
+                            }
+                        }
+                    }
+                }
+                std::cout << "error: comparison failed!" << std::endl;
+                exit(1);
+            } else {
+                std::cout << "comparison success!" << std::endl;
+            }
+        }
+
+        {
+            std::vector<space_vector>& center_of_masses = interactor.get_center_of_masses();
+            std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr =
+                grid_ptr->get_com_ptr();
+            std::vector<space_vector>& com0 = *(com_ptr[0]);
+
+            std::cout << "comparing com0, center_of_masses:" << std::endl;
+            bool all_ok = octotiger::fmm::compare_padded_with_non_padded(
+                [com0, center_of_masses](const octotiger::fmm::multiindex& i,
+                    const size_t flat_index, const octotiger::fmm::multiindex& i_unpadded,
+                    const size_t flat_index_unpadded) -> bool {
+                    const space_vector& ref = com0[flat_index_unpadded];
+                    const space_vector& mine = center_of_masses[flat_index];
+                    if (ref.size() != mine.size()) {
+                        std::cout << "size of expansion doesn't match" << std::endl;
+                        return false;
+                    }
+                    for (size_t i = 0; i < mine.size(); i++) {
+                        if (mine[i] != ref[i]) {
+                            std::cout << "error: index padded: " << i << ",  mine[" << i
+                                      << "] != ref[" << i << "] <=> " << mine[i] << " != " << ref[i]
+                                      << std::endl;
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            if (!all_ok) {
+                std::cout << "center_of_masses:" << std::endl;
+                interactor.print_center_of_masses();
+
+                std::cout << "com0 (reference):" << std::endl;
+                for (size_t i0 = 0; i0 < INX; i0++) {
+                    for (size_t i1 = 0; i1 < INX; i1++) {
+                        for (size_t i2 = 0; i2 < INX; i2++) {
+                            octotiger::fmm::multiindex i(i0, i1, i2);
+                            size_t flat_index = i0 * INX * INX + i1 * INX + i2;
+                            if (i.y % INX == 0 && i.z % INX == 0) {
+                                std::cout << "-------- next layer: " << i.x << "---------"
+                                          << std::endl;
+                            }
+                            if (i.z % INX != 0) {
+                                std::cout << ", ";
+                            }
+                            std::cout << " (" << i << ") = " << com0[flat_index];
+                            if ((i.z + 1) % INX == 0) {
+                                std::cout << std::endl;
+                            }
+                        }
+                    }
+                }
+                std::cout << "error: comparison failed!" << std::endl;
+                exit(1);
+            } else {
+                std::cout << "comparison success!" << std::endl;
+            }
+        }
+
+        ////////////////////////////////////////// end input comparisons /////////////////////////////////////////
+
+        // std::cout << "center_of_masses:" << std::endl;
+        // kernel.print_center_of_masses();
+
+        interactor.compute_interactions();    // includes boundary
+
+        // std::cout << "potential_expansions:" << std::endl;
+        // kernel.print_potential_expansions();
 
         // std::cout << "angular_corrections:" << std::endl;
         // kernel.print_angular_corrections();
@@ -505,28 +627,117 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             }
         }
 
-        std::vector<expansion>& L = grid_ptr->get_L();
-	std::cout << "potential_expansions (reference):" << std::endl;
-        for (size_t i0 = 0; i0 < INX; i0++) {
-            for (size_t i1 = 0; i1 < INX; i1++) {
-                for (size_t i2 = 0; i2 < INX; i2++) {
-		    octotiger::fmm::multiindex i(i0, i1, i2);
-                    size_t flat_index = i0 * INX * INX + i1 * INX + i2;
-                    if (i.y % INX == 0 &&
-                        i.z % INX == 0) {
-                        std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
+        ////////////////////////////////////////// start output comparisons /////////////////////////////////////////
+        {
+            std::vector<expansion>& potential_expansions = interactor.get_potential_expansions();
+            std::vector<expansion>& L = grid_ptr->get_L();
+
+            std::cout << "comparing L, potential_expansions:" << std::endl;
+            bool all_ok = octotiger::fmm::compare_non_padded_with_non_padded(
+                [L, potential_expansions](const octotiger::fmm::multiindex& m_unpadded,
+                    const size_t flat_index_unpadded) -> bool {
+                    const expansion& ref = L[flat_index_unpadded];
+                    const expansion& mine = potential_expansions[flat_index_unpadded];
+                    if (ref.size() != mine.size()) {
+                        std::cout << "size of expansion doesn't match" << std::endl;
+                        return false;
                     }
-                    // std::cout << this->potential_expansions[flat_index];
-                    if (i.z % INX != 0) {
-                        std::cout << ", ";
+                    for (size_t i = 0; i < mine.size(); i++) {
+                        if (mine[i] != ref[i]) {
+                            std::cout << "error: index: " << m_unpadded << ", mine[" << i
+                                      << "] != ref[" << i << "] <=> " << mine[i] << " != " << ref[i]
+                                      << std::endl;
+                            return false;
+                        }
                     }
-                    std::cout << " (" << i << ") =[0] " << L[flat_index][0];
-                    if ((i.z + 1) % INX == 0) {
-                        std::cout << std::endl;
+                    return true;
+                });
+            if (!all_ok) {
+                std::cout << "potential_expansions:" << std::endl;
+                interactor.print_potential_expansions();
+
+                std::cout << "L (reference):" << std::endl;
+                for (size_t i0 = 0; i0 < INX; i0++) {
+                    for (size_t i1 = 0; i1 < INX; i1++) {
+                        for (size_t i2 = 0; i2 < INX; i2++) {
+                            octotiger::fmm::multiindex i(i0, i1, i2);
+                            size_t flat_index = i0 * INX * INX + i1 * INX + i2;
+                            if (i.y % INX == 0 && i.z % INX == 0) {
+                                std::cout << "-------- next layer: " << i.x << "---------"
+                                          << std::endl;
+                            }
+                            if (i.z % INX != 0) {
+                                std::cout << ", ";
+                            }
+                            std::cout << " (" << i << ") = " << L[flat_index];
+                            if ((i.z + 1) % INX == 0) {
+                                std::cout << std::endl;
+                            }
+                        }
                     }
                 }
+                std::cout << "error: comparison failed!" << std::endl;
+                exit(1);
+            } else {
+                std::cout << "comparison success!" << std::endl;
             }
         }
+
+        {
+            std::vector<space_vector>& angular_corrections = interactor.get_angular_corrections();
+            std::vector<space_vector>& L_c = grid_ptr->get_L_c();
+
+            std::cout << "comparing L_c, angular_corrections:" << std::endl;
+            bool all_ok = octotiger::fmm::compare_non_padded_with_non_padded(
+                [L_c, angular_corrections](const octotiger::fmm::multiindex& m_unpadded,
+                    const size_t flat_index_unpadded) -> bool {
+                    const space_vector& ref = L_c[flat_index_unpadded];
+                    const space_vector& mine = angular_corrections[flat_index_unpadded];
+                    if (ref.size() != mine.size()) {
+                        std::cout << "size of expansion doesn't match" << std::endl;
+                        return false;
+                    }
+                    for (size_t i = 0; i < mine.size(); i++) {
+                        if (mine[i] != ref[i]) {
+                            std::cout << "error: index: " << m_unpadded << ", mine[" << i
+                                      << "] != ref[" << i << "] <=> " << mine[i] << " != " << ref[i]
+                                      << std::endl;
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            if (!all_ok) {
+                std::cout << "angular_corrections:" << std::endl;
+                interactor.print_angular_corrections();
+
+                std::cout << "L_c (reference):" << std::endl;
+                for (size_t i0 = 0; i0 < INX; i0++) {
+                    for (size_t i1 = 0; i1 < INX; i1++) {
+                        for (size_t i2 = 0; i2 < INX; i2++) {
+                            octotiger::fmm::multiindex i(i0, i1, i2);
+                            size_t flat_index = i0 * INX * INX + i1 * INX + i2;
+                            if (i.y % INX == 0 && i.z % INX == 0) {
+                                std::cout << "-------- next layer: " << i.x << "---------"
+                                          << std::endl;
+                            }
+                            if (i.z % INX != 0) {
+                                std::cout << ", ";
+                            }
+                            std::cout << " (" << i << ") = " << L_c[flat_index];
+                            if ((i.z + 1) % INX == 0) {
+                                std::cout << std::endl;
+                            }
+                        }
+                    }
+                }
+                std::cout << "error: comparison failed!" << std::endl;
+                exit(1);
+            } else {
+                std::cout << "comparison success!" << std::endl;
+            }
+        }        
+        ////////////////////////////////////////// end output comparisons /////////////////////////////////////////
 
     } else {
         grid_ptr->compute_interactions(type);

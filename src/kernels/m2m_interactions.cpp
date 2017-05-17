@@ -83,6 +83,7 @@ namespace fmm {
         m2m_kernel kernel(
             local_expansions, center_of_masses, potential_expansions, angular_corrections, type);
         for (multiindex& m : stencil) {
+            std::cout << "next stencil: " << m << std::endl;
             kernel.apply_stencil_element(m);
         }
     }
@@ -94,6 +95,10 @@ namespace fmm {
         });
     }
 
+    std::vector<expansion>& m2m_interactions::get_local_expansions() {
+        return local_expansions;
+    }
+
     void m2m_interactions::get_converted_center_of_masses(
         std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr) {
         std::vector<space_vector>& com0 = *(com_ptr[0]);
@@ -103,10 +108,18 @@ namespace fmm {
         });
     }
 
+    std::vector<space_vector>& m2m_interactions::get_center_of_masses() {
+        return center_of_masses;
+    }
+
     void m2m_interactions::get_converted_potential_expansions(std::vector<expansion>& L) {
         iterate_inner_cells_not_padded([this, &L](multiindex& i, size_t flat_index) {
             L[flat_index] = potential_expansions[flat_index];
         });
+    }
+
+    std::vector<expansion>& m2m_interactions::get_potential_expansions() {
+        return potential_expansions;
     }
 
     void m2m_interactions::get_converted_angular_corrections(std::vector<space_vector>& L_c) {
@@ -115,37 +128,37 @@ namespace fmm {
         });
     }
 
+    std::vector<space_vector>& m2m_interactions::get_angular_corrections() {
+        return angular_corrections;
+    }
+
     void m2m_interactions::print_potential_expansions() {
-        iterate_inner_cells_not_padded([this](multiindex& i, size_t flat_index) {
-            if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
-                std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
-            }
-            // std::cout << this->potential_expansions[flat_index];
-	    if (i.z % INNER_CELLS_PER_DIRECTION != 0) {
-		std::cout << ", ";
-	    }
-	    std::cout << " (" << i << ") =[0] " << this->potential_expansions[flat_index][0];
-            if ((i.z + 1) % INNER_CELLS_PER_DIRECTION == 0) {
-                std::cout << std::endl;
-            }
+        print_layered_not_padded(true, [this](const multiindex& i, const size_t flat_index) {
+            std::cout << " (" << i << ") =[0] " << this->potential_expansions[flat_index][0];
         });
     }
 
     void m2m_interactions::print_angular_corrections() {
-        iterate_inner_cells_not_padded([this](multiindex& i, size_t flat_index) {
-            if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
-                std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
-            }
-            // std::cout << this->potential_expansions[flat_index];
-	    if (i.z % INNER_CELLS_PER_DIRECTION != 0) {
-		std::cout << ", ";
-	    }
-	    std::cout << " (" << i << ") = " << this->angular_corrections[flat_index];
-            if ((i.z + 1) % INNER_CELLS_PER_DIRECTION == 0) {
-                std::cout << std::endl;
-            }
+        print_layered_not_padded(true, [this](const multiindex& i, const size_t flat_index) {
+            std::cout << " (" << i << ") =[0] " << this->angular_corrections[flat_index];
         });
-	}
+    }
+
+    void m2m_interactions::print_local_expansions() {
+        print_layered_padded(
+            true, [this](const multiindex& i, const size_t flat_index, const multiindex& i_unpadded,
+                      const size_t flat_index_unpadded) {
+                std::cout << " " << this->local_expansions[flat_index];
+            });
+    }
+
+    void m2m_interactions::print_center_of_masses() {
+        print_layered_padded(
+            true, [this](const multiindex& i, const size_t flat_index, const multiindex& i_unpadded,
+                      const size_t flat_index_unpadded) {
+                std::cout << this->center_of_masses[flat_index];
+            });
+    }
 
 }    // namespace fmm
 }    // namespace octotiger

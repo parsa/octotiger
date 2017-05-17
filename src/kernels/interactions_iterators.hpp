@@ -20,7 +20,7 @@ namespace fmm {
 
     // meant to iterate the input data structure
     template <typename F>
-    void iterate_inner_cells_padded(F f) {
+    void iterate_inner_cells_padded(const F& f) {
         for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
             for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
                 for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
@@ -38,7 +38,7 @@ namespace fmm {
 
     // meant to iterate the input data structure
     template <typename F>
-    void iterate_inner_cells_padding(const geo::direction& dir, F f) {
+    void iterate_inner_cells_padding(const geo::direction& dir, const F& f) {
         // TODO: implementation not finished
         for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
             for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
@@ -59,7 +59,7 @@ namespace fmm {
 
     // meant to iterate the output data structure
     template <typename F>
-    void iterate_inner_cells_not_padded(F f) {
+    void iterate_inner_cells_not_padded(const F& f) {
         for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
             for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
                 for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
@@ -69,6 +69,96 @@ namespace fmm {
                 }
             }
         }
+    }
+
+    template <typename component_printer>
+    void print_layered_not_padded(bool print_index, const component_printer& printer) {
+        iterate_inner_cells_not_padded([&printer, print_index](multiindex& i, size_t flat_index) {
+            if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
+                std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
+            }
+            // std::cout << this->potential_expansions[flat_index];
+            if (i.z % INNER_CELLS_PER_DIRECTION != 0) {
+                std::cout << ", ";
+            }
+            if (print_index) {
+                std::cout << " (" << i << ") = ";
+            }
+            printer(i, flat_index);
+            if ((i.z + 1) % INNER_CELLS_PER_DIRECTION == 0) {
+                std::cout << std::endl;
+            }
+        });
+    }
+
+    template <typename component_printer>
+    void print_layered_padded(bool print_index, const component_printer& printer) {
+        iterate_inner_cells_padded(
+            [&printer, print_index](const multiindex& i, const size_t flat_index,
+                const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+                if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
+                    std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
+                }
+                // std::cout << this->potential_expansions[flat_index];
+                if (i.z % INNER_CELLS_PER_DIRECTION != 0) {
+                    std::cout << ", ";
+                }
+                if (print_index) {
+                    std::cout << " (" << i << ") = ";
+                }
+                printer(i, flat_index, i_unpadded, flat_index_unpadded);
+                if ((i.z + 1) % INNER_CELLS_PER_DIRECTION == 0) {
+                    std::cout << std::endl;
+                }
+            });
+    }
+
+    template <typename component_printer>
+    void print_layered_padding(geo::direction& dir, bool print_index, const component_printer& printer) {
+        iterate_inner_cells_padding(
+            dir, [&printer, print_index](const multiindex& i, const size_t flat_index,
+                     const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+                if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
+                    std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
+                }
+                // std::cout << this->potential_expansions[flat_index];
+                if (i.z % INNER_CELLS_PER_DIRECTION != 0) {
+                    std::cout << ", ";
+                }
+                if (print_index) {
+                    std::cout << " (" << i << ") = ";
+                }
+                printer(i, flat_index, i_unpadded, flat_index_unpadded);
+                if ((i.z + 1) % INNER_CELLS_PER_DIRECTION == 0) {
+                    std::cout << std::endl;
+                }
+            });
+    }
+
+    template <typename compare_functional>
+    bool compare_padded_with_non_padded(const compare_functional& c) {
+        bool all_ok = true;
+        iterate_inner_cells_padded([&c, &all_ok](const multiindex& i, const size_t flat_index,
+            const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+            bool ok = c(i, flat_index, i_unpadded, flat_index_unpadded);
+            if (all_ok) {
+                all_ok = ok;
+            }
+        });
+        return all_ok;
+    }
+
+    template <typename compare_functional>
+    bool compare_non_padded_with_non_padded(const compare_functional& c) {
+        bool all_ok = true;
+        iterate_inner_cells_not_padded(
+            [&c, &all_ok](const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+                bool ok = c(i_unpadded, flat_index_unpadded);
+                if (all_ok) {
+                    all_ok = ok;
+                }
+            });
+        return all_ok;
     }
 
 }    // namespace fmm

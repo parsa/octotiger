@@ -27,7 +27,7 @@ namespace fmm {
 
         //
         template <typename F>
-        void iterate_inner_cells_padded_stencil(multiindex& stencil_element, F f) {
+        void iterate_inner_cells_padded_stencil(multiindex& stencil_element, F &f) {
             for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
                 for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
                     for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
@@ -42,6 +42,8 @@ namespace fmm {
                             cell_index.y + stencil_element.y, cell_index.z + stencil_element.z);
                         const size_t interaction_flat_partner_index =
                             to_inner_flat_index_padded(interaction_partner_index);
+                        std::cout << "cur: " << cell_index
+                                  << " partner: " << interaction_partner_index << std::endl;
                         f(cell_index, cell_flat_index, cell_index_unpadded,
                             cell_flat_index_unpadded, interaction_partner_index,
                             interaction_flat_partner_index);
@@ -50,11 +52,22 @@ namespace fmm {
             }
         }
 
+        void operator()(const multiindex& cell_index, const size_t cell_flat_index,
+            const multiindex& cell_index_unpadded, const size_t cell_flat_index_unpadded,
+            const multiindex& interaction_partner_index,
+            const size_t interaction_partner_flat_index);
+
     public:
         m2m_kernel(std::vector<expansion>& local_expansions,
             std::vector<space_vector>& center_of_masses,
             std::vector<expansion>& potential_expansions,
             std::vector<space_vector>& angular_corrections, gsolve_type type);
+
+        m2m_kernel(m2m_kernel &other) = delete;
+        
+        m2m_kernel(const m2m_kernel &other) = delete;
+
+        m2m_kernel operator =(const m2m_kernel &other) = delete;
 
         void apply_stencil_element(multiindex& m);
     };
