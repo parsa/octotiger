@@ -7,6 +7,16 @@
 namespace octotiger {
 namespace fmm {
 
+    inline multiindex inner_flat_index_to_multiindex(size_t flat_index) {
+        size_t x = flat_index / (INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION);
+        flat_index %= (INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION);
+        size_t y = flat_index / INNER_CELLS_PER_DIRECTION;
+        flat_index %= INNER_CELLS_PER_DIRECTION;
+        size_t z = flat_index;
+        multiindex m(x, y, z);
+        return m;
+    }
+
     // stride for multiple outer cells (and/or padding)
     inline size_t to_inner_flat_index_padded(const multiindex& m) {
         return m.x * PADDED_STRIDE * PADDED_STRIDE + m.y * PADDED_STRIDE + m.z;
@@ -114,7 +124,8 @@ namespace fmm {
     }
 
     template <typename component_printer>
-    void print_layered_padding(geo::direction& dir, bool print_index, const component_printer& printer) {
+    void print_layered_padding(
+        geo::direction& dir, bool print_index, const component_printer& printer) {
         iterate_inner_cells_padding(
             dir, [&printer, print_index](const multiindex& i, const size_t flat_index,
                      const multiindex& i_unpadded, const size_t flat_index_unpadded) {
