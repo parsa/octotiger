@@ -42,8 +42,8 @@ namespace fmm {
                             cell_index.y + stencil_element.y, cell_index.z + stencil_element.z);
                         const size_t interaction_flat_partner_index =
                             to_inner_flat_index_padded(interaction_partner_index);
-                        std::cout << "cur: " << cell_index
-                                  << " partner: " << interaction_partner_index << std::endl;
+                        // std::cout << "cur: " << cell_index
+                        //           << " partner: " << interaction_partner_index << std::endl;
                         f(cell_index, cell_flat_index, cell_index_unpadded,
                             cell_flat_index_unpadded, interaction_partner_index,
                             interaction_flat_partner_index);

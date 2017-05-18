@@ -1,8 +1,8 @@
 #include "defs.hpp"
+#include "geometry.hpp"
 #include "interaction_types.hpp"
 #include "options.hpp"
 #include "simd.hpp"
-#include "geometry.hpp"
 
 // non-root and non-leaf node (David)
 extern std::vector<interaction_type> ilist_n;
@@ -143,6 +143,43 @@ void compute_ilist() {
                             // linear index of interaction partner
                             // (only used for saving work using the reflective property)
                             const integer iii1 = gindex(j0, j1, j2);
+
+                            if (i0 == 0 && i1 == 0 && i2 == 1) {
+                                if (j0 == 4 && j1 == 4 && j2 == 0) {
+                                    std::cout << "in compute_ilist: " << std::endl;
+                                    std::cout << "in 0,0,1 -> 4,4,0, diff: 4,4,-1" << std::endl;
+                                    std::cout << "(i0, i1, i2) = (" << i0 << ", " << i1 << ", "
+                                              << i2 << ")" << std::endl;
+                                    std::cout << "(j0, j1, j2) = (" << j0 << ", " << j1 << ", "
+                                              << j2 << ")" << std::endl;
+                                    std::cout << "(i0_c, i1_c, i2_c) = (" << i0_c << ", " << i1_c
+                                              << ", " << i2_c << ")" << std::endl;
+                                    std::cout << "(j0_c, j1_c, j2_c) = (" << j0_c << ", " << j1_c
+                                              << ", " << j2_c << ")" << std::endl;
+                                    std::cout << "theta_f: " << theta_f << std::endl;
+                                    std::cout << "theta_c: " << theta_c << std::endl;
+                                    std::cout << "theta0: " << theta0 << std::endl;
+                                }
+                            }
+                            if (i0 == 0 && i1 == 0 && i2 == 0) {
+                                if (j0 == 4 && j1 == 4 && j2 == -1) {
+                                    std::cout << "in compute_ilist: " << std::endl;
+                                    std::cout << "in 0,0,0 -> 4,4,-1, diff: 4,4,-1" << std::endl;
+                                    std::cout << "(i0, i1, i2) = (" << i0 << ", " << i1 << ", "
+                                              << i2 << ")" << std::endl;
+                                    std::cout << "(j0, j1, j2) = (" << j0 << ", " << j1 << ", "
+                                              << j2 << ")" << std::endl;
+                                    std::cout << "(i0_c, i1_c, i2_c) = (" << i0_c << ", " << i1_c
+                                              << ", " << i2_c << ")" << std::endl;
+                                    std::cout << "(j0_c, j1_c, j2_c) = (" << j0_c << ", " << j1_c
+                                              << ", " << j2_c << ")" << std::endl;
+                                    std::cout << "theta_f: " << theta_f << std::endl;
+                                    std::cout << "theta_c: " << theta_c << std::endl;
+                                    std::cout << "theta0: " << theta0 << std::endl;
+                                }
+                            }
+                            
+
                             // not in inner sphere (theta_c > theta0), but in outer sphere
                             if (theta_c > theta0 && theta_f <= theta0) {
                                 np.first = iii0;
@@ -163,7 +200,8 @@ void compute_ilist() {
                                 }
                             }
                             // not in inner sphere, and maybe not in outer sphere?
-                            // TODO: Why are the potentials calculated correctly, wouldn't that lead
+                            // TODO: Why are the potentials calculated correctly, wouldn't that
+                            // lead
                             // to duplicate calculations?
                             if (theta_c > theta0) {
                                 dp.first = iii0;
@@ -183,7 +221,8 @@ void compute_ilist() {
                                 }
                             }
                             // in outer sphere, and maybe not in inner sphere
-                            // TODO: Why are the potentials calculated correctly, wouldn't that lead
+                            // TODO: Why are the potentials calculated correctly, wouldn't that
+                            // lead
                             // to duplicate calcualtions?
                             if (theta_f <= theta0) {
                                 np.first = iii0;

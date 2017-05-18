@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <cmath>
 
 namespace octotiger {
 namespace fmm {
@@ -16,6 +17,10 @@ namespace fmm {
           : x(x)
           , y(y)
           , z(z) {}
+
+        inline const double length() const {
+            return sqrt(static_cast<double>(x * x + y * y + z * z));
+        }
     };
 
 }    // namespace fmm

@@ -88,6 +88,21 @@ namespace fmm {
                     const real theta_c =
                         detail::reciprocal_distance(i0_c, i1_c, i2_c, j0_c, j1_c, j2_c);
 
+                    if (j0 == 4 && j1 == 4 && j2 == -1) {
+                        std::cout << "in 4,4,-1" << std::endl;
+                        std::cout << "(i0, i1, i2) = (" << i0 << ", " << i1 << ", " << i2 << ")"
+                                  << std::endl;
+                        std::cout << "(j0, j1, j2) = (" << j0 << ", " << j1 << ", " << j2 << ")"
+                                  << std::endl;
+                        std::cout << "(i0_c, i1_c, i2_c) = (" << i0_c << ", " << i1_c << ", "
+                                  << i2_c << ")" << std::endl;
+                        std::cout << "(j0_c, j1_c, j2_c) = (" << j0_c << ", " << j1_c << ", "
+                                  << j2_c << ")" << std::endl;
+                        std::cout << "theta_f: " << theta_f << std::endl;
+                        std::cout << "theta_c: " << theta_c << std::endl;
+                        std::cout << "theta0: " << theta0 << std::endl;
+                    }
+
                     // not in inner sphere (theta_c > theta0), but in outer sphere
                     if (theta_c > theta0 && theta_f <= theta0) {
                         stencil.emplace_back(j0, j1, j2);

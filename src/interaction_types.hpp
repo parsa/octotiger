@@ -1,9 +1,48 @@
 #pragma once
 
-#include "space_vector.hpp"
 #include "simd.hpp"
+#include "space_vector.hpp"
+#include "geometry.hpp"
+#include "taylor.hpp"
 
 #include <vector>
+
+typedef std::pair<std::vector<multipole>, std::vector<space_vector>> multipole_pass_type;
+typedef std::pair<std::vector<expansion>, std::vector<space_vector>> expansion_pass_type;
+
+struct gravity_boundary_type
+{
+    std::shared_ptr<std::vector<multipole>> M;
+    std::shared_ptr<std::vector<real>> m;
+    std::shared_ptr<std::vector<space_vector>> x;
+    bool is_local;
+    gravity_boundary_type()
+      : M(nullptr)
+      , m(nullptr)
+      , x(nullptr) {}
+    void allocate() {
+        if (M == nullptr) {
+            M = std::make_shared<std::vector<multipole>>();
+            m = std::make_shared<std::vector<real>>();
+            x = std::make_shared<std::vector<space_vector>>();
+        }
+    }
+    template <class Archive>
+    void serialize(Archive& arc, unsigned) {
+        allocate();
+        arc& M;
+        arc& m;
+        arc& x;
+        arc& is_local;
+    }
+};
+
+struct neighbor_gravity_type
+{
+    gravity_boundary_type data;
+    bool is_monopole;
+    geo::direction direction;
+};
 
 struct interaction_type
 {

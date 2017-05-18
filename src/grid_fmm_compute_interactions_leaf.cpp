@@ -17,7 +17,6 @@ extern taylor<4, real> factor;
 extern options opts;
 
 void grid::compute_interactions_leaf(gsolve_type type) {
-
     // calculating the contribution of all the inner cells
     // calculating the interaction
 
@@ -29,7 +28,7 @@ void grid::compute_interactions_leaf(gsolve_type type) {
     std::fill(std::begin(L), std::end(L), ZERO);
     if (opts.ang_con) {
         std::fill(std::begin(L_c), std::end(L_c), ZERO);
-    }   
+    }
 
 #if !defined(HPX_HAVE_DATAPAR)
     const v4sd d0 = {1.0 / dx, +1.0 / sqr(dx), +1.0 / sqr(dx), +1.0 / sqr(dx)};
@@ -41,8 +40,7 @@ void grid::compute_interactions_leaf(gsolve_type type) {
     // components for the force
 
     // Coefficients for potential evaluation? (David)
-    const std::array<double, 4> di0 = {
-	1.0 / dx, +1.0 / sqr(dx), +1.0 / sqr(dx), +1.0 / sqr(dx)};
+    const std::array<double, 4> di0 = {1.0 / dx, +1.0 / sqr(dx), +1.0 / sqr(dx), +1.0 / sqr(dx)};
 #if !defined(HPX_HAVE_DATAPAR_VC) || (defined(Vc_IS_VERSION_1) && Vc_IS_VERSION_1)
     const v4sd d0(di0.data());
 #else
@@ -50,8 +48,7 @@ void grid::compute_interactions_leaf(gsolve_type type) {
 #endif
 
     // negative of d0 because it's the force in the opposite direction
-    const std::array<double, 4> di1 = {
-	1.0 / dx, -1.0 / sqr(dx), -1.0 / sqr(dx), -1.0 / sqr(dx)};
+    const std::array<double, 4> di1 = {1.0 / dx, -1.0 / sqr(dx), -1.0 / sqr(dx), -1.0 / sqr(dx)};
 #if !defined(HPX_HAVE_DATAPAR_VC) || (defined(Vc_IS_VERSION_1) && Vc_IS_VERSION_1)
     const v4sd d1(di1.data());
 #else
@@ -67,35 +64,35 @@ void grid::compute_interactions_leaf(gsolve_type type) {
     // Iterate interaction description between bodies in the current cell and closeby bodies
     // (David)
     for (integer li = 0; li < dsize; ++li) {
-	// Retrieve the interaction description for the current body (David)
-	const auto& ele = ilist_d[li];
-	// Extract the indices of the two interacting bodies (David)
-	const integer iii0 = ele.first;
-	const integer iii1 = ele.second;
+        // Retrieve the interaction description for the current body (David)
+        const auto& ele = ilist_d[li];
+        // Extract the indices of the two interacting bodies (David)
+        const integer iii0 = ele.first;
+        const integer iii1 = ele.second;
 #if !defined(HPX_HAVE_DATAPAR)
-	v4sd m0, m1;
+        v4sd m0, m1;
 #pragma GCC ivdep
-	for (integer i = 0; i != 4; ++i) {
-	    m0[i] = mon[iii1];
-	}
+        for (integer i = 0; i != 4; ++i) {
+            m0[i] = mon[iii1];
+        }
 #pragma GCC ivdep
-	for (integer i = 0; i != 4; ++i) {
-	    m1[i] = mon[iii0];
-	}
+        for (integer i = 0; i != 4; ++i) {
+            m1[i] = mon[iii0];
+        }
 
 #ifdef USE_GRAV_PAR
-	std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
+        std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
 #endif
-	L[iii0] += m0 * ele.four * d0;
-	L[iii1] += m1 * ele.four * d1;
+        L[iii0] += m0 * ele.four * d0;
+        L[iii1] += m1 * ele.four * d1;
 #else
 #ifdef USE_GRAV_PAR
-	std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
+        std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
 #endif
-	// fetch both interacting bodies (monopoles) (David)
-	// broadcasts a single value
-	L[iii0] += mon[iii1] * ele.four * d0;
-	L[iii1] += mon[iii0] * ele.four * d1;
+        // fetch both interacting bodies (monopoles) (David)
+        // broadcasts a single value
+        L[iii0] += mon[iii1] * ele.four * d0;
+        L[iii1] += mon[iii0] * ele.four * d1;
 #endif
-    }   
-}    
+    }
+}

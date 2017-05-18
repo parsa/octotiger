@@ -8,12 +8,12 @@
 #include "node_server.hpp"
 #include "defs.hpp"
 #include "future.hpp"
+#include "kernels/compare_interaction_lists.hpp"
 #include "kernels/interactions_iterators.hpp"
 #include "kernels/m2m_interactions.hpp"
 #include "options.hpp"
 #include "problem.hpp"
 #include "set_locality_data.hpp"
-#include "kernels/compare_interaction_lists.hpp"
 #include "taylor.hpp"
 
 #include <array>
@@ -487,7 +487,12 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
     // TODO(David): Probably need another special case for root node
     // // TODO(David): Add call for inner boundary and non-boundary here!
     if (!grid_ptr->get_leaf()) {
-        octotiger::fmm::m2m_interactions interactor(*grid_ptr, all_neighbor_interaction_data, type);
+        std::vector<multipole>& M_ptr = grid_ptr->get_M();
+        std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr = grid_ptr->get_com_ptr();
+        // octotiger::fmm::m2m_interactions interactor(*grid_ptr, all_neighbor_interaction_data,
+        // type);
+        octotiger::fmm::m2m_interactions interactor(
+            M_ptr, com_ptr, all_neighbor_interaction_data, type);
 
         ////////////////////////////////////////// start input comparisons /////////////////////////////////////////
         {
@@ -606,7 +611,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
         ////////////////////////////////////////// end input comparisons /////////////////////////////////////////
 
-        interactor.compute_interactions();    // includes boundary        
+        interactor.compute_interactions();    // includes boundary
 
         // kernel call generated debugging ilist, compare it now
         compare_interaction_lists();

@@ -12,13 +12,15 @@
 namespace octotiger {
 namespace fmm {
 
-    m2m_interactions::m2m_interactions(
-        grid& g, std::vector<node_server::neighbor_gravity_type>& neighbors, gsolve_type type)
+    m2m_interactions::m2m_interactions(std::vector<multipole>& M_ptr,
+        std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
+        // grid& g,
+        std::vector<neighbor_gravity_type>& neighbors, gsolve_type type)
       : verbose(true)
       , type(type) {
         stencil = calculate_stencil();
-        std::vector<multipole>& M_ptr = g.get_M();
-        std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr = g.get_com_ptr();
+        // std::vector<multipole>& M_ptr = g.get_M();
+        // std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr = g.get_com_ptr();
         // allocate input variables with padding (so that the interactions spheres are always valid
         // indices)
 

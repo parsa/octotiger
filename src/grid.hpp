@@ -10,13 +10,13 @@
 
 #include "defs.hpp"
 #include "geometry.hpp"
+#include "interaction_types.hpp"
 #include "problem.hpp"
 #include "roe.hpp"
 #include "scf_data.hpp"
 #include "simd.hpp"
 #include "space_vector.hpp"
 #include "taylor.hpp"
-#include "interaction_types.hpp"
 
 #ifdef RADIATION
 class rad_grid;
@@ -70,36 +70,6 @@ public:
             linfa[field] = std::max(linfa[field], other.linfa[field]);
         }
         return *this;
-    }
-};
-
-typedef std::pair<std::vector<multipole>, std::vector<space_vector>> multipole_pass_type;
-typedef std::pair<std::vector<expansion>, std::vector<space_vector>> expansion_pass_type;
-
-struct gravity_boundary_type
-{
-    std::shared_ptr<std::vector<multipole>> M;
-    std::shared_ptr<std::vector<real>> m;
-    std::shared_ptr<std::vector<space_vector>> x;
-    bool is_local;
-    gravity_boundary_type()
-      : M(nullptr)
-      , m(nullptr)
-      , x(nullptr) {}
-    void allocate() {
-        if (M == nullptr) {
-            M = std::make_shared<std::vector<multipole>>();
-            m = std::make_shared<std::vector<real>>();
-            x = std::make_shared<std::vector<space_vector>>();
-        }
-    }
-    template <class Archive>
-    void serialize(Archive& arc, unsigned) {
-        allocate();
-        arc& M;
-        arc& m;
-        arc& x;
-        arc& is_local;
     }
 };
 
@@ -168,7 +138,7 @@ private:
     std::array<real, NDIM> xmin;
     std::vector<real> U_out;
     std::vector<real> U_out0;
-    //TODO: explanation for the structure of com_ptr? (David)
+    // TODO: explanation for the structure of com_ptr? (David)
     std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr;
     static bool xpoint_eq(const xpoint& a, const xpoint& b);
     void compute_boundary_interactions_multipole_multipole(gsolve_type type,
@@ -181,28 +151,27 @@ private:
         const std::vector<boundary_interaction_type>&, const gravity_boundary_type&);
 
 public:
-
-    std::vector<multipole> &get_M() {
+    std::vector<multipole>& get_M() {
         std::cout << "in here: " << M_ptr->size() << std::endl;
-	return *M_ptr;
+        return *M_ptr;
     }
 
-    std::vector<real> &get_mon() {
-	return *mon_ptr;
+    std::vector<real>& get_mon() {
+        return *mon_ptr;
     }
 
-    std::vector<std::shared_ptr<std::vector<space_vector>>> &get_com_ptr() {
+    std::vector<std::shared_ptr<std::vector<space_vector>>>& get_com_ptr() {
         return com_ptr;
     }
 
-    std::vector<expansion> &get_L() {
+    std::vector<expansion>& get_L() {
         return L;
     }
 
-    std::vector<space_vector> &get_L_c() {
+    std::vector<space_vector>& get_L_c() {
         return L_c;
-    }        
-    
+    }
+
 #ifdef RADIATION
     std::shared_ptr<rad_grid> get_rad_grid() {
         return rad_grid_ptr;

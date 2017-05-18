@@ -4,8 +4,9 @@
 #include <vector>
 
 #include "geometry.hpp"
-#include "grid.hpp"
-#include "node_server.hpp"
+// #include "grid.hpp"
+// #include "node_server.hpp"
+#include "interaction_types.hpp"
 #include "taylor.hpp"
 
 #include "interaction_constants.hpp"
@@ -46,8 +47,10 @@ namespace fmm {
     public:
         // at this point, uses the old datamembers of the grid class as input
         // and converts them to the new data structure
-        m2m_interactions(
-            grid& g, std::vector<node_server::neighbor_gravity_type>& neighbors, gsolve_type type);
+        m2m_interactions(std::vector<multipole>& M_ptr,
+            std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
+            // grid& g,
+            std::vector<neighbor_gravity_type>& neighbors, gsolve_type type);
 
         // dummy constructor for debugging
         m2m_interactions();
@@ -56,20 +59,20 @@ namespace fmm {
 
         void get_converted_local_expansions(std::vector<multipole>& M_ptr);
 
-        std::vector<expansion> &get_local_expansions();
+        std::vector<expansion>& get_local_expansions();
 
         void get_converted_center_of_masses(
             std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr);
 
-        std::vector<space_vector> &get_center_of_masses();
+        std::vector<space_vector>& get_center_of_masses();
 
         void get_converted_potential_expansions(std::vector<expansion>& L);
 
-        std::vector<expansion> &get_potential_expansions();
+        std::vector<expansion>& get_potential_expansions();
 
         void get_converted_angular_corrections(std::vector<space_vector>& L_c);
 
-        std::vector<space_vector> &get_angular_corrections();
+        std::vector<space_vector>& get_angular_corrections();
 
         void print_potential_expansions();
 

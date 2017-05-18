@@ -37,14 +37,14 @@ namespace fmm {
         current_interaction.x[2] = interaction_partner_index.z;
         ilist_debugging.push_back(current_interaction);
 
-        std::cout << "X: ";
-        for (size_t d = 0; d < NDIM; d++) {
-            if (d > 0) {
-                std::cout << ", ";
-            }
-            std::cout << X[d];
-        }
-        std::cout << std::endl;
+        // std::cout << "X: ";
+        // for (size_t d = 0; d < NDIM; d++) {
+        //     if (d > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << X[d];
+        // }
+        // std::cout << std::endl;
 
         std::array<real, NDIM>
             Y;    // TODO: replace by space_vector for vectorization or get rid of temporary
@@ -52,14 +52,14 @@ namespace fmm {
             Y[d] = center_of_masses[interaction_partner_flat_index][d];
         }
 
-        std::cout << "Y: ";
-        for (size_t d = 0; d < NDIM; d++) {
-            if (d > 0) {
-                std::cout << ", ";
-            }
-            std::cout << Y[d];
-        }
-        std::cout << std::endl;
+        // std::cout << "Y: ";
+        // for (size_t d = 0; d < NDIM; d++) {
+        //     if (d > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << Y[d];
+        // }
+        // std::cout << std::endl;
 
         // cell specific taylor series coefficients
         // multipole const& Miii1 = M_ptr[iii1];
@@ -69,14 +69,14 @@ namespace fmm {
         //     m0[j] = local_expansions[interaction_partner_flat_index][j];
         // }
         expansion& m_partner = local_expansions[interaction_partner_flat_index];
-        std::cout << "m_partner: ";
-        for (size_t i = 0; i < m_partner.size(); i++) {
-            if (i > 0) {
-                std::cout << ", ";
-            }
-            std::cout << m_partner[i];
-        }
-        std::cout << std::endl;
+        // std::cout << "m_partner: ";
+        // for (size_t i = 0; i < m_partner.size(); i++) {
+        //     if (i > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << m_partner[i];
+        // }
+        // std::cout << std::endl;
 
         // n angular momentum of the cells
         // TODO: replace by expansion type or get rid of temporary
@@ -117,27 +117,27 @@ namespace fmm {
         // (multipole expansion)
         taylor<5, real> D;    // TODO: replace by simd_vector for vectorization
 
-        std::cout << "dX: ";
-        for (size_t i = 0; i < dX.size(); i++) {
-            if (i > 0) {
-                std::cout << ", ";
-            }
-            std::cout << dX[i];
-        }
-        std::cout << std::endl;
+        // std::cout << "dX: ";
+        // for (size_t i = 0; i < dX.size(); i++) {
+        //     if (i > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << dX[i];
+        // }
+        // std::cout << std::endl;
 
         // calculates all D-values, calculate all coefficients of 1/r (not the potential),
         // formula (6)-(9) and (19)
         D.set_basis(dX);    // make sure the vectorized version is called
 
-        std::cout << "D: ";
-        for (size_t i = 0; i < D.size(); i++) {
-            if (i > 0) {
-                std::cout << ", ";
-            }
-            std::cout << D[i];
-        }
-        std::cout << std::endl;
+        // std::cout << "D: ";
+        // for (size_t i = 0; i < D.size(); i++) {
+        //     if (i > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << D[i];
+        // }
+        // std::cout << std::endl;
 
         // output variable references
         expansion& current_potential = potential_expansions[cell_flat_index_unpadded];
@@ -201,23 +201,23 @@ namespace fmm {
             current_potential[i] += m_partner[0] * tmp;
         }
 
-        std::cout << "current_potential: ";
-        for (size_t i = 0; i < current_potential.size(); i++) {
-            if (i > 0) {
-                std::cout << ", ";
-            }
-            std::cout << current_potential[i];
-        }
-        std::cout << std::endl;
+        // std::cout << "current_potential: ";
+        // for (size_t i = 0; i < current_potential.size(); i++) {
+        //     if (i > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << current_potential[i];
+        // }
+        // std::cout << std::endl;
 
-        std::cout << "current_angular_correction: ";
-        for (size_t d = 0; d < NDIM; d++) {
-            if (d > 0) {
-                std::cout << ", ";
-            }
-            std::cout << current_angular_correction[d];
-        }
-        std::cout << std::endl;
+        // std::cout << "current_angular_correction: ";
+        // for (size_t d = 0; d < NDIM; d++) {
+        //     if (d > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << current_angular_correction[d];
+        // }
+        // std::cout << std::endl;
     }
 
     m2m_kernel::m2m_kernel(std::vector<expansion>& local_expansions,
@@ -234,9 +234,9 @@ namespace fmm {
         // use this object as a functor for the iteration
         iterate_inner_cells_padded_stencil(stencil_element, *this);
 
-        std::cout << "potential_expansions.size(): " << potential_expansions.size() << std::endl;
-        std::cout << "potential_expansions[0]: " << potential_expansions[0];
-        std::cout << std::endl;
+        // std::cout << "potential_expansions.size(): " << potential_expansions.size() << std::endl;
+        // std::cout << "potential_expansions[0]: " << potential_expansions[0];
+        // std::cout << std::endl;
     }
 
 }    // namespace fmm
