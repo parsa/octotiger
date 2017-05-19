@@ -18,7 +18,7 @@ namespace fmm {
         std::vector<neighbor_gravity_type>& neighbors, gsolve_type type)
       : verbose(true)
       , type(type) {
-        stencil = calculate_stencil();
+        stencils = calculate_stencil();
         // std::vector<multipole>& M_ptr = g.get_M();
         // std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr = g.get_com_ptr();
         // allocate input variables with padding (so that the interactions spheres are always valid
@@ -84,10 +84,12 @@ namespace fmm {
     void m2m_interactions::compute_interactions() {
         m2m_kernel kernel(
             local_expansions, center_of_masses, potential_expansions, angular_corrections, type);
-        for (multiindex& m : stencil) {
-            std::cout << "next stencil: " << m << std::endl;
-            kernel.apply_stencil_element(m);
-        }
+        // std::vector<multiindex>& stencil = stencils[0];
+        // for (multiindex& m : stencil) {
+        //     std::cout << "next stencil: " << m << std::endl;
+        //     kernel.apply_stencil_element(m);
+        // }
+        kernel.apply_stencils(stencils);
     }
 
     void m2m_interactions::get_converted_local_expansions(std::vector<multipole>& M_ptr) {

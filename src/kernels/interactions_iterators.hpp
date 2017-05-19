@@ -7,7 +7,7 @@
 namespace octotiger {
 namespace fmm {
 
-    inline multiindex inner_flat_index_to_multiindex(size_t flat_index) {
+    inline multiindex flat_index_to_multiindex_not_padded(size_t flat_index) {
         size_t x = flat_index / (INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION);
         flat_index %= (INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION);
         size_t y = flat_index / INNER_CELLS_PER_DIRECTION;
@@ -16,6 +16,16 @@ namespace fmm {
         multiindex m(x, y, z);
         return m;
     }
+
+    inline multiindex flat_index_to_multiindex_padded(size_t flat_index) {
+        size_t x = flat_index / (PADDED_STRIDE * PADDED_STRIDE);
+        flat_index %= (PADDED_STRIDE * PADDED_STRIDE);
+        size_t y = flat_index / PADDED_STRIDE;
+        flat_index %= PADDED_STRIDE;
+        size_t z = flat_index;
+        multiindex m(x, y, z);
+        return m;
+    }    
 
     // stride for multiple outer cells (and/or padding)
     inline size_t to_inner_flat_index_padded(const multiindex& m) {

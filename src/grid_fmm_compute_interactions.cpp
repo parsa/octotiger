@@ -227,6 +227,30 @@ void grid::compute_interactions_inner(gsolve_type type) {
                 const auto& tmp = D[i];
                 A0[i] += m0[0] * tmp;
             }
+
+            // for (integer i = 0;
+            //      i != simd_len && integer(interaction_second_index + i) < inner_loop_stop; ++i) {
+            //     if (interaction_list[interaction_first_index].first == 0 &&
+            //         interaction_list[interaction_second_index + i].second == 3) {
+            //         std::cout << "A0: ";
+            //         for (size_t j = 0; j < A0.size(); j++) {
+            //             if (j > 0) {
+            //                 std::cout << ", ";
+            //             }
+            //             std::cout << A0[i][j];
+            //         }
+            //         std::cout << std::endl;
+
+            //         std::cout << "B0: ";
+            //         for (size_t d = 0; d < NDIM; d++) {
+            //             if (d > 0) {
+            //                 std::cout << ", ";
+            //             }
+            //             std::cout << B0[i][d];
+            //         }
+            //         std::cout << std::endl;
+            //     }
+            // }
         }
 
         multipole& Liii0 = L[iii0];

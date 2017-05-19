@@ -669,7 +669,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
                             if (i.z % INX != 0) {
                                 std::cout << ", ";
                             }
-                            std::cout << " (" << i << ") = " << L[flat_index];
+                            std::cout << " (" << i << ") =[0] " << L[flat_index][0];
                             if ((i.z + 1) % INX == 0) {
                                 std::cout << std::endl;
                             }

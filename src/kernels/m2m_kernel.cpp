@@ -17,6 +17,20 @@ namespace fmm {
     void m2m_kernel::operator()(const multiindex& cell_index, const size_t cell_flat_index,
         const multiindex& cell_index_unpadded, const size_t cell_flat_index_unpadded,
         const multiindex& interaction_partner_index, const size_t interaction_partner_flat_index) {
+        if (cell_flat_index_unpadded != 1) {
+            return;
+        }
+        std::cout << "cell_index: " << cell_index << std::endl;
+        std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
+        std::cout << "cell_index_unpadded: " << cell_index_unpadded << std::endl;
+        std::cout << "cell_flat_index_unpadded: " << cell_flat_index_unpadded << std::endl;
+        std::cout << "interaction_partner_index: " << interaction_partner_index << std::endl;
+        std::cout << "interaction_partner_flat_index: " << interaction_partner_flat_index
+                  << std::endl;
+        std::cout << "diff: " << (interaction_partner_index.x - cell_index.x) << ", "
+                  << (interaction_partner_index.y - cell_index.y) << ", "
+                  << (interaction_partner_index.z - cell_index.z) << std::endl;
+
         std::array<real, NDIM>
             X;    // TODO: replace by space_vector for vectorization or get rid of temporary
         for (integer d = 0; d < NDIM; ++d) {
@@ -24,17 +38,17 @@ namespace fmm {
             X[d] = center_of_masses[cell_flat_index][d];
         }
 
-        const integer interaction_partner_flat_index_ilist_debugging = gindex(
-            (interaction_partner_index.x + INX) % INX, (interaction_partner_index.y + INX) % INX,
-            (interaction_partner_index.z + INX) % INX);
+        // const integer interaction_partner_flat_index_ilist_debugging = gindex(
+        //     (interaction_partner_index.x + INX) % INX, (interaction_partner_index.y + INX) % INX,
+        //     (interaction_partner_index.z + INX) % INX);
 
         interaction_type current_interaction;
-        current_interaction.first = cell_flat_index_unpadded;
-        current_interaction.second = interaction_partner_flat_index_ilist_debugging;
+        current_interaction.first = cell_flat_index; // has to be translated to unpadded before comparison
+        current_interaction.second = interaction_partner_flat_index; // has to be translated to unpadded before comparison
         current_interaction.four = {0};
-        current_interaction.x[0] = interaction_partner_index.x;
-        current_interaction.x[1] = interaction_partner_index.y;
-        current_interaction.x[2] = interaction_partner_index.z;
+        current_interaction.x[0] = (interaction_partner_index.x - cell_index.x);
+        current_interaction.x[1] = (interaction_partner_index.y - cell_index.y);
+        current_interaction.x[2] = (interaction_partner_index.z - cell_index.z);
         ilist_debugging.push_back(current_interaction);
 
         // std::cout << "X: ";
@@ -201,23 +215,26 @@ namespace fmm {
             current_potential[i] += m_partner[0] * tmp;
         }
 
-        // std::cout << "current_potential: ";
-        // for (size_t i = 0; i < current_potential.size(); i++) {
-        //     if (i > 0) {
-        //         std::cout << ", ";
+        // if (cell_flat_index_unpadded == 0 && interaction_partner_flat_index_ilist_debugging == 3)
+        // {
+        //     std::cout << "current_potential: ";
+        //     for (size_t i = 0; i < current_potential.size(); i++) {
+        //         if (i > 0) {
+        //             std::cout << ", ";
+        //         }
+        //         std::cout << current_potential[i];
         //     }
-        //     std::cout << current_potential[i];
-        // }
-        // std::cout << std::endl;
+        //     std::cout << std::endl;
 
-        // std::cout << "current_angular_correction: ";
-        // for (size_t d = 0; d < NDIM; d++) {
-        //     if (d > 0) {
-        //         std::cout << ", ";
+        //     std::cout << "current_angular_correction: ";
+        //     for (size_t d = 0; d < NDIM; d++) {
+        //         if (d > 0) {
+        //             std::cout << ", ";
+        //         }
+        //         std::cout << current_angular_correction[d];
         //     }
-        //     std::cout << current_angular_correction[d];
+        //     std::cout << std::endl;
         // }
-        // std::cout << std::endl;
     }
 
     m2m_kernel::m2m_kernel(std::vector<expansion>& local_expansions,
@@ -229,15 +246,36 @@ namespace fmm {
       , angular_corrections(angular_corrections)
       , type(type) {}
 
-    void m2m_kernel::apply_stencil_element(multiindex& stencil_element) {
-        // execute kernel for individual interactions for every inner cell
-        // use this object as a functor for the iteration
-        iterate_inner_cells_padded_stencil(stencil_element, *this);
-
-        // std::cout << "potential_expansions.size(): " << potential_expansions.size() << std::endl;
-        // std::cout << "potential_expansions[0]: " << potential_expansions[0];
-        // std::cout << std::endl;
+    void m2m_kernel::apply_stencils(std::array<std::vector<multiindex>, 8>& stencils) {
+        for (int64_t i0 = 0; i0 < 2; ++i0) {
+            for (int64_t i1 = 0; i1 < 2; ++i1) {
+                for (int64_t i2 = 0; i2 < 2; ++i2) {
+                    multiindex offset(i0, i1, i2);
+                    size_t stencil_index = i0 * 4 + i1 * 2 + i2;
+                    std::cout << "stencil_index: " << stencil_index << std::endl;
+                    std::vector<multiindex>& stencil = stencils[i0 * 4 + i1 * 2 + i2];
+                    for (multiindex& stencil_element : stencil) {
+                        std::cout << stencil_element << std::endl;
+                    }
+                    std::cout << std::endl;
+                    for (multiindex& stencil_element : stencil) {
+                        iterate_inner_cells_padded_stridded_stencil(offset, stencil_element, *this);
+                    }
+                }
+            }
+        }
     }
+
+    // void m2m_kernel::apply_stencil_element(multiindex& stencil_element) {
+    //     // execute kernel for individual interactions for every inner cell
+    //     // use this object as a functor for the iteration
+    //     iterate_inner_cells_padded_stencil(stencil_element, *this);
+
+    //     // std::cout << "potential_expansions.size(): " << potential_expansions.size() <<
+    //     std::endl;
+    //     // std::cout << "potential_expansions[0]: " << potential_expansions[0];
+    //     // std::cout << std::endl;
+    // }
 
 }    // namespace fmm
 }    // namespace octotiger

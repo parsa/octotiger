@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
 namespace octotiger {
 namespace fmm {
@@ -21,9 +21,17 @@ namespace fmm {
         inline const double length() const {
             return sqrt(static_cast<double>(x * x + y * y + z * z));
         }
+
+        inline bool compare(multiindex& other) {
+            if (this->x == other.x && this->y == other.y && this->z == other.z) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     };
 
 }    // namespace fmm
 }    // namespace octotiger
 
-std::ostream & operator<<(std::ostream &os, const octotiger::fmm::multiindex& m);
+std::ostream& operator<<(std::ostream& os, const octotiger::fmm::multiindex& m);

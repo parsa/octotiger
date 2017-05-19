@@ -22,7 +22,7 @@ namespace fmm {
     {
     private:
         bool verbose;
-        std::vector<multiindex> stencil;
+        std::array<std::vector<multiindex>, 8> stencils;
 
         /*
          * logical structure of all arrays:
