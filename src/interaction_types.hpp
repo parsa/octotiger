@@ -1,8 +1,8 @@
 #pragma once
 
+#include "geometry.hpp"
 #include "simd.hpp"
 #include "space_vector.hpp"
-#include "geometry.hpp"
 #include "taylor.hpp"
 
 #include <vector>
@@ -57,6 +57,9 @@ struct interaction_type
     v4sd four;
     // helper variable for vectorization
     std::uint32_t inner_loop_stop;
+
+    std::array<integer, 3> first_index;
+    std::array<integer, 3> second_index;
 };
 
 struct boundary_interaction_type

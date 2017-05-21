@@ -56,6 +56,10 @@ namespace fmm {
             for (size_t i0 = offset.x; i0 < INNER_CELLS_PER_DIRECTION; i0 += 2) {
                 for (size_t i1 = offset.y; i1 < INNER_CELLS_PER_DIRECTION; i1 += 2) {
                     for (size_t i2 = offset.z; i2 < INNER_CELLS_PER_DIRECTION; i2 += 2) {
+            // for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0 += 1) {
+            //     for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1 += 1) {
+            //         for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += 1) {
+			
                         const multiindex cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
                             i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
                         const size_t cell_flat_index =

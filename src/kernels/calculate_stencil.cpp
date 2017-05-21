@@ -80,6 +80,7 @@ namespace fmm {
                                     continue;
                                 }
 
+				// indices on coarser level (for outer stencil boundary)
                                 const int64_t i0_c = (i0 + INX) / 2 - INX / 2;
                                 const int64_t i1_c = (i1 + INX) / 2 - INX / 2;
                                 const int64_t i2_c = (i2 + INX) / 2 - INX / 2;
@@ -114,7 +115,7 @@ namespace fmm {
 
                                 // not in inner sphere (theta_c > theta0), but in outer sphere
                                 if (theta_c > theta0 && theta_f <= theta0) {
-                                    stencil.emplace_back(j0, j1, j2);
+                                    stencil.emplace_back(j0 - i0, j1 - i1, j2 - i2);
                                 }
                             }
                         }

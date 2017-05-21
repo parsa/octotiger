@@ -17,19 +17,19 @@ namespace fmm {
     void m2m_kernel::operator()(const multiindex& cell_index, const size_t cell_flat_index,
         const multiindex& cell_index_unpadded, const size_t cell_flat_index_unpadded,
         const multiindex& interaction_partner_index, const size_t interaction_partner_flat_index) {
-        if (cell_flat_index_unpadded != 1) {
-            return;
-        }
-        std::cout << "cell_index: " << cell_index << std::endl;
-        std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
-        std::cout << "cell_index_unpadded: " << cell_index_unpadded << std::endl;
-        std::cout << "cell_flat_index_unpadded: " << cell_flat_index_unpadded << std::endl;
-        std::cout << "interaction_partner_index: " << interaction_partner_index << std::endl;
-        std::cout << "interaction_partner_flat_index: " << interaction_partner_flat_index
-                  << std::endl;
-        std::cout << "diff: " << (interaction_partner_index.x - cell_index.x) << ", "
-                  << (interaction_partner_index.y - cell_index.y) << ", "
-                  << (interaction_partner_index.z - cell_index.z) << std::endl;
+        // if (cell_flat_index_unpadded != 1) {
+        //     return;
+        // }
+        // std::cout << "cell_index: " << cell_index << std::endl;
+        // std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
+        // std::cout << "cell_index_unpadded: " << cell_index_unpadded << std::endl;
+        // std::cout << "cell_flat_index_unpadded: " << cell_flat_index_unpadded << std::endl;
+        // std::cout << "interaction_partner_index: " << interaction_partner_index << std::endl;
+        // std::cout << "interaction_partner_flat_index: " << interaction_partner_flat_index
+        //           << std::endl;
+        // std::cout << "diff: " << (interaction_partner_index.x - cell_index.x) << ", "
+        //           << (interaction_partner_index.y - cell_index.y) << ", "
+        //           << (interaction_partner_index.z - cell_index.z) << std::endl;
 
         std::array<real, NDIM>
             X;    // TODO: replace by space_vector for vectorization or get rid of temporary
@@ -43,12 +43,19 @@ namespace fmm {
         //     (interaction_partner_index.z + INX) % INX);
 
         interaction_type current_interaction;
-        current_interaction.first = cell_flat_index; // has to be translated to unpadded before comparison
-        current_interaction.second = interaction_partner_flat_index; // has to be translated to unpadded before comparison
+        current_interaction.first =
+            cell_flat_index;    // has to be translated to unpadded before comparison
+        current_interaction.second =
+            interaction_partner_flat_index;    // has to be translated to unpadded before comparison
         current_interaction.four = {0};
         current_interaction.x[0] = (interaction_partner_index.x - cell_index.x);
         current_interaction.x[1] = (interaction_partner_index.y - cell_index.y);
         current_interaction.x[2] = (interaction_partner_index.z - cell_index.z);
+        current_interaction.first_index = {
+            {cell_index_unpadded.x, cell_index_unpadded.y, cell_index_unpadded.z}};
+        current_interaction.second_index = {{interaction_partner_index.x - 8,
+            interaction_partner_index.y - 8, interaction_partner_index.z - 8}};
+
         ilist_debugging.push_back(current_interaction);
 
         // std::cout << "X: ";
@@ -247,16 +254,16 @@ namespace fmm {
       , type(type) {}
 
     void m2m_kernel::apply_stencils(std::array<std::vector<multiindex>, 8>& stencils) {
-        for (int64_t i0 = 0; i0 < 2; ++i0) {
-            for (int64_t i1 = 0; i1 < 2; ++i1) {
-                for (int64_t i2 = 0; i2 < 2; ++i2) {
+        for (int64_t i0 = 0; i0 < 2; i0 += 1) {
+            for (int64_t i1 = 0; i1 < 2; i1 += 1) {
+                for (int64_t i2 = 0; i2 < 2; i2 += 1) {
                     multiindex offset(i0, i1, i2);
                     size_t stencil_index = i0 * 4 + i1 * 2 + i2;
                     std::cout << "stencil_index: " << stencil_index << std::endl;
                     std::vector<multiindex>& stencil = stencils[i0 * 4 + i1 * 2 + i2];
-                    for (multiindex& stencil_element : stencil) {
-                        std::cout << stencil_element << std::endl;
-                    }
+                    // for (multiindex& stencil_element : stencil) {
+                    //     std::cout << stencil_element << std::endl;
+                    // }
                     std::cout << std::endl;
                     for (multiindex& stencil_element : stencil) {
                         iterate_inner_cells_padded_stridded_stencil(offset, stencil_element, *this);

@@ -1,6 +1,8 @@
 #include "defs.hpp"
 #include "geometry.hpp"
 #include "interaction_types.hpp"
+#include "kernels/calculate_stencil.hpp"
+#include "kernels/multiindex.hpp"
 #include "options.hpp"
 #include "simd.hpp"
 
@@ -78,10 +80,21 @@ void compute_ilist() {
     // used to check the radiuses of the outer and inner sphere
     const real theta0 = opts.theta;
     integer width = INX;
+
+    std::array<std::vector<octotiger::fmm::multiindex>, 8> stencils =
+        octotiger::fmm::calculate_stencil();
+
+    // bool all_interior_found = true;
+    // bool all_boundary_found = true;
+
     // iterate node inner points
     for (integer i0 = 0; i0 != INX; ++i0) {
         for (integer i1 = 0; i1 != INX; ++i1) {
             for (integer i2 = 0; i2 != INX; ++i2) {
+                // uint64_t stencil_elements_accessed = 0;
+                // size_t stencil_selector = (i0 % 2) * 4 + (i1 % 2) * 2 + (i2 % 2);
+                // std::vector<octotiger::fmm::multiindex>& stencil = stencils[stencil_selector];
+
                 // lower and upper boundaries for iteration
                 // gives inner cube of interaction candidates plus bounding box where the boundaries
                 // of the node are left
@@ -178,7 +191,6 @@ void compute_ilist() {
                             //         std::cout << "theta0: " << theta0 << std::endl;
                             //     }
                             // }
-                            
 
                             // not in inner sphere (theta_c > theta0), but in outer sphere
                             if (theta_c > theta0 && theta_f <= theta0) {
@@ -188,8 +200,37 @@ void compute_ilist() {
                                 np.x[XDIM] = j0;
                                 np.x[YDIM] = j1;
                                 np.x[ZDIM] = j2;
+
+                                np.first_index = {{i0, i1, i2}};
+                                np.second_index = {{j0, j1, j2}};
                                 // TODO: i should always be in interior?
                                 if (is_interior(j0, j1, j2)) {
+                                    // octotiger::fmm::multiindex first_index(i0, i1, i2);
+                                    // octotiger::fmm::multiindex second_index(j0, j1, j2);
+                                    // octotiger::fmm::multiindex recalc_stencil(
+                                    //     j0 - i0, j1 - i1, j2 - i2);
+                                    // bool found = false;
+                                    // for (octotiger::fmm::multiindex& stencil_element : stencil) {
+                                    //     if (recalc_stencil.compare(stencil_element)) {
+                                    //         found = true;
+                                    //         break;
+                                    //     }
+                                    // }
+
+                                    // if (!found) {
+                                    //     std::cout << "--------------------------------------------"
+                                    //               << std::endl;
+                                    //     std::cout << "interior stencil element not found!"
+                                    //               << std::endl;
+                                    //     std::cout << "first_index: " << first_index << std::endl;
+                                    //     std::cout << "second_index: " << second_index << std::endl;
+                                    //     std::cout << "missing stencil: " << recalc_stencil
+                                    //               << std::endl;
+                                    //     all_interior_found = false;
+                                    // } else {
+                                    //     stencil_elements_accessed += 1;
+                                    // }
+
                                     inner_interactions += 1;
                                     ilist_n.push_back(np);
                                 } else {
@@ -197,6 +238,32 @@ void compute_ilist() {
                                     integer neighbor_index =
                                         get_neighbor_dir(j0, j1, j2).flat_index();
                                     ilist_n0_bnd[neighbor_index].push_back(np);
+
+                                    // octotiger::fmm::multiindex first_index(i0, i1, i2);
+                                    // octotiger::fmm::multiindex second_index(j0, j1, j2);
+                                    // octotiger::fmm::multiindex recalc_stencil(
+                                    //     j0 - i0, j1 - i1, j2 - i2);
+                                    // bool found = false;
+                                    // for (octotiger::fmm::multiindex& stencil_element : stencil) {
+                                    //     if (recalc_stencil.compare(stencil_element)) {
+                                    //         found = true;
+                                    //         break;
+                                    //     }
+                                    // }
+
+                                    // if (!found) {
+                                    //     std::cout << "--------------------------------------------"
+                                    //               << std::endl;
+                                    //     std::cout << "boundary stencil element not found!"
+                                    //               << std::endl;
+                                    //     std::cout << "first_index: " << first_index << std::endl;
+                                    //     std::cout << "second_index: " << second_index << std::endl;
+                                    //     std::cout << "missing stencil: " << recalc_stencil
+                                    //               << std::endl;
+                                    //     all_interior_found = false;
+                                    // } else {
+                                    //     stencil_elements_accessed += 1;
+                                    // }
                                 }
                             }
                             // not in inner sphere, and maybe not in outer sphere?
@@ -238,9 +305,19 @@ void compute_ilist() {
                         }
                     }
                 }
+
+                // if (stencil_elements_accessed != stencil.size()) {
+                //     std::cout << "stencil_elements_accessed: " << stencil_elements_accessed
+                //               << " != " << stencil.size() << std::endl;
+                // } else {
+		//     std::cout << "all stencil elements accessed!" << std::endl;
+		// }
             }
         }
     }
+
+    // std::cout << "all_interior_found: " << std::boolalpha << all_interior_found << std::endl;
+    // std::cout << "all_boundary_found: " << std::boolalpha << all_boundary_found << std::endl;
 
     std::cout << "inner_interactions: " << inner_interactions
               << " boundary_interactions: " << boundary_interactions << std::endl;
