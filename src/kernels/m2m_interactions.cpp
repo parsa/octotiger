@@ -53,7 +53,23 @@ namespace fmm {
 
         // allocate output variables without padding
         potential_expansions = std::vector<expansion>(EXPANSION_COUNT_NOT_PADDED);
+        // TODO/BUG: expansion don't initialize to zero by default
+        iterate_inner_cells_not_padded(
+            [this](const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+                expansion& e = potential_expansions.at(flat_index_unpadded);
+                for (size_t j = 0; j < e.size(); j++) {
+                    e[j] = 0.0;
+                }
+            });
         angular_corrections = std::vector<space_vector>(EXPANSION_COUNT_NOT_PADDED);
+        // TODO/BUG: expansion don't initialize to zero by default
+        iterate_inner_cells_not_padded(
+            [this](const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+                space_vector& s = angular_corrections.at(flat_index_unpadded);
+                for (size_t j = 0; j < s.size(); j++) {
+                    s[j] = 0.0;
+                }
+            });
         std::cout << "result variables initialized" << std::endl;
     }
 

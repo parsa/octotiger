@@ -17,19 +17,29 @@ namespace fmm {
     void m2m_kernel::operator()(const multiindex& cell_index, const size_t cell_flat_index,
         const multiindex& cell_index_unpadded, const size_t cell_flat_index_unpadded,
         const multiindex& interaction_partner_index, const size_t interaction_partner_flat_index) {
-        // if (cell_flat_index_unpadded != 1) {
-        //     return;
-        // }
-        // std::cout << "cell_index: " << cell_index << std::endl;
-        // std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
-        // std::cout << "cell_index_unpadded: " << cell_index_unpadded << std::endl;
-        // std::cout << "cell_flat_index_unpadded: " << cell_flat_index_unpadded << std::endl;
-        // std::cout << "interaction_partner_index: " << interaction_partner_index << std::endl;
-        // std::cout << "interaction_partner_flat_index: " << interaction_partner_flat_index
-        //           << std::endl;
-        // std::cout << "diff: " << (interaction_partner_index.x - cell_index.x) << ", "
-        //           << (interaction_partner_index.y - cell_index.y) << ", "
-        //           << (interaction_partner_index.z - cell_index.z) << std::endl;
+        if (cell_flat_index_unpadded != 0) {
+            return;
+        }
+        if (interaction_partner_index.x - cell_index.x < 0 ||
+            interaction_partner_index.y - cell_index.y < 0 ||
+            interaction_partner_index.z - cell_index.z < 0) {
+            return;
+        }
+
+        {
+            std::cout << "-------------------------------------------------------------"
+                      << std::endl;
+            std::cout << "cell_index: " << cell_index << std::endl;
+            std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
+            std::cout << "cell_index_unpadded: " << cell_index_unpadded << std::endl;
+            std::cout << "cell_flat_index_unpadded: " << cell_flat_index_unpadded << std::endl;
+            std::cout << "interaction_partner_index: " << interaction_partner_index << std::endl;
+            std::cout << "interaction_partner_flat_index: " << interaction_partner_flat_index
+                      << std::endl;
+            std::cout << "diff: " << (interaction_partner_index.x - cell_index.x) << ", "
+                      << (interaction_partner_index.y - cell_index.y) << ", "
+                      << (interaction_partner_index.z - cell_index.z) << std::endl;
+        }
 
         std::array<real, NDIM>
             X;    // TODO: replace by space_vector for vectorization or get rid of temporary
@@ -37,10 +47,6 @@ namespace fmm {
             // TODO: need SoA for this access if vectorized
             X[d] = center_of_masses[cell_flat_index][d];
         }
-
-        // const integer interaction_partner_flat_index_ilist_debugging = gindex(
-        //     (interaction_partner_index.x + INX) % INX, (interaction_partner_index.y + INX) % INX,
-        //     (interaction_partner_index.z + INX) % INX);
 
         interaction_type current_interaction;
         current_interaction.first =
@@ -58,14 +64,16 @@ namespace fmm {
 
         ilist_debugging.push_back(current_interaction);
 
-        // std::cout << "X: ";
-        // for (size_t d = 0; d < NDIM; d++) {
-        //     if (d > 0) {
-        //         std::cout << ", ";
-        //     }
-        //     std::cout << X[d];
-        // }
-        // std::cout << std::endl;
+        {
+            std::cout << "X: ";
+            for (size_t d = 0; d < NDIM; d++) {
+                if (d > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << X[d];
+            }
+            std::cout << std::endl;
+        }
 
         std::array<real, NDIM>
             Y;    // TODO: replace by space_vector for vectorization or get rid of temporary
@@ -73,14 +81,16 @@ namespace fmm {
             Y[d] = center_of_masses[interaction_partner_flat_index][d];
         }
 
-        // std::cout << "Y: ";
-        // for (size_t d = 0; d < NDIM; d++) {
-        //     if (d > 0) {
-        //         std::cout << ", ";
-        //     }
-        //     std::cout << Y[d];
-        // }
-        // std::cout << std::endl;
+        {
+            std::cout << "Y: ";
+            for (size_t d = 0; d < NDIM; d++) {
+                if (d > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << Y[d];
+            }
+            std::cout << std::endl;
+        }
 
         // cell specific taylor series coefficients
         // multipole const& Miii1 = M_ptr[iii1];
@@ -90,14 +100,16 @@ namespace fmm {
         //     m0[j] = local_expansions[interaction_partner_flat_index][j];
         // }
         expansion& m_partner = local_expansions[interaction_partner_flat_index];
-        // std::cout << "m_partner: ";
-        // for (size_t i = 0; i < m_partner.size(); i++) {
-        //     if (i > 0) {
-        //         std::cout << ", ";
-        //     }
-        //     std::cout << m_partner[i];
-        // }
-        // std::cout << std::endl;
+        {
+            std::cout << "m_partner: ";
+            for (size_t i = 0; i < m_partner.size(); i++) {
+                if (i > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << m_partner[i];
+            }
+            std::cout << std::endl;
+        }
 
         // n angular momentum of the cells
         // TODO: replace by expansion type or get rid of temporary
@@ -149,7 +161,17 @@ namespace fmm {
 
         // calculates all D-values, calculate all coefficients of 1/r (not the potential),
         // formula (6)-(9) and (19)
-        D.set_basis(dX);    // make sure the vectorized version is called
+        D.set_basis(dX);    // TODO: after vectorization, make sure the vectorized version is called
+        {
+            std::cout << "D: ";
+            for (size_t i = 0; i < D.size(); i++) {
+                if (i > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << D[i];
+            }
+            std::cout << std::endl;
+        }
 
         // std::cout << "D: ";
         // for (size_t i = 0; i < D.size(); i++) {
@@ -161,8 +183,18 @@ namespace fmm {
         // std::cout << std::endl;
 
         // output variable references
-        expansion& current_potential = potential_expansions[cell_flat_index_unpadded];
-        space_vector& current_angular_correction = angular_corrections[cell_flat_index_unpadded];
+        // TODO: use these again after debugging individual components!
+        // expansion& current_potential = potential_expansions[cell_flat_index_unpadded];
+        // space_vector& current_angular_correction = angular_corrections[cell_flat_index_unpadded];
+
+        expansion current_potential;
+        for (size_t i = 0; i < current_potential.size(); i++) {
+            current_potential[i] = 0.0;
+        }
+        space_vector current_angular_correction;
+        for (size_t i = 0; i < current_angular_correction.size(); i++) {
+            current_angular_correction[i] = 0.0;
+        }
 
         // the following loops calculate formula (10), potential from B->A
         current_potential[0] += m_partner[0] * D[0];
@@ -222,26 +254,36 @@ namespace fmm {
             current_potential[i] += m_partner[0] * tmp;
         }
 
-        // if (cell_flat_index_unpadded == 0 && interaction_partner_flat_index_ilist_debugging == 3)
-        // {
-        //     std::cout << "current_potential: ";
-        //     for (size_t i = 0; i < current_potential.size(); i++) {
-        //         if (i > 0) {
-        //             std::cout << ", ";
-        //         }
-        //         std::cout << current_potential[i];
-        //     }
-        //     std::cout << std::endl;
+        {
+            std::cout << "current_potential: ";
+            for (size_t i = 0; i < current_potential.size(); i++) {
+                if (i > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << current_potential[i];
+            }
+            std::cout << std::endl;
 
-        //     std::cout << "current_angular_correction: ";
-        //     for (size_t d = 0; d < NDIM; d++) {
-        //         if (d > 0) {
-        //             std::cout << ", ";
-        //         }
-        //         std::cout << current_angular_correction[d];
-        //     }
-        //     std::cout << std::endl;
-        // }
+            std::cout << "current_angular_correction: ";
+            for (size_t d = 0; d < NDIM; d++) {
+                if (d > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << current_angular_correction[d];
+            }
+            std::cout << std::endl;
+        }
+
+        // TODO: remove this when switching back to non-copy (reference-based) approach
+        expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded];
+        space_vector& current_angular_correction_result =
+            angular_corrections[cell_flat_index_unpadded];
+        for (size_t i = 0; i < current_potential.size(); i++) {
+            current_potential_result[i] += current_potential[i];
+        }
+        for (size_t i = 0; i < current_angular_correction.size(); i++) {
+            current_angular_correction_result[i] += current_angular_correction[i];
+        }
     }
 
     m2m_kernel::m2m_kernel(std::vector<expansion>& local_expansions,

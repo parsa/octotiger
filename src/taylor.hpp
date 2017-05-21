@@ -65,7 +65,7 @@ public:
     }
     taylor<N, T>& operator=(const taylor<N, T>&) = default;
     OCTOTIGER_FORCEINLINE taylor<N, T>& operator=(taylor<N, T>&& other) {
-        data = std::move(other.data);
+        data = std::move(other.data);    // BUG: invalidates other object, very misleading!
         return *this;
     }
 
