@@ -48,23 +48,37 @@ namespace fmm {
         for (const geo::direction& dir : geo::direction::full_set()) {
             neighbor_gravity_type& neighbor = neighbors[dir];
             std::cout << "dir: " << dir << std::endl;
-            std::cout << "is neighbor monopole: " << std::boolalpha << neighbor.is_monopole << std::endl;
-            if (!neighbor.data.M) {
-                throw "neighbor M empty";
+            std::cout << "is neighbor monopole: " << std::boolalpha << neighbor.is_monopole
+                      << std::endl;
+            // this dir is setup as a multipole
+            if (!neighbor.is_monopole) {
+                if (!neighbor.data.M) {
+                    throw "neighbor M empty";
+                }
+                if (!neighbor.data.x) {
+                    throw "neighbor x empty";
+                }
+                std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
+                std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
+                iterate_inner_cells_padding(
+                    neighbor.direction, [this, neighbor_M_ptr, neighbor_com0](const multiindex& i,
+                                            const size_t flat_index, const multiindex& i_unpadded,
+                                            const size_t flat_index_unpadded) {
+                        local_expansions.at(flat_index) = neighbor_M_ptr.at(flat_index_unpadded);
+                        center_of_masses.at(flat_index) = neighbor_com0.at(flat_index_unpadded);
+                    });
+            } else {
+                // in case of monopole, boundary becomes padding in that direction
+                // TODO: setting everything to zero might not be correct to create zero potentials
+                iterate_inner_cells_padding(
+                    neighbor.direction, [this](const multiindex& i, const size_t flat_index,
+                                            const multiindex&, const size_t) {
+                        // initializes whole expansion, relatively expansion
+                        local_expansions.at(flat_index) = 0.0;
+                        // initializes x,y,z vector
+                        center_of_masses.at(flat_index) = 0.0;
+                    });
             }
-            if (!neighbor.data.x) {
-                throw "neighbor x empty";
-            }
-
-            std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
-            std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
-            iterate_inner_cells_padding(
-                neighbor.direction,
-                [this, neighbor_M_ptr, neighbor_com0](const multiindex& i, const size_t flat_index,
-                    const multiindex& i_unpadded, const size_t flat_index_unpadded) {
-                    // local_expansions.at(flat_index) = neighbor_M_ptr.at(flat_index_unpadded);
-                    center_of_masses.at(flat_index) = neighbor_com0.at(flat_index_unpadded);
-                });
         }
 
         // allocate output variables without padding

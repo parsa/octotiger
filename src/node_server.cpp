@@ -637,6 +637,21 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
         interactor.compute_interactions();    // includes boundary
 
+        // // TODO: at this time, do have to trigger old-style multipole-monopole interactions
+        // // for directions that are monopoles
+        // // TODO: replace by a monopole-monopole interactions kernel
+        // for (const geo::direction& dir : geo::direction::full_set()) {
+        //     // TODO: does this ever trigger? no monopoles in neighbor cell maybe?
+        //     if (!neighbors[dir].empty()) {
+        //         neighbor_gravity_type& neighbor_data = all_neighbor_interaction_data[dir];
+        //         if (neighbor_data.is_monopole) {
+        //             // this triggers "compute_boundary_interactions_monopole_multipole()"
+        //             grid_ptr->compute_boundary_interactions(type, neighbor_data.direction,
+        //                 neighbor_data.is_monopole, neighbor_data.data);
+        //         }
+        //     }
+        // }
+
         // kernel call generated debugging ilist, compare it now
         // compare_interaction_lists();
 
@@ -644,6 +659,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
         grid_ptr->compute_interactions(type);
         for (const geo::direction& dir : geo::direction::full_set()) {
+            // TODO: does this ever trigger? empty monopole maybe?
             if (!neighbors[dir].empty()) {
                 neighbor_gravity_type& neighbor_data = all_neighbor_interaction_data[dir];
                 grid_ptr->compute_boundary_interactions(
