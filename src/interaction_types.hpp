@@ -72,4 +72,7 @@ struct boundary_interaction_type
     std::vector<v4sd> four;
     // index vector in cell
     space_vector x;
+
+    std::vector<std::array<integer, 3>> first_index;
+    std::vector<std::array<integer, 3>> second_index;
 };

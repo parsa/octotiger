@@ -218,12 +218,14 @@ void compute_ilist() {
                                     // }
 
                                     // if (!found) {
-                                    //     std::cout << "--------------------------------------------"
+                                    //     std::cout <<
+                                    //     "--------------------------------------------"
                                     //               << std::endl;
                                     //     std::cout << "interior stencil element not found!"
                                     //               << std::endl;
                                     //     std::cout << "first_index: " << first_index << std::endl;
-                                    //     std::cout << "second_index: " << second_index << std::endl;
+                                    //     std::cout << "second_index: " << second_index <<
+                                    //     std::endl;
                                     //     std::cout << "missing stencil: " << recalc_stencil
                                     //               << std::endl;
                                     //     all_interior_found = false;
@@ -252,12 +254,14 @@ void compute_ilist() {
                                     // }
 
                                     // if (!found) {
-                                    //     std::cout << "--------------------------------------------"
+                                    //     std::cout <<
+                                    //     "--------------------------------------------"
                                     //               << std::endl;
                                     //     std::cout << "boundary stencil element not found!"
                                     //               << std::endl;
                                     //     std::cout << "first_index: " << first_index << std::endl;
-                                    //     std::cout << "second_index: " << second_index << std::endl;
+                                    //     std::cout << "second_index: " << second_index <<
+                                    //     std::endl;
                                     //     std::cout << "missing stencil: " << recalc_stencil
                                     //               << std::endl;
                                     //     all_interior_found = false;
@@ -310,8 +314,8 @@ void compute_ilist() {
                 //     std::cout << "stencil_elements_accessed: " << stencil_elements_accessed
                 //               << " != " << stencil.size() << std::endl;
                 // } else {
-		//     std::cout << "all stencil elements accessed!" << std::endl;
-		// }
+                //     std::cout << "all stencil elements accessed!" << std::endl;
+                // }
             }
         }
     }
@@ -361,6 +365,7 @@ void compute_ilist() {
                 boundary_interaction_type boundary_interaction;
                 boundary_interaction.second.push_back(interaction_0.second);
                 boundary_interaction.x = interaction_0.x;
+                boundary_interaction.second_index.push_back(interaction_0.second_index);
                 M2M.push_back(boundary_interaction);
             }
 
@@ -369,6 +374,7 @@ void compute_ilist() {
                 boundary_interaction_type boundary_interaction;
                 boundary_interaction.first.push_back(interaction_0.first);
                 boundary_interaction.x = interaction_0.x;
+                boundary_interaction.first_index.push_back(interaction_0.first_index);
                 M2M_new.push_back(boundary_interaction);
             }
         }
@@ -377,6 +383,7 @@ void compute_ilist() {
             for (boundary_interaction_type& boundary_interaction : M2M) {
                 if (boundary_interaction.second[0] == interaction_0.second) {
                     boundary_interaction.first.push_back(interaction_0.first);
+                    boundary_interaction.first_index.push_back(interaction_0.first_index);
                     boundary_interaction.four.push_back(interaction_0.four);
                     break;
                 }
@@ -387,6 +394,7 @@ void compute_ilist() {
                 if (boundary_interaction.first[0] == interaction_0.first) {
                     boundary_interaction.second.push_back(interaction_0.second);
                     boundary_interaction.four.push_back(interaction_0.four);
+                    boundary_interaction.second_index.push_back(interaction_0.second_index);
                     break;
                 }
             }

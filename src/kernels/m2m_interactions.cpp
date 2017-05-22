@@ -41,13 +41,29 @@ namespace fmm {
             center_of_masses.at(flat_index) = com0.at(flat_index_unpadded);
         });
 
+        // for (const geo::direction& dir : geo::direction::full_set()) {
+        //     std::cout << "dir 0: " << dir[0] << " 1: " << dir[1] << " 2: " << dir[2] <<
+        //     std::endl;
+        // for (neighbor_gravity_type& neighbor : neighbors) {
         for (const geo::direction& dir : geo::direction::full_set()) {
-            std::cout << "dir 0: " << dir[0] << " 1: " << dir[1] << " 2: " << dir[2] << std::endl;
+            neighbor_gravity_type& neighbor = neighbors[dir];
+            std::cout << "dir: " << dir << std::endl;
+            std::cout << "is neighbor monopole: " << std::boolalpha << neighbor.is_monopole << std::endl;
+            if (!neighbor.data.M) {
+                throw "neighbor M empty";
+            }
+            if (!neighbor.data.x) {
+                throw "neighbor x empty";
+            }
+
+            std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
+            std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
             iterate_inner_cells_padding(
-                dir, [this, M_ptr, com0](const multiindex& i, const size_t flat_index,
-                         const multiindex& i_unpadded, const size_t flat_index_unpadded) {
-                    local_expansions.at(flat_index) = M_ptr.at(flat_index_unpadded);
-                    center_of_masses.at(flat_index) = com0.at(flat_index_unpadded);
+                neighbor.direction,
+                [this, neighbor_M_ptr, neighbor_com0](const multiindex& i, const size_t flat_index,
+                    const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+                    // local_expansions.at(flat_index) = neighbor_M_ptr.at(flat_index_unpadded);
+                    center_of_masses.at(flat_index) = neighbor_com0.at(flat_index_unpadded);
                 });
         }
 
@@ -165,7 +181,7 @@ namespace fmm {
     }
 
     void m2m_interactions::print_local_expansions() {
-        print_layered_padded(
+        print_layered_inner_padded(
             true, [this](const multiindex& i, const size_t flat_index, const multiindex& i_unpadded,
                       const size_t flat_index_unpadded) {
                 std::cout << " " << this->local_expansions[flat_index];
@@ -173,11 +189,9 @@ namespace fmm {
     }
 
     void m2m_interactions::print_center_of_masses() {
-        print_layered_padded(
-            true, [this](const multiindex& i, const size_t flat_index, const multiindex& i_unpadded,
-                      const size_t flat_index_unpadded) {
-                std::cout << this->center_of_masses[flat_index];
-            });
+        print_layered_padded(true, [this](const multiindex& i, const size_t flat_index) {
+            std::cout << this->center_of_masses[flat_index];
+        });
     }
 
 }    // namespace fmm

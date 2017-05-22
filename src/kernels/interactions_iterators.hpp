@@ -25,10 +25,10 @@ namespace fmm {
         size_t z = flat_index;
         multiindex m(x, y, z);
         return m;
-    }    
+    }
 
     // stride for multiple outer cells (and/or padding)
-    inline size_t to_inner_flat_index_padded(const multiindex& m) {
+    inline size_t to_flat_index_padded(const multiindex& m) {
         return m.x * PADDED_STRIDE * PADDED_STRIDE + m.y * PADDED_STRIDE + m.z;
     }
 
@@ -46,7 +46,7 @@ namespace fmm {
                 for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
                     const multiindex m(i0 + INNER_CELLS_PADDING_DEPTH,
                         i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
-                    const size_t inner_flat_index = to_inner_flat_index_padded(m);
+                    const size_t inner_flat_index = to_flat_index_padded(m);
                     const multiindex m_unpadded(i0, i1, i2);
                     const size_t inner_flat_index_unpadded =
                         to_inner_flat_index_not_padded(m_unpadded);
@@ -63,15 +63,31 @@ namespace fmm {
         for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
             for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
                 for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
+                    // shift to central cube and apply dir-based offset
                     const multiindex m(
                         i0 + INNER_CELLS_PADDING_DEPTH + dir[0] * INNER_CELLS_PADDING_DEPTH,
                         i1 + INNER_CELLS_PADDING_DEPTH + dir[1] * INNER_CELLS_PADDING_DEPTH,
                         i2 + INNER_CELLS_PADDING_DEPTH + dir[2] * INNER_CELLS_PADDING_DEPTH);
-                    const size_t inner_flat_index = to_inner_flat_index_padded(m);
+                    const size_t inner_flat_index = to_flat_index_padded(m);
                     const multiindex m_unpadded(i0, i1, i2);
                     const size_t inner_flat_index_unpadded =
                         to_inner_flat_index_not_padded(m_unpadded);
                     f(m, inner_flat_index, m_unpadded, inner_flat_index_unpadded);
+                }
+            }
+        }
+    }
+
+    // meant to iterate the input data structure
+    template <typename F>
+    void iterate_cells_padded(const F& f) {
+        // TODO: implementation not finished
+        for (size_t i0 = 0; i0 < PADDED_STRIDE; i0++) {
+            for (size_t i1 = 0; i1 < PADDED_STRIDE; i1++) {
+                for (size_t i2 = 0; i2 < PADDED_STRIDE; i2++) {
+                    const multiindex m(i0, i1, i2);
+                    const size_t flat_index = to_flat_index_padded(m);
+                    f(m, flat_index);
                 }
             }
         }
@@ -91,6 +107,7 @@ namespace fmm {
         }
     }
 
+    // iterate non-padded cube
     template <typename component_printer>
     void print_layered_not_padded(bool print_index, const component_printer& printer) {
         iterate_inner_cells_not_padded([&printer, print_index](multiindex& i, size_t flat_index) {
@@ -111,15 +128,15 @@ namespace fmm {
         });
     }
 
+    // iterates only the central cube in a padded data structure
     template <typename component_printer>
-    void print_layered_padded(bool print_index, const component_printer& printer) {
+    void print_layered_inner_padded(bool print_index, const component_printer& printer) {
         iterate_inner_cells_padded(
             [&printer, print_index](const multiindex& i, const size_t flat_index,
                 const multiindex& i_unpadded, const size_t flat_index_unpadded) {
                 if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
                     std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
                 }
-                // std::cout << this->potential_expansions[flat_index];
                 if (i.z % INNER_CELLS_PER_DIRECTION != 0) {
                     std::cout << ", ";
                 }
@@ -133,6 +150,27 @@ namespace fmm {
             });
     }
 
+    // iterate everything including padding
+    template <typename component_printer>
+    void print_layered_padded(bool print_index, const component_printer& printer) {
+        iterate_cells_padded([&printer, print_index](const multiindex& i, const size_t flat_index) {
+            if (i.y % PADDED_STRIDE == 0 && i.z % PADDED_STRIDE == 0) {
+                std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
+            }
+            if (i.z % PADDED_STRIDE != 0) {
+                std::cout << ", ";
+            }
+            if (print_index) {
+                std::cout << " (" << i << ") = ";
+            }
+            printer(i, flat_index);
+            if ((i.z + 1) % PADDED_STRIDE == 0) {
+                std::cout << std::endl;
+            }
+        });
+    }
+
+    // iterate one of the padding directions
     template <typename component_printer>
     void print_layered_padding(
         geo::direction& dir, bool print_index, const component_printer& printer) {

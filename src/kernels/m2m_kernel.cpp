@@ -17,28 +17,37 @@ namespace fmm {
     void m2m_kernel::operator()(const multiindex& cell_index, const size_t cell_flat_index,
         const multiindex& cell_index_unpadded, const size_t cell_flat_index_unpadded,
         const multiindex& interaction_partner_index, const size_t interaction_partner_flat_index) {
-        if (cell_flat_index_unpadded != 0) {
-            return;
-        }
-        if (interaction_partner_index.x - cell_index.x < 0 ||
-            interaction_partner_index.y - cell_index.y < 0 ||
-            interaction_partner_index.z - cell_index.z < 0) {
-            return;
-        }
+        // if (cell_flat_index_unpadded != 0) {
+        //     return;
+        // }
+        // if (interaction_partner_index.x - cell_index.x < 0 ||
+        //     interaction_partner_index.y - cell_index.y < 0 ||
+        //     interaction_partner_index.z - cell_index.z < 0) {
+        //     return;
+        // }
 
         {
             std::cout << "-------------------------------------------------------------"
                       << std::endl;
-            std::cout << "cell_index: " << cell_index << std::endl;
-            std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
-            std::cout << "cell_index_unpadded: " << cell_index_unpadded << std::endl;
-            std::cout << "cell_flat_index_unpadded: " << cell_flat_index_unpadded << std::endl;
-            std::cout << "interaction_partner_index: " << interaction_partner_index << std::endl;
-            std::cout << "interaction_partner_flat_index: " << interaction_partner_flat_index
-                      << std::endl;
-            std::cout << "diff: " << (interaction_partner_index.x - cell_index.x) << ", "
+            std::cout << "cell_index: " << cell_index;
+            std::cout << " interaction_partner_index: " << interaction_partner_index;
+            std::cout << " diff: " << (interaction_partner_index.x - cell_index.x) << ", "
                       << (interaction_partner_index.y - cell_index.y) << ", "
                       << (interaction_partner_index.z - cell_index.z) << std::endl;
+            // std::cout << " cell_index_unpadded: " << cell_index_unpadded;
+            std::cout << " cell_flat_index: " << cell_flat_index;
+            std::cout << " cell_flat_index_unpadded: " << cell_flat_index_unpadded;
+            std::cout << " interaction_partner_flat_index: " << interaction_partner_flat_index;
+            std::cout << std::endl;
+            if (interaction_partner_index.x < 8 || interaction_partner_index.y < 8 ||
+                interaction_partner_index.z < 8 || interaction_partner_index.x >= 16 ||
+                interaction_partner_index.y >= 16 || interaction_partner_index.z >= 16) {
+                multiindex old_partner_index(interaction_partner_index.x % 8,
+                    interaction_partner_index.y % 8, interaction_partner_index.z % 8);
+                std::cout << "old partner index: " << old_partner_index << std::endl;
+                std::cout << "old partner flat index: "
+                          << to_inner_flat_index_not_padded(old_partner_index) << std::endl;
+            }
         }
 
         std::array<real, NDIM>
