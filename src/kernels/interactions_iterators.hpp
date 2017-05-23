@@ -2,6 +2,7 @@
 
 #include "geometry.hpp"
 #include "interaction_constants.hpp"
+#include "interaction_types.hpp"
 #include "multiindex.hpp"
 
 #include <vector>
@@ -197,7 +198,7 @@ namespace fmm {
     }
 
     template <typename T, typename compare_functional>
-    bool compare_padded_with_non_padded(const std::vector<T>& ref_array,
+    bool compare_inner_padded_with_non_padded(const std::vector<T>& ref_array,
         const std::vector<T>& mine_array, const compare_functional& c) {
         bool all_ok = true;
         iterate_inner_cells_padded(
@@ -235,6 +236,54 @@ namespace fmm {
                 all_ok = ok;
             }
         });
+        if (!all_ok) {
+            std::cout << "error: comparison failed!" << std::endl;
+            exit(1);
+        } else {
+            std::cout << "comparison success!" << std::endl;
+        }
+        return all_ok;
+    }
+
+    template <typename T, typename compare_functional>
+    bool compare_padded_with_non_padded(
+        std::array<std::shared_ptr<std::vector<T>>, geo::direction::count()>& all_neighbors_ref,
+        const std::vector<T>& mine_array, const compare_functional& c) {
+        bool all_ok = true;
+        for (const geo::direction& dir : geo::direction::full_set()) {
+            if (all_neighbors_ref[dir]) {
+                std::vector<T>& neighbor_ref = *(all_neighbors_ref[dir]);
+                iterate_inner_cells_padding(
+                    dir, [&c, &all_ok, &neighbor_ref, &mine_array](const multiindex& i,
+                             const size_t flat_index, const multiindex& i_unpadded,
+                             const size_t flat_index_unpadded) {
+                        const T& ref = neighbor_ref[flat_index_unpadded];
+                        const T& mine = mine_array[flat_index];
+                        bool ok = c(ref, mine);
+                        if (!ok) {
+                            std::cout << "error for i:" << i << " i_unpadded: " << i_unpadded
+                                      << std::endl;
+                            all_ok = ok;
+                        }
+                    });
+            } else {
+                T ref_dummy;
+		ref_dummy = 0.0;
+                iterate_inner_cells_padding(
+                    dir, [&c, &all_ok, &ref_dummy, &mine_array](const multiindex& i,
+                             const size_t flat_index, const multiindex& i_unpadded,
+                             const size_t flat_index_unpadded) {
+                        const T& mine = mine_array[flat_index];
+                        bool ok = c(ref_dummy, mine);
+                        if (!ok) {
+                            std::cout << "error for i:" << i << " i_unpadded: " << i_unpadded
+                                      << std::endl;
+                            all_ok = ok;
+                        }
+                    });
+            }
+        }
+
         if (!all_ok) {
             std::cout << "error: comparison failed!" << std::endl;
             exit(1);

@@ -470,6 +470,18 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         }
     }
 
+    std::array<std::shared_ptr<std::vector<expansion>>, geo::direction::count()>
+        all_neighbors_M_ptr;
+    for (geo::direction const& dir : geo::direction::full_set()) {
+        all_neighbors_M_ptr[dir] = all_neighbor_interaction_data[dir].data.M;
+    }
+
+    std::array<std::shared_ptr<std::vector<space_vector>>, geo::direction::count()>
+        all_neighbors_com0;
+    for (geo::direction const& dir : geo::direction::full_set()) {
+        all_neighbors_com0[dir] = all_neighbor_interaction_data[dir].data.x;
+    }
+
     // grid_ptr->compute_interactions(type);
     // for (auto const& dir : geo::direction::full_set()) {
     //     std::cout << "current dir: " << dir << std::endl;
@@ -521,18 +533,28 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             return true;
         };
 
-        std::cout << "comparing M, local_expansions:" << std::endl;
-        std::vector<expansion>& local_expansions = interactor.get_local_expansions();
+        {
+            std::cout << "comparing M, local_expansions:" << std::endl;
+            std::vector<expansion>& local_expansions = interactor.get_local_expansions();
 
-        octotiger::fmm::compare_padded_with_non_padded(
-            M_ptr, local_expansions, expansion_comparator);
+            octotiger::fmm::compare_inner_padded_with_non_padded(
+                M_ptr, local_expansions, expansion_comparator);
 
-        std::cout << "comparing com0, center_of_masses:" << std::endl;
-        std::vector<space_vector>& center_of_masses = interactor.get_center_of_masses();
-        std::vector<space_vector>& com0 = *(com_ptr[0]);
+            std::cout << "comparing M, local_expansions neighborhood:" << std::endl;
+            octotiger::fmm::compare_padded_with_non_padded(
+                all_neighbors_M_ptr, local_expansions, expansion_comparator);
 
-        octotiger::fmm::compare_padded_with_non_padded(
-            com0, center_of_masses, space_vector_comparator);
+            std::cout << "comparing com0, center_of_masses:" << std::endl;
+            std::vector<space_vector>& center_of_masses = interactor.get_center_of_masses();
+            std::vector<space_vector>& com0 = *(com_ptr[0]);
+
+            octotiger::fmm::compare_inner_padded_with_non_padded(
+                com0, center_of_masses, space_vector_comparator);
+
+            std::cout << "comparing com0, center_of_masses neighborhood:" << std::endl;
+            octotiger::fmm::compare_padded_with_non_padded(
+                all_neighbors_com0, center_of_masses, space_vector_comparator);
+        }
 
         ////////////////////////////////////////// end input comparisons /////////////////////////////////////////
 
