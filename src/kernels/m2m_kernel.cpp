@@ -26,30 +26,6 @@ namespace fmm {
         //     return;
         // }
 
-        {
-            std::cout << "-------------------------------------------------------------"
-                      << std::endl;
-            std::cout << "cell_index: " << cell_index;
-            std::cout << " interaction_partner_index: " << interaction_partner_index;
-            std::cout << " diff: " << (interaction_partner_index.x - cell_index.x) << ", "
-                      << (interaction_partner_index.y - cell_index.y) << ", "
-                      << (interaction_partner_index.z - cell_index.z) << std::endl;
-            // std::cout << " cell_index_unpadded: " << cell_index_unpadded;
-            std::cout << " cell_flat_index: " << cell_flat_index;
-            std::cout << " cell_flat_index_unpadded: " << cell_flat_index_unpadded;
-            std::cout << " interaction_partner_flat_index: " << interaction_partner_flat_index;
-            std::cout << std::endl;
-            if (interaction_partner_index.x < 8 || interaction_partner_index.y < 8 ||
-                interaction_partner_index.z < 8 || interaction_partner_index.x >= 16 ||
-                interaction_partner_index.y >= 16 || interaction_partner_index.z >= 16) {
-                multiindex old_partner_index(interaction_partner_index.x % 8,
-                    interaction_partner_index.y % 8, interaction_partner_index.z % 8);
-                std::cout << "old partner index: " << old_partner_index << std::endl;
-                std::cout << "old partner flat index: "
-                          << to_inner_flat_index_not_padded(old_partner_index) << std::endl;
-            }
-        }
-
         std::array<real, NDIM>
             X;    // TODO: replace by space_vector for vectorization or get rid of temporary
         for (integer d = 0; d < NDIM; ++d) {
@@ -73,32 +49,10 @@ namespace fmm {
 
         ilist_debugging.push_back(current_interaction);
 
-        {
-            std::cout << "X: ";
-            for (size_t d = 0; d < NDIM; d++) {
-                if (d > 0) {
-                    std::cout << ", ";
-                }
-                std::cout << X[d];
-            }
-            std::cout << std::endl;
-        }
-
         std::array<real, NDIM>
             Y;    // TODO: replace by space_vector for vectorization or get rid of temporary
         for (integer d = 0; d < NDIM; ++d) {
             Y[d] = center_of_masses[interaction_partner_flat_index][d];
-        }
-
-        {
-            std::cout << "Y: ";
-            for (size_t d = 0; d < NDIM; d++) {
-                if (d > 0) {
-                    std::cout << ", ";
-                }
-                std::cout << Y[d];
-            }
-            std::cout << std::endl;
         }
 
         // cell specific taylor series coefficients
@@ -109,16 +63,6 @@ namespace fmm {
         //     m0[j] = local_expansions[interaction_partner_flat_index][j];
         // }
         expansion& m_partner = local_expansions[interaction_partner_flat_index];
-        {
-            std::cout << "m_partner: ";
-            for (size_t i = 0; i < m_partner.size(); i++) {
-                if (i > 0) {
-                    std::cout << ", ";
-                }
-                std::cout << m_partner[i];
-            }
-            std::cout << std::endl;
-        }
 
         // n angular momentum of the cells
         // TODO: replace by expansion type or get rid of temporary
@@ -171,16 +115,6 @@ namespace fmm {
         // calculates all D-values, calculate all coefficients of 1/r (not the potential),
         // formula (6)-(9) and (19)
         D.set_basis(dX);    // TODO: after vectorization, make sure the vectorized version is called
-        {
-            std::cout << "D: ";
-            for (size_t i = 0; i < D.size(); i++) {
-                if (i > 0) {
-                    std::cout << ", ";
-                }
-                std::cout << D[i];
-            }
-            std::cout << std::endl;
-        }
 
         // std::cout << "D: ";
         // for (size_t i = 0; i < D.size(); i++) {
@@ -263,7 +197,72 @@ namespace fmm {
             current_potential[i] += m_partner[0] * tmp;
         }
 
-        {
+        // TODO: remove this when switching back to non-copy (reference-based) approach
+        expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded];
+        space_vector& current_angular_correction_result =
+            angular_corrections[cell_flat_index_unpadded];
+        for (size_t i = 0; i < current_potential.size(); i++) {
+            current_potential_result[i] += current_potential[i];
+        }
+        for (size_t i = 0; i < current_angular_correction.size(); i++) {
+            current_angular_correction_result[i] += current_angular_correction[i];
+        }
+
+        if (cell_index_unpadded.x == 0 && cell_index_unpadded.y == 0 &&
+            cell_index_unpadded.z == 0) {
+            std::cout << "-------------------------------------------------------------"
+                      << std::endl;
+            std::cout << "cell_index: " << cell_index;
+            std::cout << " interaction_partner_index: " << interaction_partner_index;
+            std::cout << " diff: " << (interaction_partner_index.x - cell_index.x) << ", "
+                      << (interaction_partner_index.y - cell_index.y) << ", "
+                      << (interaction_partner_index.z - cell_index.z) << std::endl;
+            // std::cout << " cell_index_unpadded: " << cell_index_unpadded;
+            std::cout << " cell_flat_index: " << cell_flat_index;
+            std::cout << " cell_flat_index_unpadded: " << cell_flat_index_unpadded;
+            std::cout << " interaction_partner_flat_index: " << interaction_partner_flat_index;
+            std::cout << std::endl;
+            if (interaction_partner_index.x < 8 || interaction_partner_index.y < 8 ||
+                interaction_partner_index.z < 8 || interaction_partner_index.x >= 16 ||
+                interaction_partner_index.y >= 16 || interaction_partner_index.z >= 16) {
+                multiindex old_partner_index(interaction_partner_index.x % 8,
+                    interaction_partner_index.y % 8, interaction_partner_index.z % 8);
+                std::cout << "old partner index: " << old_partner_index << std::endl;
+                std::cout << "old partner flat index: "
+                          << to_inner_flat_index_not_padded(old_partner_index) << std::endl;
+            }
+            std::cout << "X: ";
+            for (size_t d = 0; d < NDIM; d++) {
+                if (d > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << X[d];
+            }
+            std::cout << std::endl;
+            std::cout << "Y: ";
+            for (size_t d = 0; d < NDIM; d++) {
+                if (d > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << Y[d];
+            }
+            std::cout << std::endl;
+            std::cout << "m_partner: ";
+            for (size_t i = 0; i < m_partner.size(); i++) {
+                if (i > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << m_partner[i];
+            }
+            std::cout << std::endl;
+            std::cout << "D: ";
+            for (size_t i = 0; i < D.size(); i++) {
+                if (i > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << D[i];
+            }
+            std::cout << std::endl;
             std::cout << "current_potential: ";
             for (size_t i = 0; i < current_potential.size(); i++) {
                 if (i > 0) {
@@ -281,17 +280,6 @@ namespace fmm {
                 std::cout << current_angular_correction[d];
             }
             std::cout << std::endl;
-        }
-
-        // TODO: remove this when switching back to non-copy (reference-based) approach
-        expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded];
-        space_vector& current_angular_correction_result =
-            angular_corrections[cell_flat_index_unpadded];
-        for (size_t i = 0; i < current_potential.size(); i++) {
-            current_potential_result[i] += current_potential[i];
-        }
-        for (size_t i = 0; i < current_angular_correction.size(); i++) {
-            current_angular_correction_result[i] += current_angular_correction[i];
         }
     }
 

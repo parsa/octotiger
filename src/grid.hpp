@@ -172,6 +172,14 @@ public:
         return L_c;
     }
 
+    std::array<real, NDIM> get_xmin() {
+        return xmin;
+    }
+
+    real get_dx() {
+        return dx;
+    }
+
 #ifdef RADIATION
     std::shared_ptr<rad_grid> get_rad_grid() {
         return rad_grid_ptr;
@@ -218,6 +226,9 @@ public:
     }
     void set_root(bool flag = true) {
         is_root = flag;
+    }
+    bool get_root() {
+        return is_root;
     }
     void set_leaf(bool flag = true) {
         if (is_leaf != flag) {

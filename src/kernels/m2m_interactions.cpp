@@ -53,20 +53,39 @@ namespace fmm {
             // this dir is setup as a multipole
             if (!neighbor.is_monopole) {
                 if (!neighbor.data.M) {
-                    throw "neighbor M empty";
+                    std::cout << "neighbor M empty" << std::endl;
+                    if (!neighbor.data.x) {
+                        std::cout << "neighbor x also empty" << std::endl;
+                    }
+                    if (!neighbor.data.m) {
+                        std::cout << "neighbor m also empty" << std::endl;
+                    }
+                    // TODO: ask Dominic why !is_monopole and stuff still empty
+                    iterate_inner_cells_padding(
+                        neighbor.direction, [this](const multiindex& i, const size_t flat_index,
+                                                const multiindex&, const size_t) {
+                            // initializes whole expansion, relatively expansion
+                            local_expansions.at(flat_index) = 0.0;
+                            // initializes x,y,z vector
+                            center_of_masses.at(flat_index) = 0.0;
+                        });
+                    // throw "neighbor M empty";
+                } else {
+                    if (!neighbor.data.x) {
+                        throw "neighbor x empty";
+                    }
+                    std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
+                    std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
+                    iterate_inner_cells_padding(
+                        neighbor.direction,
+                        [this, neighbor_M_ptr, neighbor_com0](const multiindex& i,
+                            const size_t flat_index, const multiindex& i_unpadded,
+                            const size_t flat_index_unpadded) {
+                            local_expansions.at(flat_index) =
+                                neighbor_M_ptr.at(flat_index_unpadded);
+                            center_of_masses.at(flat_index) = neighbor_com0.at(flat_index_unpadded);
+                        });
                 }
-                if (!neighbor.data.x) {
-                    throw "neighbor x empty";
-                }
-                std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
-                std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
-                iterate_inner_cells_padding(
-                    neighbor.direction, [this, neighbor_M_ptr, neighbor_com0](const multiindex& i,
-                                            const size_t flat_index, const multiindex& i_unpadded,
-                                            const size_t flat_index_unpadded) {
-                        local_expansions.at(flat_index) = neighbor_M_ptr.at(flat_index_unpadded);
-                        center_of_masses.at(flat_index) = neighbor_com0.at(flat_index_unpadded);
-                    });
             } else {
                 // in case of monopole, boundary becomes padding in that direction
                 // TODO: setting everything to zero might not be correct to create zero potentials
@@ -206,6 +225,17 @@ namespace fmm {
         print_layered_padded(true, [this](const multiindex& i, const size_t flat_index) {
             std::cout << this->center_of_masses[flat_index];
         });
+    }
+
+    void m2m_interactions::add_to_potential_expansions(std::vector<expansion>& L) {
+        iterate_inner_cells_not_padded([this, &L](multiindex& i, size_t flat_index) {
+            potential_expansions[flat_index] += L[flat_index];
+        });
+    }
+
+    void m2m_interactions::add_to_center_of_masses(std::vector<space_vector>& L_c) {
+        iterate_inner_cells_not_padded([this, &L_c](
+            multiindex& i, size_t flat_index) { center_of_masses[flat_index] += L_c[flat_index]; });
     }
 
 }    // namespace fmm

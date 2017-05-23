@@ -58,6 +58,7 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
         }
 
         const integer list_size = bnd.second.size();
+        // TODO: is that always divisible? -> padding?
         for (integer li = 0; li < list_size; li += simd_len) {
             taylor<4, simd_vector> m0;
             std::array<simd_vector, NDIM> Y;
@@ -150,55 +151,59 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
             for (integer i = 0; i != simd_len; ++i) {
                 // if (interaction_list[interaction_first_index + i].first == 0 &&
                 //     interaction_list[interaction_second_index + i].second == 3) {
-                std::cout << "---------------------- boundary ---------------------------"
-                          << std::endl;
                 auto& first_index = bnd.first_index[0];
-                std::cout << "first_index: " << first_index[0] << ", " << first_index[1] << ", "
-                          << first_index[2];
-                auto& second_index = bnd.second_index[li + i];
-                std::cout << " second_index: " << second_index[0] << ", " << second_index[1] << ", "
-                          << second_index[2];
-                std::cout << " diff: " << (second_index[0] - first_index[0]) << ", "
-                          << (second_index[1] - first_index[1]) << ", "
-                          << (second_index[2] - first_index[2]) << std::endl;
-                std::cout << "first_index_flat: " << bnd.first[0] << std::endl;
-                std::cout << "second_index_flat: " << bnd.second[li + i] << std::endl;
-                std::cout << "X: " << X[0][i] << ", " << X[1][i] << ", " << X[2][i] << std::endl;
-                std::cout << "Y: " << Y[0][i] << ", " << Y[1][i] << ", " << Y[2][i] << std::endl;
-                std::cout << "m0 (m_partner): ";
-                for (size_t j = 0; j < m0.size(); j++) {
-                    if (j > 0) {
-                        std::cout << ", ";
-                    }
-                    std::cout << m0[j][i];
-                }
-                std::cout << std::endl;
-                std::cout << "D: ";
-                for (size_t j = 0; j < D.size(); j++) {
-                    if (j > 0) {
-                        std::cout << ", ";
-                    }
-                    std::cout << D[j][i];
-                }
-                std::cout << std::endl;
-                std::cout << "A0: ";
-                for (size_t j = 0; j < A0.size(); j++) {
-                    if (j > 0) {
-                        std::cout << ", ";
-                    }
-                    std::cout << A0[j][i];
-                }
-                std::cout << std::endl;
+                if (first_index[0] == 0 && first_index[1] == 0 && first_index[2] == 0) {
+                    std::cout << "---------------------- boundary ---------------------------"
+                              << std::endl;
 
-                std::cout << "B0: ";
-                for (size_t d = 0; d < NDIM; d++) {
-                    if (d > 0) {
-                        std::cout << ", ";
+                    std::cout << "first_index: " << first_index[0] << ", " << first_index[1] << ", "
+                              << first_index[2];
+                    auto& second_index = bnd.second_index[li + i];
+                    std::cout << " second_index: " << second_index[0] << ", " << second_index[1]
+                              << ", " << second_index[2];
+                    std::cout << " diff: " << (second_index[0] - first_index[0]) << ", "
+                              << (second_index[1] - first_index[1]) << ", "
+                              << (second_index[2] - first_index[2]) << std::endl;
+                    std::cout << "first_index_flat: " << bnd.first[0] << std::endl;
+                    std::cout << "second_index_flat: " << bnd.second[li + i] << std::endl;
+                    std::cout << "X: " << X[0][i] << ", " << X[1][i] << ", " << X[2][i]
+                              << std::endl;
+                    std::cout << "Y: " << Y[0][i] << ", " << Y[1][i] << ", " << Y[2][i]
+                              << std::endl;
+                    std::cout << "m0 (m_partner): ";
+                    for (size_t j = 0; j < m0.size(); j++) {
+                        if (j > 0) {
+                            std::cout << ", ";
+                        }
+                        std::cout << m0[j][i];
                     }
-                    std::cout << B0[d][i];
+                    std::cout << std::endl;
+                    std::cout << "D: ";
+                    for (size_t j = 0; j < D.size(); j++) {
+                        if (j > 0) {
+                            std::cout << ", ";
+                        }
+                        std::cout << D[j][i];
+                    }
+                    std::cout << std::endl;
+                    std::cout << "A0: ";
+                    for (size_t j = 0; j < A0.size(); j++) {
+                        if (j > 0) {
+                            std::cout << ", ";
+                        }
+                        std::cout << A0[j][i];
+                    }
+                    std::cout << std::endl;
+
+                    std::cout << "B0: ";
+                    for (size_t d = 0; d < NDIM; d++) {
+                        if (d > 0) {
+                            std::cout << ", ";
+                        }
+                        std::cout << B0[d][i];
+                    }
+                    std::cout << std::endl;
                 }
-                std::cout << std::endl;
-                // }
             }
         }
 

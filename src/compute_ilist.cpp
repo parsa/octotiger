@@ -291,10 +291,8 @@ void compute_ilist() {
                                     ilist_d0_bnd[neighbor_index].push_back(dp);
                                 }
                             }
-                            // in outer sphere, and maybe not in inner sphere
-                            // TODO: Why are the potentials calculated correctly, wouldn't that
-                            // lead
-                            // to duplicate calcualtions?
+                            // on root level, interact with every other cell, except for those that
+                            // are too close
                             if (theta_f <= theta0) {
                                 np.first = iii0;
                                 np.second = iii1n;

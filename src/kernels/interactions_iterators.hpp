@@ -4,6 +4,8 @@
 #include "interaction_constants.hpp"
 #include "multiindex.hpp"
 
+#include <vector>
+
 namespace octotiger {
 namespace fmm {
 
@@ -194,29 +196,51 @@ namespace fmm {
             });
     }
 
-    template <typename compare_functional>
-    bool compare_padded_with_non_padded(const compare_functional& c) {
+    template <typename T, typename compare_functional>
+    bool compare_padded_with_non_padded(const std::vector<T>& ref_array,
+        const std::vector<T>& mine_array, const compare_functional& c) {
         bool all_ok = true;
-        iterate_inner_cells_padded([&c, &all_ok](const multiindex& i, const size_t flat_index,
-            const multiindex& i_unpadded, const size_t flat_index_unpadded) {
-            bool ok = c(i, flat_index, i_unpadded, flat_index_unpadded);
-            if (all_ok) {
-                all_ok = ok;
-            }
-        });
-        return all_ok;
-    }
-
-    template <typename compare_functional>
-    bool compare_non_padded_with_non_padded(const compare_functional& c) {
-        bool all_ok = true;
-        iterate_inner_cells_not_padded(
-            [&c, &all_ok](const multiindex& i_unpadded, const size_t flat_index_unpadded) {
-                bool ok = c(i_unpadded, flat_index_unpadded);
-                if (all_ok) {
+        iterate_inner_cells_padded(
+            [&c, &all_ok, &ref_array, &mine_array](const multiindex& i, const size_t flat_index,
+                const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+                const T& ref = ref_array[flat_index_unpadded];
+                const T& mine = mine_array[flat_index];
+                bool ok = c(ref, mine);
+                if (!ok) {
+                    std::cout << "error for i:" << i << " i_unpadded: " << i_unpadded << std::endl;
                     all_ok = ok;
                 }
             });
+
+        if (!all_ok) {
+            std::cout << "error: comparison failed!" << std::endl;
+            exit(1);
+        } else {
+            std::cout << "comparison success!" << std::endl;
+        }
+        return all_ok;
+    }
+
+    template <typename T, typename compare_functional>
+    bool compare_non_padded_with_non_padded(const std::vector<T>& ref_array,
+        const std::vector<T>& mine_array, const compare_functional& c) {
+        bool all_ok = true;
+        iterate_inner_cells_not_padded([&c, &all_ok, &ref_array, &mine_array](
+            const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+            const T& ref = ref_array[flat_index_unpadded];
+            const T& mine = mine_array[flat_index_unpadded];
+            bool ok = c(ref, mine);
+            if (!ok) {
+                std::cout << "error for i_unpadded: " << i_unpadded << std::endl;
+                all_ok = ok;
+            }
+        });
+        if (!all_ok) {
+            std::cout << "error: comparison failed!" << std::endl;
+            exit(1);
+        } else {
+            std::cout << "comparison success!" << std::endl;
+        }
         return all_ok;
     }
 

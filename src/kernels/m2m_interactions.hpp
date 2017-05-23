@@ -81,6 +81,10 @@ namespace fmm {
         void print_local_expansions();
 
         void print_center_of_masses();
+
+        void add_to_potential_expansions(std::vector<expansion>& L);
+
+        void add_to_center_of_masses(std::vector<space_vector>& L_c);
     };
 }    // namespace fmm
 }    // namespace octotiger
