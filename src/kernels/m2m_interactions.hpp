@@ -57,20 +57,20 @@ namespace fmm {
 
         void compute_interactions();
 
-        void get_converted_local_expansions(std::vector<multipole>& M_ptr);
+        // void get_converted_local_expansions(std::vector<multipole>& M_ptr);
 
         std::vector<expansion>& get_local_expansions();
 
-        void get_converted_center_of_masses(
-            std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr);
+        // void get_converted_center_of_masses(
+        //     std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr);
 
         std::vector<space_vector>& get_center_of_masses();
 
-        void get_converted_potential_expansions(std::vector<expansion>& L);
+        // void get_converted_potential_expansions(std::vector<expansion>& L);
 
         std::vector<expansion>& get_potential_expansions();
 
-        void get_converted_angular_corrections(std::vector<space_vector>& L_c);
+        // void get_converted_angular_corrections(std::vector<space_vector>& L_c);
 
         std::vector<space_vector>& get_angular_corrections();
 

@@ -197,6 +197,10 @@ namespace fmm {
             });
     }
 
+    bool expansion_comparator(const expansion& ref, const expansion& mine);
+
+    bool space_vector_comparator(const space_vector& ref, const space_vector& mine);
+
     template <typename T, typename compare_functional>
     bool compare_inner_padded_with_non_padded(const std::vector<T>& ref_array,
         const std::vector<T>& mine_array, const compare_functional& c) {

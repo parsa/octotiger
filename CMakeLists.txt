@@ -120,6 +120,7 @@ set(source_files ${source_files}
     src/kernels/calculate_stencil.cpp
     src/kernels/m2m_kernel.cpp
     src/kernels/compare_interaction_lists.cpp
+    src/kernels/interactions_iterators.cpp
 )
 
 set(header_files

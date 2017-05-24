@@ -169,45 +169,45 @@ namespace fmm {
         kernel.apply_stencils(stencils);
     }
 
-    void m2m_interactions::get_converted_local_expansions(std::vector<multipole>& M_ptr) {
-        iterate_inner_cells_padded([this, &M_ptr](const multiindex& i, const size_t flat_index,
-            const multiindex& i_unpadded, const size_t flat_index_unpadded) {
-            M_ptr[flat_index_unpadded] = local_expansions[flat_index];
-        });
-    }
+    // void m2m_interactions::get_converted_local_expansions(std::vector<multipole>& M_ptr) {
+    //     iterate_inner_cells_padded([this, &M_ptr](const multiindex& i, const size_t flat_index,
+    //         const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+    //         M_ptr[flat_index_unpadded] = local_expansions[flat_index];
+    //     });
+    // }
 
     std::vector<expansion>& m2m_interactions::get_local_expansions() {
         return local_expansions;
     }
 
-    void m2m_interactions::get_converted_center_of_masses(
-        std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr) {
-        std::vector<space_vector>& com0 = *(com_ptr[0]);
-        iterate_inner_cells_padded([this, &com0](const multiindex& i, const size_t flat_index,
-            const multiindex& i_unpadded, const size_t flat_index_unpadded) {
-            com0[flat_index_unpadded] = center_of_masses[flat_index];
-        });
-    }
+    // void m2m_interactions::get_converted_center_of_masses(
+    //     std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr) {
+    //     std::vector<space_vector>& com0 = *(com_ptr[0]);
+    //     iterate_inner_cells_padded([this, &com0](const multiindex& i, const size_t flat_index,
+    //         const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+    //         com0[flat_index_unpadded] = center_of_masses[flat_index];
+    //     });
+    // }
 
     std::vector<space_vector>& m2m_interactions::get_center_of_masses() {
         return center_of_masses;
     }
 
-    void m2m_interactions::get_converted_potential_expansions(std::vector<expansion>& L) {
-        iterate_inner_cells_not_padded([this, &L](multiindex& i, size_t flat_index) {
-            L[flat_index] = potential_expansions[flat_index];
-        });
-    }
+    // void m2m_interactions::get_converted_potential_expansions(std::vector<expansion>& L) {
+    //     iterate_inner_cells_not_padded([this, &L](multiindex& i, size_t flat_index) {
+    //         L[flat_index] = potential_expansions[flat_index];
+    //     });
+    // }
 
     std::vector<expansion>& m2m_interactions::get_potential_expansions() {
         return potential_expansions;
     }
 
-    void m2m_interactions::get_converted_angular_corrections(std::vector<space_vector>& L_c) {
-        iterate_inner_cells_not_padded([this, &L_c](multiindex& i, size_t flat_index) {
-            L_c[flat_index] = angular_corrections[flat_index];
-        });
-    }
+    // void m2m_interactions::get_converted_angular_corrections(std::vector<space_vector>& L_c) {
+    //     iterate_inner_cells_not_padded([this, &L_c](multiindex& i, size_t flat_index) {
+    //         L_c[flat_index] = angular_corrections[flat_index];
+    //     });
+    // }
 
     std::vector<space_vector>& m2m_interactions::get_angular_corrections() {
         return angular_corrections;
