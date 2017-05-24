@@ -248,27 +248,50 @@ namespace fmm {
     template <typename T, typename compare_functional>
     bool compare_padded_with_non_padded(
         std::array<std::shared_ptr<std::vector<T>>, geo::direction::count()>& all_neighbors_ref,
+        std::array<bool, geo::direction::count()>& is_direction_empty,
         const std::vector<T>& mine_array, const compare_functional& c) {
         bool all_ok = true;
         for (const geo::direction& dir : geo::direction::full_set()) {
-            if (all_neighbors_ref[dir]) {
+            std::cout << "comparing dir: " << dir;
+            std::cout << ", is_empty: " << std::boolalpha << is_direction_empty[dir];
+            std::cout << ", is_multipole: " << std::boolalpha
+                      << (all_neighbors_ref[dir].operator bool()) << std::endl;
+            // second condition implies that neighbor is monopole
+            if (!is_direction_empty[dir] && all_neighbors_ref[dir]) {
                 std::vector<T>& neighbor_ref = *(all_neighbors_ref[dir]);
                 iterate_inner_cells_padding(
-                    dir, [&c, &all_ok, &neighbor_ref, &mine_array](const multiindex& i,
-                             const size_t flat_index, const multiindex& i_unpadded,
-                             const size_t flat_index_unpadded) {
+                    dir, [&c, &all_ok, &neighbor_ref, &mine_array, &dir, &all_neighbors_ref](
+                             const multiindex& i, const size_t flat_index,
+                             const multiindex& i_unpadded, const size_t flat_index_unpadded) {
                         const T& ref = neighbor_ref[flat_index_unpadded];
                         const T& mine = mine_array[flat_index];
+                        if (dir == 0) {
+                            std::cout << "ref  !empty-multi d0: " << ref << std::endl;
+                            std::cout << "mine !empty-multi d0: " << mine << std::endl;
+                        }
                         bool ok = c(ref, mine);
                         if (!ok) {
-                            std::cout << "error for i:" << i << " i_unpadded: " << i_unpadded
+                            std::cout << "error for i: " << i << " i_unpadded: " << i_unpadded
                                       << std::endl;
+                            std::cout << "trying to find value in other neighbor..." << std::endl;
+                            for (const geo::direction& dir_inner : geo::direction::full_set()) {
+                                if (all_neighbors_ref[dir_inner]) {
+                                    const T& ref_inner =
+                                        (*all_neighbors_ref[dir_inner])[flat_index_unpadded];
+                                    bool ok_inner = c(ref_inner, mine);
+                                    if (ok_inner) {
+                                        std::cout << "found missing entry in dir: " << dir_inner
+                                                  << std::endl;
+                                    }
+                                }
+                            }
+
                             all_ok = ok;
                         }
                     });
             } else {
                 T ref_dummy;
-		ref_dummy = 0.0;
+                ref_dummy = 0.0;
                 iterate_inner_cells_padding(
                     dir, [&c, &all_ok, &ref_dummy, &mine_array](const multiindex& i,
                              const size_t flat_index, const multiindex& i_unpadded,
@@ -277,7 +300,7 @@ namespace fmm {
                         bool ok = c(ref_dummy, mine);
                         if (!ok) {
                             std::cout << "error for i:" << i << " i_unpadded: " << i_unpadded
-                                      << std::endl;
+                                      << " (empty dir)" << std::endl;
                             all_ok = ok;
                         }
                     });

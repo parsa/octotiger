@@ -460,13 +460,21 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
     // all neighbors and placeholder for yourself
     std::vector<neighbor_gravity_type> all_neighbor_interaction_data;
-
     for (geo::direction const& dir : geo::direction::full_set()) {
         if (!neighbors[dir].empty()) {    // TODO: check special case for empty dirs
             all_neighbor_interaction_data.push_back(
                 neighbor_gravity_channels[dir].get_future(gcycle).get());
         } else {
             all_neighbor_interaction_data.emplace_back();
+        }
+    }
+
+    std::array<bool, geo::direction::count()> is_direction_empty;
+    for (geo::direction const& dir : geo::direction::full_set()) {
+        if (neighbors[dir].empty()) {
+            is_direction_empty[dir] = true;
+        } else {
+            is_direction_empty[dir] = false;
         }
     }
 
@@ -512,9 +520,12 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
                 return false;
             }
             for (size_t i = 0; i < mine.size(); i++) {
-                if (std::abs(ref[i] - mine[i]) >= 1000.0 * std::numeric_limits<real>::epsilon()) {
+                if (std::abs(ref[i] - mine[i]) >= 10000.0 * std::numeric_limits<real>::epsilon()) {
                     std::cout << "error: index padded: " << i << ", mine[" << i << "] != ref[" << i
-                              << "] <=> " << mine[i] << " != " << ref[i] << std::endl;
+                              << "] <=> " << mine[i] << " != " << ref[i] << ", "
+                              << std::abs(ref[i] - mine[i])
+                              << " >= " << 1000.0 * std::numeric_limits<real>::epsilon()
+                              << std::endl;
                     return false;
                 }
             }
@@ -524,9 +535,12 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         auto space_vector_comparator = [](
             const space_vector& ref, const space_vector& mine) -> bool {
             for (size_t i = 0; i < mine.size(); i++) {
-                if (std::abs(ref[i] - mine[i]) >= 1000.0 * std::numeric_limits<real>::epsilon()) {
+                if (std::abs(ref[i] - mine[i]) >= 10000.0 * std::numeric_limits<real>::epsilon()) {
                     std::cout << "error: index padded: " << i << ", mine[" << i << "] != ref[" << i
-                              << "] <=> " << mine[i] << " != " << ref[i] << std::endl;
+                              << "] <=> " << mine[i] << " != " << ref[i] << ", "
+                              << std::abs(ref[i] - mine[i])
+                              << " >= " << 1000.0 * std::numeric_limits<real>::epsilon()
+                              << std::endl;
                     return false;
                 }
             }
@@ -540,9 +554,24 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             octotiger::fmm::compare_inner_padded_with_non_padded(
                 M_ptr, local_expansions, expansion_comparator);
 
+            for (geo::direction const& dir : geo::direction::full_set()) {
+                if (dir != 0) {
+                    continue;
+                }
+                if (all_neighbors_M_ptr[dir]) {
+                    std::cout << "printing dir: " << dir << std::endl;
+                    std::vector<expansion>& neighbor_M_ptr = *(all_neighbors_M_ptr[dir]);
+                    octotiger::fmm::print_layered_not_padded(
+                        true, [&neighbor_M_ptr](const octotiger::fmm::multiindex& i,
+                                  size_t flat_index) { std::cout << neighbor_M_ptr[flat_index]; });
+                } else {
+                    std::cout << "empty dir" << std::endl;
+                }
+            }
+
             std::cout << "comparing M, local_expansions neighborhood:" << std::endl;
             octotiger::fmm::compare_padded_with_non_padded(
-                all_neighbors_M_ptr, local_expansions, expansion_comparator);
+                all_neighbors_M_ptr, is_direction_empty, local_expansions, expansion_comparator);
 
             std::cout << "comparing com0, center_of_masses:" << std::endl;
             std::vector<space_vector>& center_of_masses = interactor.get_center_of_masses();
@@ -553,7 +582,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
             std::cout << "comparing com0, center_of_masses neighborhood:" << std::endl;
             octotiger::fmm::compare_padded_with_non_padded(
-                all_neighbors_com0, center_of_masses, space_vector_comparator);
+                all_neighbors_com0, is_direction_empty, center_of_masses, space_vector_comparator);
         }
 
         ////////////////////////////////////////// end input comparisons /////////////////////////////////////////
