@@ -37,7 +37,8 @@ namespace fmm {
         // current_interaction.first =
         //     cell_flat_index;    // has to be translated to unpadded before comparison
         // current_interaction.second =
-        //     interaction_partner_flat_index;    // has to be translated to unpadded before comparison
+        //     interaction_partner_flat_index;    // has to be translated to unpadded before
+        //     comparison
         // current_interaction.four = {0};
         // current_interaction.x[0] = (interaction_partner_index.x - cell_index.x);
         // current_interaction.x[1] = (interaction_partner_index.y - cell_index.y);
@@ -298,12 +299,8 @@ namespace fmm {
                 for (int64_t i2 = 0; i2 < 2; i2 += 1) {
                     multiindex offset(i0, i1, i2);
                     size_t stencil_index = i0 * 4 + i1 * 2 + i2;
-                    std::cout << "stencil_index: " << stencil_index << std::endl;
-                    std::vector<multiindex>& stencil = stencils[i0 * 4 + i1 * 2 + i2];
-                    // for (multiindex& stencil_element : stencil) {
-                    //     std::cout << stencil_element << std::endl;
-                    // }
-                    std::cout << std::endl;
+                    // std::cout << "stencil_index: " << stencil_index << std::endl;
+                    std::vector<multiindex>& stencil = stencils[stencil_index];
                     for (multiindex& stencil_element : stencil) {
                         iterate_inner_cells_padded_stridded_stencil(offset, stencil_element, *this);
                     }

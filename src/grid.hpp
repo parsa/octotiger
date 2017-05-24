@@ -152,7 +152,6 @@ private:
 
 public:
     std::vector<multipole>& get_M() {
-        std::cout << "in here: " << M_ptr->size() << std::endl;
         return *M_ptr;
     }
 

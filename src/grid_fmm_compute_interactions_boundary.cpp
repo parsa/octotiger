@@ -19,7 +19,7 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
     const std::vector<boundary_interaction_type>& ilist_n_bnd,
     const gravity_boundary_type& mpoles) {
     PROF_BEGIN;
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
     auto& M = *M_ptr;
     // auto& mon = *mon_ptr;
 
@@ -231,9 +231,10 @@ void grid::compute_boundary_interactions_multipole_multipole(gsolve_type type,
         }
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    std::cout << "boundary compute_interactions_inner duration (ms, branch): " << duration.count()
-              << std::endl;
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double, std::milli> duration = end - start;
+    // std::cout << "boundary compute_interactions_inner duration (ms, branch): " <<
+    // duration.count()
+    //           << std::endl;
     PROF_END;
 }

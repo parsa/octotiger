@@ -17,6 +17,7 @@
 #include "taylor.hpp"
 
 #include <array>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <streambuf>
@@ -530,7 +531,8 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         //             std::vector<expansion>& neighbor_M_ptr = *(all_neighbors_M_ptr[dir]);
         //             octotiger::fmm::print_layered_not_padded(
         //                 true, [&neighbor_M_ptr](const octotiger::fmm::multiindex& i,
-        //                           size_t flat_index) { std::cout << neighbor_M_ptr[flat_index]; });
+        //                           size_t flat_index) { std::cout << neighbor_M_ptr[flat_index];
+        //                           });
         //         } else {
         //             std::cout << "empty dir" << std::endl;
         //         }
@@ -549,10 +551,13 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
         //     std::cout << "comparing com0, center_of_masses neighborhood:" << std::endl;
         //     octotiger::fmm::compare_padded_with_non_padded(
-        //         all_neighbors_com0, is_direction_empty, center_of_masses, space_vector_comparator);
+        //         all_neighbors_com0, is_direction_empty, center_of_masses,
+        //         space_vector_comparator);
         // }
 
         ////////////////////////////////////////// end input comparisons /////////////////////////////////////////
+
+        auto start = std::chrono::high_resolution_clock::now();
 
         interactor.compute_interactions();    // includes boundary
 
@@ -607,18 +612,26 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             }
         }
 
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        std::cout << "new interaction kernel (ms): " << duration.count() << std::endl;
+
         // // kernel call generated debugging ilist, compare it now
         // compare_interaction_lists();
 
-        // grid_ptr->compute_interactions(type);
-        // for (const geo::direction& dir : geo::direction::full_set()) {
-        //     if (!neighbors[dir].empty()) {
-        //         neighbor_gravity_type& neighbor_data = all_neighbor_interaction_data[dir];
-        //         grid_ptr->compute_boundary_interactions(
-        //             type, neighbor_data.direction, neighbor_data.is_monopole,
-        //             neighbor_data.data);
-        //     }
-        // }
+        auto start_old = std::chrono::high_resolution_clock::now();
+        grid_ptr->compute_interactions(type);
+        for (const geo::direction& dir : geo::direction::full_set()) {
+            if (!neighbors[dir].empty()) {
+                neighbor_gravity_type& neighbor_data = all_neighbor_interaction_data[dir];
+                grid_ptr->compute_boundary_interactions(
+                    type, neighbor_data.direction, neighbor_data.is_monopole, neighbor_data.data);
+            }
+        }
+
+        auto end_old = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration_old = end_old - start_old;
+        std::cout << "old interaction kernel (ms): " << duration_old.count() << std::endl;
 
         std::vector<expansion>& L = grid_ptr->get_L();
         std::vector<expansion>& potential_expansions = interactor.get_potential_expansions();

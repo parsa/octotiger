@@ -24,10 +24,6 @@ namespace fmm {
         // allocate input variables with padding (so that the interactions spheres are always valid
         // indices)
 
-        if (verbose) {
-            std::cout << "EXPANSION_COUNT_NOT_PADDED: " << EXPANSION_COUNT_NOT_PADDED << std::endl;
-            std::cout << "EXPANSION_COUNT_PADDED: " << EXPANSION_COUNT_PADDED << std::endl;
-        }
         local_expansions = std::vector<expansion>(EXPANSION_COUNT_PADDED);
         center_of_masses = std::vector<space_vector>(EXPANSION_COUNT_PADDED);
 
@@ -49,20 +45,20 @@ namespace fmm {
             // don't use neighbor.direction, is always zero for empty cells!
             neighbor_gravity_type& neighbor = neighbors[dir];
 
-            std::cout << "dir: " << dir << " neighbor.direction: " << neighbor.direction;
-            std::cout << " is_neighbor_monopole: " << std::boolalpha << neighbor.is_monopole
-                      << std::endl;
+            // std::cout << "dir: " << dir << " neighbor.direction: " << neighbor.direction;
+            // std::cout << " is_neighbor_monopole: " << std::boolalpha << neighbor.is_monopole
+            //           << std::endl;
             // this dir is setup as a multipole
             if (!neighbor.is_monopole) {
                 if (!neighbor.data.M) {
-                    std::cout << " neighbor M empty";
-                    if (!neighbor.data.x) {
-                        std::cout << ", neighbor x also empty";
-                    }
-                    if (!neighbor.data.m) {
-                        std::cout << ", neighbor m also empty";
-                    }
-                    std::cout << std::endl;
+                    // std::cout << " neighbor M empty";
+                    // if (!neighbor.data.x) {
+                    //     std::cout << ", neighbor x also empty";
+                    // }
+                    // if (!neighbor.data.m) {
+                    //     std::cout << ", neighbor m also empty";
+                    // }
+                    // std::cout << std::endl;
                     // TODO: ask Dominic why !is_monopole and stuff still empty
                     iterate_inner_cells_padding(
                         dir, [this](const multiindex& i, const size_t flat_index, const multiindex&,
@@ -73,24 +69,24 @@ namespace fmm {
                             center_of_masses.at(flat_index) = 0.0;
                         });
                 } else {
-                    if (!neighbor.data.x) {
-                        throw "neighbor x empty";
-                    }
+                    // if (!neighbor.data.x) {
+                    //     throw "neighbor x empty";
+                    // }
                     std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
                     std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
                     iterate_inner_cells_padding(
                         dir, [this, neighbor_M_ptr, neighbor_com0](const multiindex& i,
                                  const size_t flat_index, const multiindex& i_unpadded,
                                  const size_t flat_index_unpadded) {
-                            if (flat_index == 0) {
-                                std::cout << "debug! flat_index: " << flat_index
-                                          << " flat_index_unpadded: " << flat_index_unpadded
-                                          << std::endl;
-                                std::cout << "center_of_masses set to: "
-                                          << neighbor_com0.at(flat_index_unpadded) << std::endl;
-                                std::cout << "local_expansions set to: "
-                                          << neighbor_M_ptr.at(flat_index_unpadded) << std::endl;
-                            }
+                            // if (flat_index == 0) {
+                            //     std::cout << "debug! flat_index: " << flat_index
+                            //               << " flat_index_unpadded: " << flat_index_unpadded
+                            //               << std::endl;
+                            //     std::cout << "center_of_masses set to: "
+                            //               << neighbor_com0.at(flat_index_unpadded) << std::endl;
+                            //     std::cout << "local_expansions set to: "
+                            //               << neighbor_M_ptr.at(flat_index_unpadded) << std::endl;
+                            // }
                             local_expansions.at(flat_index) =
                                 neighbor_M_ptr.at(flat_index_unpadded);
                             center_of_masses.at(flat_index) = neighbor_com0.at(flat_index_unpadded);
