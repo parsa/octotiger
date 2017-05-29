@@ -1,19 +1,22 @@
 #pragma once
 
+#include "defs.hpp"
+
 #include <cmath>
 #include <iostream>
 
 namespace octotiger {
 namespace fmm {
 
-    struct multiindex
+    template<typename T = int64_t>
+    class multiindex
     {
     public:
-        int64_t x;
-        int64_t y;
-        int64_t z;
+        T x;
+        T y;
+        T z;
 
-        multiindex(size_t x, size_t y, size_t z)
+        multiindex(T x, T y, T z)
           : x(x)
           , y(y)
           , z(z) {}
@@ -29,9 +32,19 @@ namespace fmm {
                 return false;
             }
         }
+
+        // set this multiindex to the next coarser level index
+        void transform_coarse() {
+            x = (x + INX) / 2 - INX / 2;
+            y = (y + INX) / 2 - INX / 2;
+            z = (z + INX) / 2 - INX / 2;
+        }
     };
 
 }    // namespace fmm
 }    // namespace octotiger
 
-std::ostream& operator<<(std::ostream& os, const octotiger::fmm::multiindex& m);
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const octotiger::fmm::multiindex<T>& m) {
+    return os << m.x << ", " << m.y << ", " << m.z;
+}

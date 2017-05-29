@@ -81,8 +81,8 @@ void compute_ilist() {
     const real theta0 = opts.theta;
     integer width = INX;
 
-    std::array<std::vector<octotiger::fmm::multiindex>, 8> stencils =
-        octotiger::fmm::calculate_stencil();
+    // std::array<std::vector<octotiger::fmm::multiindex>, 8> stencils =
+    //     octotiger::fmm::calculate_stencil();
 
     // bool all_interior_found = true;
     // bool all_boundary_found = true;

@@ -2,29 +2,28 @@
 
 #include "defs.hpp"
 #include "grid_flattened_indices.hpp"
+#include "helper.hpp"
 #include "interaction_types.hpp"
+#include "options.hpp"
 
 #include <array>
 #include <functional>
 
 extern taylor<4, real> factor;
 
-std::vector<interaction_type> ilist_debugging;
+// std::vector<interaction_type> ilist_debugging;
+
+extern options opts;
 
 namespace octotiger {
 namespace fmm {
 
-    void m2m_kernel::operator()(const multiindex& cell_index, const size_t cell_flat_index,
-        const multiindex& cell_index_unpadded, const size_t cell_flat_index_unpadded,
-        const multiindex& interaction_partner_index, const size_t interaction_partner_flat_index) {
-        // if (cell_flat_index_unpadded != 0) {
-        //     return;
-        // }
-        // if (interaction_partner_index.x - cell_index.x < 0 ||
-        //     interaction_partner_index.y - cell_index.y < 0 ||
-        //     interaction_partner_index.z - cell_index.z < 0) {
-        //     return;
-        // }
+    void m2m_kernel::operator()(const multiindex<>& cell_index, const size_t cell_flat_index,
+        const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
+        const multiindex<>& interaction_partner_index,
+        const size_t interaction_partner_flat_index) {
+        // const real theta0 = opts.theta;
+        const real theta_rec_sqared = sqr(1.0 / opts.theta);
 
         std::array<real, NDIM>
             X;    // TODO: replace by space_vector for vectorization or get rid of temporary
@@ -202,11 +201,48 @@ namespace fmm {
         expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded];
         space_vector& current_angular_correction_result =
             angular_corrections[cell_flat_index_unpadded];
+
+        // indices on coarser level (for outer stencil boundary)
+        multiindex<> cell_index_coarse = cell_index;
+        cell_index_coarse.transform_coarse();
+
+        multiindex<> interaction_partner_index_coarse = interaction_partner_index;
+        interaction_partner_index_coarse.transform_coarse();
+
+        // const int64_t i0_c = (cell_index.x + INX) / 2 - INX / 2;
+        // const int64_t i1_c = (cell_index.y + INX) / 2 - INX / 2;
+        // const int64_t i2_c = (cell_index.z + INX) / 2 - INX / 2;
+
+        // const int64_t j0_c = (interaction_partner_index.x + INX) / 2 - INX / 2;
+        // const int64_t j1_c = (interaction_partner_index.y + INX) / 2 - INX / 2;
+        // const int64_t j2_c = (interaction_partner_index.z + INX) / 2 - INX / 2;
+
+        // const real theta_f = detail::reciprocal_distance(cell_index.x, cell_index.y,
+        // cell_index.z,
+        //     interaction_partner_index.x, interaction_partner_index.y,
+        //     interaction_partner_index.z);
+        const real theta_f_rec_sqared =
+            detail::distance_squared(cell_index, interaction_partner_index);
+
+        const real theta_c_rec_sqared =
+            detail::distance_squared(cell_index_coarse, interaction_partner_index_coarse);
+
+        // const real theta_c = detail::reciprocal_distance(i0_c, i1_c, i2_c, j0_c, j1_c, j2_c);
+        // bool mask = theta_f <= theta0;
+
+        bool mask = theta_rec_sqared > theta_c_rec_sqared && theta_rec_sqared <= theta_f_rec_sqared;
+
+        // if (theta_c > theta0 && theta_f <= theta0) {
+
         for (size_t i = 0; i < current_potential.size(); i++) {
-            current_potential_result[i] += current_potential[i];
+            if (mask) {
+                current_potential_result[i] += current_potential[i];
+            }
         }
         for (size_t i = 0; i < current_angular_correction.size(); i++) {
-            current_angular_correction_result[i] += current_angular_correction[i];
+            if (mask) {
+                current_angular_correction_result[i] += current_angular_correction[i];
+            }
         }
 
         // if (cell_index_unpadded.x == 0 && cell_index_unpadded.y == 0 &&
@@ -293,14 +329,21 @@ namespace fmm {
       , angular_corrections(angular_corrections)
       , type(type) {}
 
-    void m2m_kernel::apply_stencils(std::array<std::vector<multiindex>, 8>& stencils) {
+#ifdef M2M_SUPERIMPOSED_STENCIL
+    void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
+        for (multiindex<>& stencil_element : stencil) {
+            iterate_inner_cells_padded_stencil(stencil_element, *this);
+        }
+    }
+#else
+    void m2m_kernel::apply_stencils(std::array<std::vector<multiindex<>>, 8>& stencils) {
         for (int64_t i0 = 0; i0 < 2; i0 += 1) {
             for (int64_t i1 = 0; i1 < 2; i1 += 1) {
                 for (int64_t i2 = 0; i2 < 2; i2 += 1) {
-                    multiindex offset(i0, i1, i2);
+                    multiindex<> offset(i0, i1, i2);
                     size_t stencil_index = i0 * 4 + i1 * 2 + i2;
                     // std::cout << "stencil_index: " << stencil_index << std::endl;
-                    std::vector<multiindex>& stencil = stencils[stencil_index];
+                    std::vector<multiindex<>>& stencil = stencils[stencil_index];
                     for (multiindex& stencil_element : stencil) {
                         iterate_inner_cells_padded_stridded_stencil(offset, stencil_element, *this);
                     }
@@ -308,6 +351,7 @@ namespace fmm {
             }
         }
     }
+#endif
 
     // void m2m_kernel::apply_stencil_element(multiindex& stencil_element) {
     //     // execute kernel for individual interactions for every inner cell

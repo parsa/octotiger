@@ -10,33 +10,33 @@
 namespace octotiger {
 namespace fmm {
 
-    inline multiindex flat_index_to_multiindex_not_padded(size_t flat_index) {
+    inline multiindex<> flat_index_to_multiindex_not_padded(size_t flat_index) {
         size_t x = flat_index / (INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION);
         flat_index %= (INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION);
         size_t y = flat_index / INNER_CELLS_PER_DIRECTION;
         flat_index %= INNER_CELLS_PER_DIRECTION;
         size_t z = flat_index;
-        multiindex m(x, y, z);
+        multiindex<> m(x, y, z);
         return m;
     }
 
-    inline multiindex flat_index_to_multiindex_padded(size_t flat_index) {
+    inline multiindex<> flat_index_to_multiindex_padded(size_t flat_index) {
         size_t x = flat_index / (PADDED_STRIDE * PADDED_STRIDE);
         flat_index %= (PADDED_STRIDE * PADDED_STRIDE);
         size_t y = flat_index / PADDED_STRIDE;
         flat_index %= PADDED_STRIDE;
         size_t z = flat_index;
-        multiindex m(x, y, z);
+        multiindex<> m(x, y, z);
         return m;
     }
 
     // stride for multiple outer cells (and/or padding)
-    inline size_t to_flat_index_padded(const multiindex& m) {
+    inline size_t to_flat_index_padded(const multiindex<>& m) {
         return m.x * PADDED_STRIDE * PADDED_STRIDE + m.y * PADDED_STRIDE + m.z;
     }
 
     // strides are only valid for single cell! (no padding)
-    inline size_t to_inner_flat_index_not_padded(const multiindex& m) {
+    inline size_t to_inner_flat_index_not_padded(const multiindex<>& m) {
         return m.x * INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION +
             m.y * INNER_CELLS_PER_DIRECTION + m.z;
     }
@@ -47,10 +47,10 @@ namespace fmm {
         for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
             for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
                 for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
-                    const multiindex m(i0 + INNER_CELLS_PADDING_DEPTH,
+                    const multiindex<> m(i0 + INNER_CELLS_PADDING_DEPTH,
                         i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
                     const size_t inner_flat_index = to_flat_index_padded(m);
-                    const multiindex m_unpadded(i0, i1, i2);
+                    const multiindex<> m_unpadded(i0, i1, i2);
                     const size_t inner_flat_index_unpadded =
                         to_inner_flat_index_not_padded(m_unpadded);
                     f(m, inner_flat_index, m_unpadded, inner_flat_index_unpadded);
@@ -67,12 +67,12 @@ namespace fmm {
             for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
                 for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
                     // shift to central cube and apply dir-based offset
-                    const multiindex m(
+                    const multiindex<> m(
                         i0 + INNER_CELLS_PADDING_DEPTH + dir[0] * INNER_CELLS_PADDING_DEPTH,
                         i1 + INNER_CELLS_PADDING_DEPTH + dir[1] * INNER_CELLS_PADDING_DEPTH,
                         i2 + INNER_CELLS_PADDING_DEPTH + dir[2] * INNER_CELLS_PADDING_DEPTH);
                     const size_t inner_flat_index = to_flat_index_padded(m);
-                    const multiindex m_unpadded(i0, i1, i2);
+                    const multiindex<> m_unpadded(i0, i1, i2);
                     const size_t inner_flat_index_unpadded =
                         to_inner_flat_index_not_padded(m_unpadded);
                     f(m, inner_flat_index, m_unpadded, inner_flat_index_unpadded);
@@ -88,7 +88,7 @@ namespace fmm {
         for (size_t i0 = 0; i0 < PADDED_STRIDE; i0++) {
             for (size_t i1 = 0; i1 < PADDED_STRIDE; i1++) {
                 for (size_t i2 = 0; i2 < PADDED_STRIDE; i2++) {
-                    const multiindex m(i0, i1, i2);
+                    const multiindex<> m(i0, i1, i2);
                     const size_t flat_index = to_flat_index_padded(m);
                     f(m, flat_index);
                 }
@@ -102,7 +102,7 @@ namespace fmm {
         for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
             for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
                 for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
-                    multiindex i(i0, i1, i2);
+                    multiindex<> i(i0, i1, i2);
                     size_t inner_flat_index = to_inner_flat_index_not_padded(i);
                     f(i, inner_flat_index);
                 }
@@ -113,7 +113,7 @@ namespace fmm {
     // iterate non-padded cube
     template <typename component_printer>
     void print_layered_not_padded(bool print_index, const component_printer& printer) {
-        iterate_inner_cells_not_padded([&printer, print_index](multiindex& i, size_t flat_index) {
+        iterate_inner_cells_not_padded([&printer, print_index](multiindex<>& i, size_t flat_index) {
             if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
                 std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
             }
@@ -135,8 +135,8 @@ namespace fmm {
     template <typename component_printer>
     void print_layered_inner_padded(bool print_index, const component_printer& printer) {
         iterate_inner_cells_padded(
-            [&printer, print_index](const multiindex& i, const size_t flat_index,
-                const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+            [&printer, print_index](const multiindex<>& i, const size_t flat_index,
+                const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
                 if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
                     std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
                 }
@@ -156,21 +156,22 @@ namespace fmm {
     // iterate everything including padding
     template <typename component_printer>
     void print_layered_padded(bool print_index, const component_printer& printer) {
-        iterate_cells_padded([&printer, print_index](const multiindex& i, const size_t flat_index) {
-            if (i.y % PADDED_STRIDE == 0 && i.z % PADDED_STRIDE == 0) {
-                std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
-            }
-            if (i.z % PADDED_STRIDE != 0) {
-                std::cout << ", ";
-            }
-            if (print_index) {
-                std::cout << " (" << i << ") = ";
-            }
-            printer(i, flat_index);
-            if ((i.z + 1) % PADDED_STRIDE == 0) {
-                std::cout << std::endl;
-            }
-        });
+        iterate_cells_padded(
+            [&printer, print_index](const multiindex<>& i, const size_t flat_index) {
+                if (i.y % PADDED_STRIDE == 0 && i.z % PADDED_STRIDE == 0) {
+                    std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
+                }
+                if (i.z % PADDED_STRIDE != 0) {
+                    std::cout << ", ";
+                }
+                if (print_index) {
+                    std::cout << " (" << i << ") = ";
+                }
+                printer(i, flat_index);
+                if ((i.z + 1) % PADDED_STRIDE == 0) {
+                    std::cout << std::endl;
+                }
+            });
     }
 
     // iterate one of the padding directions
@@ -178,8 +179,8 @@ namespace fmm {
     void print_layered_padding(
         geo::direction& dir, bool print_index, const component_printer& printer) {
         iterate_inner_cells_padding(
-            dir, [&printer, print_index](const multiindex& i, const size_t flat_index,
-                     const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+            dir, [&printer, print_index](const multiindex<>& i, const size_t flat_index,
+                     const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
                 if (i.y % INNER_CELLS_PER_DIRECTION == 0 && i.z % INNER_CELLS_PER_DIRECTION == 0) {
                     std::cout << "-------- next layer: " << i.x << "---------" << std::endl;
                 }
@@ -206,8 +207,8 @@ namespace fmm {
         const std::vector<T>& mine_array, const compare_functional& c) {
         bool all_ok = true;
         iterate_inner_cells_padded(
-            [&c, &all_ok, &ref_array, &mine_array](const multiindex& i, const size_t flat_index,
-                const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+            [&c, &all_ok, &ref_array, &mine_array](const multiindex<>& i, const size_t flat_index,
+                const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
                 const T& ref = ref_array[flat_index_unpadded];
                 const T& mine = mine_array[flat_index];
                 bool ok = c(ref, mine);
@@ -231,7 +232,7 @@ namespace fmm {
         const std::vector<T>& mine_array, const compare_functional& c) {
         bool all_ok = true;
         iterate_inner_cells_not_padded([&c, &all_ok, &ref_array, &mine_array](
-            const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+            const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
             const T& ref = ref_array[flat_index_unpadded];
             const T& mine = mine_array[flat_index_unpadded];
             bool ok = c(ref, mine);
@@ -265,8 +266,8 @@ namespace fmm {
                 std::vector<T>& neighbor_ref = *(all_neighbors_ref[dir]);
                 iterate_inner_cells_padding(
                     dir, [&c, &all_ok, &neighbor_ref, &mine_array, &dir, &all_neighbors_ref](
-                             const multiindex& i, const size_t flat_index,
-                             const multiindex& i_unpadded, const size_t flat_index_unpadded) {
+                             const multiindex<>& i, const size_t flat_index,
+                             const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
                         const T& ref = neighbor_ref[flat_index_unpadded];
                         const T& mine = mine_array[flat_index];
                         if (dir == 0) {
@@ -297,8 +298,8 @@ namespace fmm {
                 T ref_dummy;
                 ref_dummy = 0.0;
                 iterate_inner_cells_padding(
-                    dir, [&c, &all_ok, &ref_dummy, &mine_array](const multiindex& i,
-                             const size_t flat_index, const multiindex& i_unpadded,
+                    dir, [&c, &all_ok, &ref_dummy, &mine_array](const multiindex<>& i,
+                             const size_t flat_index, const multiindex<>& i_unpadded,
                              const size_t flat_index_unpadded) {
                         const T& mine = mine_array[flat_index];
                         bool ok = c(ref_dummy, mine);

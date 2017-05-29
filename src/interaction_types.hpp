@@ -58,6 +58,7 @@ struct interaction_type
     // helper variable for vectorization
     std::uint32_t inner_loop_stop;
 
+    // TODO(David): remove this after debugging
     std::array<integer, 3> first_index;
     std::array<integer, 3> second_index;
 };
@@ -73,6 +74,7 @@ struct boundary_interaction_type
     // index vector in cell
     space_vector x;
 
+    // TODO(David): remove this after debugging
     std::vector<std::array<integer, 3>> first_index;
     std::vector<std::array<integer, 3>> second_index;
 };

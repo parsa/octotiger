@@ -410,6 +410,7 @@ using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>:
 using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
 #else
 using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
+using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<integer, 8>::type;
 using v4sd = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;
 #endif
 

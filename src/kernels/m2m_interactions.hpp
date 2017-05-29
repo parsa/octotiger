@@ -11,6 +11,7 @@
 
 #include "interaction_constants.hpp"
 #include "multiindex.hpp"
+#include "m2m_parameters.hpp"
 
 namespace octotiger {
 namespace fmm {
@@ -22,7 +23,11 @@ namespace fmm {
     {
     private:
         bool verbose;
-        std::array<std::vector<multiindex>, 8> stencils;
+#ifdef M2M_SUPERIMPOSED_STENCIL
+        std::vector<multiindex<>> stencil;
+#else
+        std::array<std::vector<multiindex<>>, 8> stencils;
+#endif
 
         /*
          * logical structure of all arrays:
