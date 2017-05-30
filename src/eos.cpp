@@ -423,7 +423,7 @@ void struct_eos::initialize(real& mass, real& radius) {
 		radius = r;
 	}
 	my_radius = radius;
-	printf( "Radius = %e\n", my_radius);
+//	printf( "Radius = %e\n", my_radius);
 }
 
 void struct_eos::initialize(real& mass, real& radius, real& core_mass) {
@@ -467,7 +467,7 @@ void struct_eos::initialize(real& mass, real& radius, real& core_mass) {
 	mass = m;
 	radius = r;
 	my_radius = radius;
-	printf( "Radius = %e\n", my_radius);
+	//printf( "Radius = %e\n", my_radius);
 }
 
 real struct_eos::d0() const {

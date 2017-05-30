@@ -55,7 +55,7 @@ void initialize(options _opts, std::vector<hpx::id_type> const& localities)
 #endif
 	if (opts.problem == DWD) {
 		set_problem(scf_binary);
-		set_refine_test(refine_test);
+		set_refine_test(refine_test_bibi);
 	} else if (opts.problem == SOD) {
 		grid::set_fgamma(7.0 / 5.0);
 		gravity_on = false;

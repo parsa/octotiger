@@ -26,8 +26,6 @@
 #include <vector>
 
 
-
-
 #include <hpx/include/components.hpp>
 #include <hpx/include/serialization.hpp>
 
@@ -90,8 +88,9 @@ private:
     hpx::lcos::local::spinlock mtx;
     hpx::lcos::local::spinlock prolong_mtx;
     std::array<channel<std::vector<real>>, NCHILD> child_hydro_channels;
-     channel<expansion_pass_type> parent_gravity_channel;
-     std::array<channel<neighbor_gravity_type>, geo::direction::count()> neighbor_gravity_channels;
+    channel<expansion_pass_type> parent_gravity_channel;
+    std::array<semaphore, geo::direction::count()> neighbor_signals;
+    std::array<channel<neighbor_gravity_type>, geo::direction::count()> neighbor_gravity_channels;
     std::array<channel<sibling_hydro_type>, geo::direction::count()> sibling_hydro_channels;
     std::array<channel<multipole_pass_type>, NCHILD> child_gravity_channels;
     std::array<std::array<channel<std::vector<real>>, 4>, NFACE> niece_hydro_channels;

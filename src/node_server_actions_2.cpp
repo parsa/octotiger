@@ -339,10 +339,10 @@ diagnostics_t& diagnostics_t::operator+=(const diagnostics_t& other) {
 		secondary_com_dot[d] *= secondary_sum[rho_i];
 		grid_com_dot[d] *= grid_sum[rho_i];
 	}
+	virial.first += other.virial.first;
+	virial.second += other.virial.second;
 	for (integer f = 0; f != NF; ++f) {
 		grid_sum[f] += other.grid_sum[f];
-		virial.first += other.virial.first;
-		virial.second += other.virial.second;
 		primary_sum[f] += other.primary_sum[f];
 		secondary_sum[f] += other.secondary_sum[f];
 		outflow_sum[f] += other.outflow_sum[f];
