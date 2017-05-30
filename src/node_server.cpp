@@ -59,7 +59,7 @@ hpx::future<void> node_server::exchange_flux_corrections() {
             }
             ub[face_dim] = lb[face_dim] + 1;
             auto data = grid_ptr->get_flux_restrict(lb, ub, face_dim);
-            this_aunt.send_hydro_flux_correct(std::move(data), f.flip(), ci, hcycle);
+            this_aunt.send_hydro_flux_correct(std::move(data), f.flip(), ci);
         }
     }
 
@@ -72,7 +72,7 @@ hpx::future<void> node_server::exchange_flux_corrections() {
 	for (auto const& f : geo::face::full_set()) {
 		if (this->nieces[f]) {
 			for (auto const& quadrant : geo::quadrant::full_set()) {
-				futs[index++] = niece_hydro_channels[f][quadrant].get_future(hcycle).then(
+				futs[index++] = niece_hydro_channels[f][quadrant].get_future().then(
 						hpx::util::annotated_function([this, f, quadrant](hpx::future<std::vector<real> > && fdata) -> void
 						{
 							const auto face_dim = f.get_dimension();
@@ -244,7 +244,7 @@ std::size_t node_server::save_me(std::ostream& strm) const {
 
 void node_server::save_to_file(const std::string& fname, std::string const& data_dir) const {
     hpx::util::high_resolution_timer timer;
-    save(0, data_dir + fname).get();
+    save(0, data_dir + fname);
 //     file_copy((data_dir + fname).c_str(), (data_dir + "restart.chk").c_str());
 //	std::string command = std::string("cp ") + fname + std::string(" restart.chk\n");
 //	SYSTEM(command);
@@ -429,7 +429,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         std::array<hpx::future<void>, geo::octant::count()> futs;
         integer index = 0;
         for (auto& ci : geo::octant::full_set()) {
-            hpx::future<multipole_pass_type> m_in_future = child_gravity_channels[ci].get_future(gcycle);
+            hpx::future<multipole_pass_type> m_in_future = child_gravity_channels[ci].get_future();
 
             futs[index++] =
                 m_in_future.then(hpx::util::annotated_function(
@@ -461,7 +461,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
     }
 
     if (my_location.level() != 0) {
-        parent.send_gravity_multipoles(std::move(m_out), my_location.get_child_index(), gcycle);
+        parent.send_gravity_multipoles(std::move(m_out), my_location.get_child_index());
     }
 
     std::vector<hpx::future<void>> send_futs;
@@ -521,7 +521,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
     expansion_pass_type l_in;
     if (my_location.level() != 0) {
-        l_in = parent_gravity_channel.get_future(gcycle).get();
+        l_in = parent_gravity_channel.get_future().get();
     }
     const expansion_pass_type ltmp = grid_ptr->compute_expansions(type, my_location.level() == 0 ? nullptr : &l_in);
 
@@ -547,7 +547,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
                     }
                 }
             }
-            children[ci].send_gravity_expansions(std::move(l_out), gcycle);
+            children[ci].send_gravity_expansions(std::move(l_out));
         }
     }
 

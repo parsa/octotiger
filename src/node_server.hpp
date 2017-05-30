@@ -175,8 +175,7 @@ public:
         return (((ci >> (face / 2)) & 1) == (face & 1));
     }
 
-    std::vector<hpx::future<void>> set_nieces_amr(const geo::face&) const;
-	node_server() {
+   node_server() {
 	    initialize(ZERO, ZERO);
     }
 	~node_server() {}
@@ -206,7 +205,7 @@ public:
 
     hpx::future<hpx::id_type> create_child(hpx::id_type const& locality, integer ci);
 
-    hpx::future<void> regrid_scatter(integer, integer);
+    void regrid_scatter(integer, integer);
     HPX_DEFINE_COMPONENT_ACTION(node_server, regrid_scatter, regrid_scatter_action);
 
     void recv_hydro_boundary(std::vector<real>&&, const geo::direction&, std::size_t cycle);
@@ -215,12 +214,12 @@ public:
     void recv_hydro_children(std::vector<real>&&, const geo::octant& ci, std::size_t cycle);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, recv_hydro_children, send_hydro_children_action);
 
-	void recv_hydro_flux_correct(std::vector<real>&&, const geo::face& face, const geo::octant& ci, integer );
+	void recv_hydro_flux_correct(std::vector<real>&&, const geo::face& face, const geo::octant& ci);
 	HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, recv_hydro_flux_correct, send_hydro_flux_correct_action);
 
 	void recv_gravity_boundary(gravity_boundary_type&&, const geo::direction&, bool monopole, std::size_t cycle);
-	void recv_gravity_multipoles(multipole_pass_type&&, const geo::octant&, integer);
-	void recv_gravity_expansions(expansion_pass_type&&, integer);
+	void recv_gravity_multipoles(multipole_pass_type&&, const geo::octant&);
+	void recv_gravity_expansions(expansion_pass_type&&);
 
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, recv_gravity_boundary, send_gravity_boundary_action);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, recv_gravity_multipoles, send_gravity_multipoles_action);
@@ -250,12 +249,12 @@ public:
     void set_grid(const std::vector<real>&, std::vector<real>&&);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, set_grid, set_grid_action);
 
-    hpx::future<real> timestep_driver_descend(integer cycle);
+    hpx::future<real> timestep_driver_descend();
 
-    void set_local_timestep(integer i, real dt, integer cycle);
+    void set_local_timestep(integer i, real dt);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, set_local_timestep, set_local_timestep_action);
 
-    void timestep_driver_ascend(real, integer cycle);
+    void timestep_driver_ascend(real);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, timestep_driver_ascend, timestep_driver_ascend_action);
 
     hpx::future<hpx::id_type> copy_to_locality(const hpx::id_type&);
@@ -264,7 +263,7 @@ public:
     hpx::id_type get_child_client(const geo::octant&);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, get_child_client, get_child_client_action);
 
-    hpx::future<void> form_tree(hpx::id_type, hpx::id_type, std::vector<hpx::id_type>);
+    void form_tree(hpx::id_type, hpx::id_type, std::vector<hpx::id_type>);
     HPX_DEFINE_COMPONENT_ACTION(node_server, form_tree, form_tree_action);
 
     std::uintptr_t get_ptr();
@@ -283,7 +282,7 @@ public:
         std::string);
     HPX_DEFINE_COMPONENT_ACTION(node_server, load, load_action);
 
-    hpx::future<void> save(integer, std::string const&) const;
+    void save(integer, std::string const&) const;
     HPX_DEFINE_COMPONENT_ACTION(node_server, save, save_action);
 
     void set_aunt(const hpx::id_type&, const geo::face& face);
@@ -293,7 +292,7 @@ public:
         const geo::face& face) const;
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, set_child_aunt, set_child_aunt_action);
 
-    hpx::future<void> check_for_refinement(real omega,real new_floor);
+    void check_for_refinement(real omega,real new_floor);
     HPX_DEFINE_COMPONENT_ACTION(node_server, check_for_refinement, check_for_refinement_action);
 
     void force_nodes_to_exist(std::vector<node_location>&& loc);
@@ -331,9 +330,9 @@ private:
 	std::array<channel<std::vector<real>>, NCHILD> child_rad_channels;
 	channel<expansion_pass_type> parent_rad_channel;
 public:
-	hpx::future<void> exchange_rad_flux_corrections();
+	void exchange_rad_flux_corrections();
 	void compute_radiation(real dt);
-	hpx::future<void> exchange_interlevel_rad_data();
+	void exchange_interlevel_rad_data();
 	void all_rad_bounds();
 
 	void collect_radiation_bounds();
@@ -360,7 +359,7 @@ public:
 
 #endif
 
-    hpx::future<void> change_units(real m, real l, real t, real k);
+    void change_units(real m, real l, real t, real k);
     HPX_DEFINE_COMPONENT_ACTION(node_server, change_units, change_units_action);
 
     void set_cgs(bool change = true);
