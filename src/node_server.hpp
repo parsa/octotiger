@@ -215,12 +215,12 @@ public:
     void recv_hydro_children(std::vector<real>&&, const geo::octant& ci, std::size_t cycle);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, recv_hydro_children, send_hydro_children_action);
 
-	void recv_hydro_flux_correct(std::vector<real>&&, const geo::face& face, const geo::octant& ci);
+	void recv_hydro_flux_correct(std::vector<real>&&, const geo::face& face, const geo::octant& ci, integer );
 	HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, recv_hydro_flux_correct, send_hydro_flux_correct_action);
 
 	void recv_gravity_boundary(gravity_boundary_type&&, const geo::direction&, bool monopole, std::size_t cycle);
-	void recv_gravity_multipoles(multipole_pass_type&&, const geo::octant&);
-	void recv_gravity_expansions(expansion_pass_type&&);
+	void recv_gravity_multipoles(multipole_pass_type&&, const geo::octant&, integer);
+	void recv_gravity_expansions(expansion_pass_type&&, integer);
 
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, recv_gravity_boundary, send_gravity_boundary_action);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, recv_gravity_multipoles, send_gravity_multipoles_action);
@@ -250,12 +250,12 @@ public:
     void set_grid(const std::vector<real>&, std::vector<real>&&);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, set_grid, set_grid_action);
 
-    hpx::future<real> timestep_driver_descend();
+    hpx::future<real> timestep_driver_descend(integer cycle);
 
-    void set_local_timestep(integer i, real dt);
+    void set_local_timestep(integer i, real dt, integer cycle);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, set_local_timestep, set_local_timestep_action);
 
-    void timestep_driver_ascend(real);
+    void timestep_driver_ascend(real, integer cycle);
     HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, timestep_driver_ascend, timestep_driver_ascend_action);
 
     hpx::future<hpx::id_type> copy_to_locality(const hpx::id_type&);
