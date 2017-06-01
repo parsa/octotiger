@@ -409,8 +409,9 @@ using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
 using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
 using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
 #else
+// those are Vc::simd_array types (similar to std::valarray)
 using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
-using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<integer, 8>::type;
+using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 8>::type;
 using v4sd = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;
 #endif
 

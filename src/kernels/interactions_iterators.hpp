@@ -31,12 +31,18 @@ namespace fmm {
     }
 
     // stride for multiple outer cells (and/or padding)
-    inline size_t to_flat_index_padded(const multiindex<>& m) {
+    // Note: for int_simd_vector and integer
+    // Note: returns uint32_t vector because of Vc limitation
+    template <typename T>
+    inline T to_flat_index_padded(const multiindex<T>& m) {
         return m.x * PADDED_STRIDE * PADDED_STRIDE + m.y * PADDED_STRIDE + m.z;
     }
 
     // strides are only valid for single cell! (no padding)
-    inline size_t to_inner_flat_index_not_padded(const multiindex<>& m) {
+    // Note: for int_simd_vector and integer
+    // Note: returns uint32_t vector because of Vc limitation
+    template <typename T>
+    inline T to_inner_flat_index_not_padded(const multiindex<T>& m) {
         return m.x * INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION +
             m.y * INNER_CELLS_PER_DIRECTION + m.z;
     }

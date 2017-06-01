@@ -18,19 +18,26 @@ extern options opts;
 namespace octotiger {
 namespace fmm {
 
-    void m2m_kernel::operator()(const multiindex<>& cell_index, const size_t cell_flat_index,
-        const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
-        const multiindex<>& interaction_partner_index,
-        const size_t interaction_partner_flat_index) {
+    void m2m_kernel::operator()(const multiindex<int_simd_vector>& cell_index,
+        const int_simd_vector cell_flat_index,
+        const multiindex<int_simd_vector>& cell_index_unpadded,
+        const int_simd_vector cell_flat_index_unpadded,
+        const multiindex<int_simd_vector>& interaction_partner_index,
+        const int_simd_vector interaction_partner_flat_index) {
         // const real theta0 = opts.theta;
-        const real theta_rec_sqared = sqr(1.0 / opts.theta);
+        const simd_vector theta_rec_sqared = sqr(1.0 / opts.theta);
 
-        std::array<real, NDIM>
-            X;    // TODO: replace by space_vector for vectorization or get rid of temporary
+        // TODO: replace by space_vector for vectorization or get rid of temporary
+        std::array<simd_vector, NDIM> X;
         for (integer d = 0; d < NDIM; ++d) {
             // TODO: need SoA for this access if vectorized
-            X[d] = center_of_masses[cell_flat_index][d];
+            for (size_t i = 0; i < X.size(); i++) {
+                // TODO: fix after SoA conversion but removing: [0]
+                X[d][i] = center_of_masses[cell_flat_index[0]][d];
+            }
         }
+
+        // std::cout << "X: " << X[0] << ", " << X[1] << ", " << X[2] << std::endl;
 
         // interaction_type current_interaction;
         // current_interaction.first =
@@ -49,11 +56,16 @@ namespace fmm {
 
         // ilist_debugging.push_back(current_interaction);
 
-        std::array<real, NDIM>
-            Y;    // TODO: replace by space_vector for vectorization or get rid of temporary
+        // TODO: replace by space_vector for vectorization or get rid of temporary
+        std::array<simd_vector, NDIM> Y;
         for (integer d = 0; d < NDIM; ++d) {
-            Y[d] = center_of_masses[interaction_partner_flat_index][d];
+            for (size_t i = 0; i < X.size(); i++) {
+                // TODO: fix after SoA conversion but removing: [0]
+                Y[d][i] = center_of_masses[interaction_partner_flat_index[0]][d];
+            }
         }
+
+        // std::cout << "Y: " << Y[0] << ", " << Y[1] << ", " << Y[2] << std::endl;
 
         // cell specific taylor series coefficients
         // multipole const& Miii1 = M_ptr[iii1];
@@ -62,12 +74,27 @@ namespace fmm {
         // for (integer j = 0; j != taylor_sizes[3]; ++j) {
         //     m0[j] = local_expansions[interaction_partner_flat_index][j];
         // }
-        expansion& m_partner = local_expansions[interaction_partner_flat_index];
+
+        // TODO: remove after switch to expansion_v
+        // TODO: fix after SoA conversion but removing: [0]
+        // std::cout << "interaction_partner_flat_index: " << interaction_partner_flat_index
+        //           << std::endl;
+        expansion& m_partner_old = local_expansions[interaction_partner_flat_index[0]];
+        // std::cout << "ref intialized" << std::endl;
+        // std::cout << "m_partner_old.size(): " << m_partner_old.size() << std::endl;
+        expansion_v m_partner;
+        for (size_t i = 0; i < m_partner_old.size(); i++) {
+            m_partner[i] = m_partner_old[i];
+            // std::cout << "m_partner_old[" << i << "] = " << m_partner_old[i] << std::endl;
+        }
+
+        // std::cout << "m_partner: " << m_partner << std::endl;
+        // std::cout << "done printing m_partner" << std::endl;
 
         // n angular momentum of the cells
         // TODO: replace by expansion type or get rid of temporary
         // (replace by simd_vector for vectorization)
-        taylor<4, real> n0;
+        taylor<4, simd_vector> n0;
 
         // Initalize moments and momentum
         if (type != RHO) {
@@ -77,9 +104,15 @@ namespace fmm {
         } else {
             // this branch computes the angular momentum correction, (20) in the
             // paper divide by mass of other cell
-            expansion& m_cell = local_expansions[cell_flat_index];
+            // TODO: fix after SoA conversion but removing: [0]
+            expansion& m_cell_old = local_expansions[cell_flat_index[0]];
 
-            real const tmp1 = m_partner() / m_cell();
+            expansion_v m_cell;
+            for (size_t i = 0; i < m_cell_old.size(); i++) {
+                m_cell[i] = m_cell_old[i];
+            }
+
+            simd_vector const tmp1 = m_partner() / m_cell();
             // calculating the coefficients for formula (M are the octopole moments)
             // the coefficients are calculated in (17) and (18)
             for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
@@ -87,13 +120,15 @@ namespace fmm {
             }
         }
 
+        // std::cout << "n0: " << n0 << std::endl;
+
         // taylor<4, simd_vector> A0;
         // std::array<simd_vector, NDIM> B0 = {
         //     {simd_vector(ZERO), simd_vector(ZERO), simd_vector(ZERO)}};
 
         // distance between cells in all dimensions
         // TODO: replace by simd_vector for vectorization or get rid of temporary
-        std::array<real, NDIM> dX;
+        std::array<simd_vector, NDIM> dX;
         for (integer d = 0; d < NDIM; ++d) {
             dX[d] = X[d] - Y[d];
         }
@@ -101,7 +136,7 @@ namespace fmm {
         // R_i in paper is the dX in the code
         // D is taylor expansion value for a given X expansion of the gravitational potential
         // (multipole expansion)
-        taylor<5, real> D;    // TODO: replace by simd_vector for vectorization
+        taylor<5, simd_vector> D;    // TODO: replace by simd_vector for vectorization
 
         // std::cout << "dX: ";
         // for (size_t i = 0; i < dX.size(); i++) {
@@ -115,6 +150,7 @@ namespace fmm {
         // calculates all D-values, calculate all coefficients of 1/r (not the potential),
         // formula (6)-(9) and (19)
         D.set_basis(dX);    // TODO: after vectorization, make sure the vectorized version is called
+        // std::cout << "D: " << D << std::endl;
 
         // std::cout << "D: ";
         // for (size_t i = 0; i < D.size(); i++) {
@@ -129,12 +165,12 @@ namespace fmm {
         // TODO: use these again after debugging individual components!
         // expansion& current_potential = potential_expansions[cell_flat_index_unpadded];
         // space_vector& current_angular_correction = angular_corrections[cell_flat_index_unpadded];
-
-        expansion current_potential;
+        expansion_v current_potential;
         for (size_t i = 0; i < current_potential.size(); i++) {
             current_potential[i] = 0.0;
         }
-        space_vector current_angular_correction;
+        std::array<simd_vector, NDIM>
+            current_angular_correction;    // Not sure about correct type for this
         for (size_t i = 0; i < current_angular_correction.size(); i++) {
             current_angular_correction[i] = 0.0;
         }
@@ -175,7 +211,7 @@ namespace fmm {
                 int const* abcd_idx_map = to_abcd_idx_map3[a];
                 for (integer i = 0; i != 10; ++i) {
                     const integer bcd_idx = bcd_idx_map[i];
-                    const auto tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
+                    const simd_vector tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
                     current_angular_correction[a] -= n0[bcd_idx] * tmp;
                 }
             }
@@ -198,51 +234,50 @@ namespace fmm {
         }
 
         // TODO: remove this when switching back to non-copy (reference-based) approach
-        expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded];
+        // TODO: fix after SoA conversion but removing: [0]
+        expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded[0]];
+
+        // TODO: fix after SoA conversion but removing: [0]
         space_vector& current_angular_correction_result =
-            angular_corrections[cell_flat_index_unpadded];
+            angular_corrections[cell_flat_index_unpadded[0]];
 
         // indices on coarser level (for outer stencil boundary)
-        multiindex<> cell_index_coarse = cell_index;
+        multiindex<int_simd_vector> cell_index_coarse = cell_index;
         cell_index_coarse.transform_coarse();
 
-        multiindex<> interaction_partner_index_coarse = interaction_partner_index;
+        multiindex<int_simd_vector> interaction_partner_index_coarse = interaction_partner_index;
         interaction_partner_index_coarse.transform_coarse();
 
-        // const int64_t i0_c = (cell_index.x + INX) / 2 - INX / 2;
-        // const int64_t i1_c = (cell_index.y + INX) / 2 - INX / 2;
-        // const int64_t i2_c = (cell_index.z + INX) / 2 - INX / 2;
-
-        // const int64_t j0_c = (interaction_partner_index.x + INX) / 2 - INX / 2;
-        // const int64_t j1_c = (interaction_partner_index.y + INX) / 2 - INX / 2;
-        // const int64_t j2_c = (interaction_partner_index.z + INX) / 2 - INX / 2;
-
-        // const real theta_f = detail::reciprocal_distance(cell_index.x, cell_index.y,
-        // cell_index.z,
-        //     interaction_partner_index.x, interaction_partner_index.y,
-        //     interaction_partner_index.z);
-        const real theta_f_rec_sqared =
+        const int_simd_vector theta_f_rec_sqared =
             detail::distance_squared(cell_index, interaction_partner_index);
 
-        const real theta_c_rec_sqared =
+        const int_simd_vector theta_c_rec_sqared =
             detail::distance_squared(cell_index_coarse, interaction_partner_index_coarse);
 
-        // const real theta_c = detail::reciprocal_distance(i0_c, i1_c, i2_c, j0_c, j1_c, j2_c);
-        // bool mask = theta_f <= theta0;
-
-        bool mask = theta_rec_sqared > theta_c_rec_sqared && theta_rec_sqared <= theta_f_rec_sqared;
+        simd_vector::mask_type mask =
+            theta_rec_sqared > theta_c_rec_sqared && theta_rec_sqared <= theta_f_rec_sqared;
+        // bool mask_scalar =
+        //     theta_rec_sqared > theta_c_rec_sqared && theta_rec_sqared <= theta_f_rec_sqared;
 
         // if (theta_c > theta0 && theta_f <= theta0) {
 
         for (size_t i = 0; i < current_potential.size(); i++) {
-            if (mask) {
-                current_potential_result[i] += current_potential[i];
+            // simd_vector tmp = current_potential_result[i] + current_potential[i];
+            // current_potential_result[i](mask) = tmp;
+            if (mask[0]) {
+                current_potential_result[i] += current_potential[i][0];
             }
+            // if (mask) {
+            //     current_potential_result[i] += current_potential[i];
+            // }
         }
         for (size_t i = 0; i < current_angular_correction.size(); i++) {
-            if (mask) {
-                current_angular_correction_result[i] += current_angular_correction[i];
+            if (mask[0]) {
+                current_angular_correction_result[i] += current_angular_correction[i][0];
             }
+            // if (mask) {
+            //     current_angular_correction_result[i] += current_angular_correction[i];
+            // }
         }
 
         // if (cell_index_unpadded.x == 0 && cell_index_unpadded.y == 0 &&
@@ -327,12 +362,18 @@ namespace fmm {
       , center_of_masses(center_of_masses)
       , potential_expansions(potential_expansions)
       , angular_corrections(angular_corrections)
-      , type(type) {}
+      , type(type) {
+        std::cout << "kernel created" << std::endl;
+    }
 
 #ifdef M2M_SUPERIMPOSED_STENCIL
     void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
         for (multiindex<>& stencil_element : stencil) {
-            iterate_inner_cells_padded_stencil(stencil_element, *this);
+            // std::cout << "stencil_element: " << stencil_element << std::endl;
+            // TODO: remove after proper vectorization
+            multiindex<int_simd_vector> se(stencil_element.x, stencil_element.y, stencil_element.z);
+            // std::cout << "se: " << se << std::endl;
+            iterate_inner_cells_padded_stencil(se, *this);
         }
     }
 #else

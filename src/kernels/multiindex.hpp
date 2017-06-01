@@ -8,7 +8,8 @@
 namespace octotiger {
 namespace fmm {
 
-    template<typename T = int64_t>
+    // is template to allow for vectorization
+    template <typename T = int64_t>
     class multiindex
     {
     public:
@@ -19,7 +20,16 @@ namespace fmm {
         multiindex(T x, T y, T z)
           : x(x)
           , y(y)
-          , z(z) {}
+          , z(z) {
+            // std::cout << "x arg: " << x << std::endl;
+            // std::cout << "this->x: " << this->x << std::endl;
+        }
+
+        // // remove when vectorization is fully enabled
+        // multiindex(size_t x, size_t y, size_t z)
+        //   : x(x)
+        //   , y(y)
+        //   , z(z) {}
 
         inline const double length() const {
             return sqrt(static_cast<double>(x * x + y * y + z * z));
@@ -44,7 +54,7 @@ namespace fmm {
 }    // namespace fmm
 }    // namespace octotiger
 
-template<typename T>
+template <typename T>
 std::ostream& operator<<(std::ostream& os, const octotiger::fmm::multiindex<T>& m) {
     return os << m.x << ", " << m.y << ", " << m.z;
 }
