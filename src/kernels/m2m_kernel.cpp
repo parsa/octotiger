@@ -31,7 +31,7 @@ namespace fmm {
         std::array<simd_vector, NDIM> X;
         for (integer d = 0; d < NDIM; ++d) {
             // TODO: need SoA for this access if vectorized
-            for (size_t i = 0; i < X.size(); i++) {
+            for (size_t i = 0; i < X[d].size(); i++) {
                 // TODO: fix after SoA conversion but removing: [0]
                 X[d][i] = center_of_masses[cell_flat_index[0]][d];
             }
@@ -59,7 +59,7 @@ namespace fmm {
         // TODO: replace by space_vector for vectorization or get rid of temporary
         std::array<simd_vector, NDIM> Y;
         for (integer d = 0; d < NDIM; ++d) {
-            for (size_t i = 0; i < X.size(); i++) {
+            for (size_t i = 0; i < Y[d].size(); i++) {
                 // TODO: fix after SoA conversion but removing: [0]
                 Y[d][i] = center_of_masses[interaction_partner_flat_index[0]][d];
             }
@@ -260,6 +260,42 @@ namespace fmm {
         //     theta_rec_sqared > theta_c_rec_sqared && theta_rec_sqared <= theta_f_rec_sqared;
 
         // if (theta_c > theta0 && theta_f <= theta0) {
+
+        // bool ok = true;
+        // int32_t error_index = 0;
+        // for (size_t i = 0; i < current_potential.size(); i++) {
+        //     for (size_t j = 0; j < current_potential[i].size(); j++) {
+        //         if (!(current_potential[i][0] == current_potential[i][j])) {
+        //             ok = false;
+        //             error_index = j;
+        //             break;
+        //         }
+        //     }
+        //     if (!ok) {
+        //         break;
+        //     }
+        // }
+        // if (!ok) {
+        //     std::cout << "error comparing potential index: " << error_index << std::endl;
+        // }
+
+        // ok = true;
+        // error_index = 0;
+        // for (size_t i = 0; i < current_angular_correction.size(); i++) {
+        //     for (size_t j = 0; j < current_angular_correction[i].size(); j++) {
+        //         if (!(current_angular_correction[i][0] == current_angular_correction[i][j])) {
+        //             ok = false;
+        //             error_index = j;
+        //             break;
+        //         }
+        //     }
+        //     if (!ok) {
+        //         break;
+        //     }
+        // }
+        // if (!ok) {
+        //     std::cout << "error comparing angular cor. index: " << error_index << std::endl;
+        // }
 
         for (size_t i = 0; i < current_potential.size(); i++) {
             // simd_vector tmp = current_potential_result[i] + current_potential[i];
