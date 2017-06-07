@@ -5,6 +5,7 @@
 #include "m2m_parameters.hpp"
 #include "multiindex.hpp"
 #include "taylor.hpp"
+#include "struct_of_array_data.hpp"
 
 #include <vector>
 
@@ -15,6 +16,7 @@ namespace fmm {
     {
     private:
         std::vector<expansion>& local_expansions;
+        struct_of_array_data<expansion, real, 20> local_expansions_SoA;
 
         // com0 = *(com_ptr[0])
         std::vector<space_vector>& center_of_masses;

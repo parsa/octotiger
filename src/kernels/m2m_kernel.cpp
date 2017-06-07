@@ -5,6 +5,7 @@
 #include "helper.hpp"
 #include "interaction_types.hpp"
 #include "options.hpp"
+#include "struct_of_array_taylor.hpp"
 
 #include <array>
 #include <functional>
@@ -79,14 +80,29 @@ namespace fmm {
         // TODO: fix after SoA conversion but removing: [0]
         // std::cout << "interaction_partner_flat_index: " << interaction_partner_flat_index
         //           << std::endl;
-        expansion& m_partner_old = local_expansions[interaction_partner_flat_index[0]];
+        // expansion& m_partner_old = local_expansions[interaction_partner_flat_index[0]];
+
         // std::cout << "ref intialized" << std::endl;
         // std::cout << "m_partner_old.size(): " << m_partner_old.size() << std::endl;
-        expansion_v m_partner;
-        for (size_t i = 0; i < m_partner_old.size(); i++) {
-            m_partner[i] = m_partner_old[i];
-            // std::cout << "m_partner_old[" << i << "] = " << m_partner_old[i] << std::endl;
-        }
+        // expansion_v m_partner_before_conversion;
+        // for (size_t i = 0; i < m_partner_old.size(); i++) {
+        //     m_partner[i] = m_partner_old[i];
+        //     // std::cout << "m_partner_old[" << i << "] = " << m_partner_old[i] << std::endl;
+        // }
+
+        struct_of_array_taylor<expansion, real, 20> m_partner =
+            local_expansions_SoA.get_view(interaction_partner_flat_index[0]);
+        // bool ok = true;
+        // for (size_t i = 0; i < m_partner_old.size(); i++) {
+        //     if (m_partner_old[i] != m_partner_old_test[i]) {
+        //         std::cout << "value doesn't match org: " << m_partner_old[i]
+        //                   << " mine: " << m_partner_old_test[i] << " i: " << i << std::endl;
+        //         ok = false;
+        //     }
+        // }
+        // if (ok) {
+        //     std::cout << "all ok!" << std::endl;
+        // }
 
         // std::cout << "m_partner: " << m_partner << std::endl;
         // std::cout << "done printing m_partner" << std::endl;
@@ -105,18 +121,31 @@ namespace fmm {
             // this branch computes the angular momentum correction, (20) in the
             // paper divide by mass of other cell
             // TODO: fix after SoA conversion but removing: [0]
-            expansion& m_cell_old = local_expansions[cell_flat_index[0]];
+            // expansion& m_cell_old = local_expansions[cell_flat_index[0]];
 
-            expansion_v m_cell;
-            for (size_t i = 0; i < m_cell_old.size(); i++) {
-                m_cell[i] = m_cell_old[i];
+            // expansion_v m_cell;
+            // for (size_t i = 0; i < m_cell_old.size(); i++) {
+            //     m_cell[i] = m_cell_old[i];
+            // }
+
+            struct_of_array_taylor<expansion, real, 20> m_cell =
+                local_expansions_SoA.get_view(cell_flat_index[0]);
+
+            //TODO: remove this by switching padding value to 1.0? or masking?
+            simd_vector m_cell_grad_0 = m_cell.grad_0();
+            for (size_t j = 1; j < m_cell_grad_0.size(); j++) {
+                m_cell_grad_0[j] = 1.0;    // for division to work
             }
 
-            simd_vector const tmp1 = m_partner() / m_cell();
+            // simd_vector const tmp1 = m_partner() / m_cell();
+            simd_vector const tmp1 = m_partner.grad_0() / m_cell_grad_0;
+            // simd_vector const tmp1 = m_partner.grad_0() / m_cell();
             // calculating the coefficients for formula (M are the octopole moments)
             // the coefficients are calculated in (17) and (18)
             for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                n0[j] = m_partner[j] - m_cell[j] * tmp1;
+                // n0[j] = m_partner[j] - m_cell[j] * tmp1;
+                n0[j] = m_partner.component(j) - m_cell.component(j) * tmp1;
+                // n0[j] = m_partner.component(j) - m_cell[j] * tmp1;
             }
         }
 
@@ -176,33 +205,40 @@ namespace fmm {
         }
 
         // the following loops calculate formula (10), potential from B->A
-        current_potential[0] += m_partner[0] * D[0];
+        // current_potential[0] += m_partner[0] * D[0];
+        current_potential[0] += m_partner.component(0) * D[0];
         if (type != RHO) {
             for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
-                current_potential[0] -= m_partner[i] * D[i];
+                // current_potential[0] -= m_partner[i] * D[i];
+                current_potential[0] -= m_partner.component(i) * D[i];
             }
         }
         for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
             const auto tmp = D[i] * (factor[i] * HALF);
-            current_potential[0] += m_partner[i] * tmp;
+            // current_potential[0] += m_partner[i] * tmp;
+            current_potential[0] += m_partner.component(i) * tmp;
         }
         for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
             const auto tmp = D[i] * (factor[i] * SIXTH);
-            current_potential[0] -= m_partner[i] * tmp;
+            // current_potential[0] -= m_partner[i] * tmp;
+            current_potential[0] -= m_partner.component(i) * tmp;
         }
 
         for (integer a = 0; a < NDIM; ++a) {
             int const* ab_idx_map = to_ab_idx_map3[a];
             int const* abc_idx_map = to_abc_idx_map3[a];
 
-            current_potential(a) += m_partner() * D(a);
+            // current_potential(a) += m_partner() * D(a);
+            current_potential(a) += m_partner.grad_0() * D(a);
             for (integer i = 0; i != 6; ++i) {
                 if (type != RHO && i < 3) {
-                    current_potential(a) -= m_partner(a) * D[ab_idx_map[i]];
+                    // current_potential(a) -= m_partner(a) * D[ab_idx_map[i]];
+                    current_potential(a) -= m_partner.grad_1(a) * D[ab_idx_map[i]];
                 }
                 const integer cb_idx = cb_idx_map[i];
                 const auto tmp1 = D[abc_idx_map[i]] * (factor[cb_idx] * HALF);
-                current_potential(a) += m_partner[cb_idx] * tmp1;
+                // current_potential(a) += m_partner[cb_idx] * tmp1;
+                current_potential(a) += m_partner.component(cb_idx) * tmp1;
             }
         }
 
@@ -221,16 +257,19 @@ namespace fmm {
             int const* abc_idx_map6 = to_abc_idx_map6[i];
 
             integer const ab_idx = ab_idx_map6[i];
-            current_potential[ab_idx] += m_partner() * D[ab_idx];
+            // current_potential[ab_idx] += m_partner() * D[ab_idx];
+            current_potential[ab_idx] += m_partner.grad_0() * D[ab_idx];
             for (integer c = 0; c < NDIM; ++c) {
                 const auto& tmp = D[abc_idx_map6[c]];
-                current_potential[ab_idx] -= m_partner(c) * tmp;
+                // current_potential[ab_idx] -= m_partner(c) * tmp;
+                current_potential[ab_idx] -= m_partner.grad_1(c) * tmp;
             }
         }
 
         for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
             const auto& tmp = D[i];
-            current_potential[i] += m_partner[0] * tmp;
+            // current_potential[i] += m_partner[0] * tmp;
+            current_potential[i] += m_partner.grad_0() * tmp;
         }
 
         // TODO: remove this when switching back to non-copy (reference-based) approach
@@ -395,6 +434,7 @@ namespace fmm {
         std::vector<space_vector>& center_of_masses, std::vector<expansion>& potential_expansions,
         std::vector<space_vector>& angular_corrections, gsolve_type type)
       : local_expansions(local_expansions)
+      , local_expansions_SoA(local_expansions)
       , center_of_masses(center_of_masses)
       , potential_expansions(potential_expansions)
       , angular_corrections(angular_corrections)
