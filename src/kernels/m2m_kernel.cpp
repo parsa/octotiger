@@ -19,12 +19,10 @@ extern options opts;
 namespace octotiger {
 namespace fmm {
 
-    void m2m_kernel::operator()(const multiindex<int_simd_vector>& cell_index,
-        const int_simd_vector cell_flat_index,
-        const multiindex<int_simd_vector>& cell_index_unpadded,
-        const int_simd_vector cell_flat_index_unpadded,
-        const multiindex<int_simd_vector>& interaction_partner_index,
-        const int_simd_vector interaction_partner_flat_index) {
+    void m2m_kernel::operator()(const multiindex<>& cell_index, const int64_t cell_flat_index,
+        const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
+        const multiindex<>& interaction_partner_index,
+        const int64_t interaction_partner_flat_index) {
         // const real theta0 = opts.theta;
         const simd_vector theta_rec_sqared = sqr(1.0 / opts.theta);
 
@@ -68,10 +66,10 @@ namespace fmm {
 
         // TODO: should change name to something better (not taylor, but space_vector)
         struct_of_array_taylor<space_vector, real, 3> X =
-            center_of_masses_SoA.get_view(cell_flat_index[0]);
+            center_of_masses_SoA.get_view(cell_flat_index);
 
         struct_of_array_taylor<space_vector, real, 3> Y =
-            center_of_masses_SoA.get_view(interaction_partner_flat_index[0]);
+            center_of_masses_SoA.get_view(interaction_partner_flat_index);
 
         // distance between cells in all dimensions
         // TODO: replace by simd_vector for vectorization or get rid of temporary
@@ -106,7 +104,7 @@ namespace fmm {
         // }
 
         struct_of_array_taylor<expansion, real, 20> m_partner =
-            local_expansions_SoA.get_view(interaction_partner_flat_index[0]);
+            local_expansions_SoA.get_view(interaction_partner_flat_index);
 
         // bool ok = true;
         // for (size_t i = 0; i < m_partner_old.size(); i++) {
@@ -145,7 +143,7 @@ namespace fmm {
             // }
 
             struct_of_array_taylor<expansion, real, 20> m_cell =
-                local_expansions_SoA.get_view(cell_flat_index[0]);
+                local_expansions_SoA.get_view(cell_flat_index);
 
             // TODO: remove this by switching padding value to 1.0? or masking?
             simd_vector m_cell_grad_0 = m_cell.grad_0();
@@ -286,19 +284,19 @@ namespace fmm {
         // TODO: fix after SoA conversion but removing: [0]
         // expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded[0]];
         struct_of_array_taylor<expansion, real, 20> current_potential_result =
-            potential_expansions_SoA.get_view(cell_flat_index_unpadded[0]);
+            potential_expansions_SoA.get_view(cell_flat_index_unpadded);
 
         // TODO: fix after SoA conversion but removing: [0]
         // space_vector& current_angular_correction_result =
         //     angular_corrections[cell_flat_index_unpadded[0]];
         struct_of_array_taylor<space_vector, real, 3> current_angular_correction_result =
-            angular_corrections_SoA.get_view(cell_flat_index_unpadded[0]);
+            angular_corrections_SoA.get_view(cell_flat_index_unpadded);
 
         // indices on coarser level (for outer stencil boundary)
-        multiindex<int_simd_vector> cell_index_coarse = cell_index;
+        multiindex<> cell_index_coarse = cell_index;
         cell_index_coarse.transform_coarse();
 
-        multiindex<int_simd_vector> interaction_partner_index_coarse = interaction_partner_index;
+        multiindex<> interaction_partner_index_coarse = interaction_partner_index;
         interaction_partner_index_coarse.transform_coarse();
 
         const int_simd_vector theta_f_rec_sqared =
@@ -467,33 +465,15 @@ namespace fmm {
         std::cout << "kernel created" << std::endl;
     }
 
-#ifdef M2M_SUPERIMPOSED_STENCIL
     void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
         for (multiindex<>& stencil_element : stencil) {
             // std::cout << "stencil_element: " << stencil_element << std::endl;
             // TODO: remove after proper vectorization
-            multiindex<int_simd_vector> se(stencil_element.x, stencil_element.y, stencil_element.z);
+            multiindex<> se(stencil_element.x, stencil_element.y, stencil_element.z);
             // std::cout << "se: " << se << std::endl;
             iterate_inner_cells_padded_stencil(se, *this);
         }
     }
-#else
-    void m2m_kernel::apply_stencils(std::array<std::vector<multiindex<>>, 8>& stencils) {
-        for (int64_t i0 = 0; i0 < 2; i0 += 1) {
-            for (int64_t i1 = 0; i1 < 2; i1 += 1) {
-                for (int64_t i2 = 0; i2 < 2; i2 += 1) {
-                    multiindex<> offset(i0, i1, i2);
-                    size_t stencil_index = i0 * 4 + i1 * 2 + i2;
-                    // std::cout << "stencil_index: " << stencil_index << std::endl;
-                    std::vector<multiindex<>>& stencil = stencils[stencil_index];
-                    for (multiindex& stencil_element : stencil) {
-                        iterate_inner_cells_padded_stridded_stencil(offset, stencil_element, *this);
-                    }
-                }
-            }
-        }
-    }
-#endif
 
     // void m2m_kernel::apply_stencil_element(multiindex& stencil_element) {
     //     // execute kernel for individual interactions for every inner cell
