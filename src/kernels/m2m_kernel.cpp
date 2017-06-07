@@ -29,14 +29,14 @@ namespace fmm {
         const simd_vector theta_rec_sqared = sqr(1.0 / opts.theta);
 
         // TODO: replace by space_vector for vectorization or get rid of temporary
-        std::array<simd_vector, NDIM> X;
-        for (integer d = 0; d < NDIM; ++d) {
-            // TODO: need SoA for this access if vectorized
-            for (size_t i = 0; i < X[d].size(); i++) {
-                // TODO: fix after SoA conversion but removing: [0]
-                X[d][i] = center_of_masses[cell_flat_index[0]][d];
-            }
-        }
+        // std::array<simd_vector, NDIM> X;
+        // for (integer d = 0; d < NDIM; ++d) {
+        //     // TODO: need SoA for this access if vectorized
+        //     for (size_t i = 0; i < X[d].size(); i++) {
+        //         // TODO: fix after SoA conversion but removing: [0]
+        //         X[d][i] = center_of_masses[cell_flat_index[0]][d];
+        //     }
+        // }
 
         // std::cout << "X: " << X[0] << ", " << X[1] << ", " << X[2] << std::endl;
 
@@ -58,12 +58,27 @@ namespace fmm {
         // ilist_debugging.push_back(current_interaction);
 
         // TODO: replace by space_vector for vectorization or get rid of temporary
-        std::array<simd_vector, NDIM> Y;
+        // std::array<simd_vector, NDIM> Y;
+        // for (integer d = 0; d < NDIM; ++d) {
+        //     for (size_t i = 0; i < Y[d].size(); i++) {
+        //         // TODO: fix after SoA conversion but removing: [0]
+        //         Y[d][i] = center_of_masses[interaction_partner_flat_index[0]][d];
+        //     }
+        // }
+
+        // TODO: should change name to something better (not taylor, but space_vector)
+        struct_of_array_taylor<space_vector, real, 3> X =
+            center_of_masses_SoA.get_view(cell_flat_index[0]);
+
+        struct_of_array_taylor<space_vector, real, 3> Y =
+            center_of_masses_SoA.get_view(interaction_partner_flat_index[0]);
+
+        // distance between cells in all dimensions
+        // TODO: replace by simd_vector for vectorization or get rid of temporary
+        std::array<simd_vector, NDIM> dX;
         for (integer d = 0; d < NDIM; ++d) {
-            for (size_t i = 0; i < Y[d].size(); i++) {
-                // TODO: fix after SoA conversion but removing: [0]
-                Y[d][i] = center_of_masses[interaction_partner_flat_index[0]][d];
-            }
+            // dX[d] = X[d] - Y[d];
+            dX[d] = X.component(d) - Y.component(d);
         }
 
         // std::cout << "Y: " << Y[0] << ", " << Y[1] << ", " << Y[2] << std::endl;
@@ -92,6 +107,7 @@ namespace fmm {
 
         struct_of_array_taylor<expansion, real, 20> m_partner =
             local_expansions_SoA.get_view(interaction_partner_flat_index[0]);
+
         // bool ok = true;
         // for (size_t i = 0; i < m_partner_old.size(); i++) {
         //     if (m_partner_old[i] != m_partner_old_test[i]) {
@@ -131,7 +147,7 @@ namespace fmm {
             struct_of_array_taylor<expansion, real, 20> m_cell =
                 local_expansions_SoA.get_view(cell_flat_index[0]);
 
-            //TODO: remove this by switching padding value to 1.0? or masking?
+            // TODO: remove this by switching padding value to 1.0? or masking?
             simd_vector m_cell_grad_0 = m_cell.grad_0();
             for (size_t j = 1; j < m_cell_grad_0.size(); j++) {
                 m_cell_grad_0[j] = 1.0;    // for division to work
@@ -154,13 +170,6 @@ namespace fmm {
         // taylor<4, simd_vector> A0;
         // std::array<simd_vector, NDIM> B0 = {
         //     {simd_vector(ZERO), simd_vector(ZERO), simd_vector(ZERO)}};
-
-        // distance between cells in all dimensions
-        // TODO: replace by simd_vector for vectorization or get rid of temporary
-        std::array<simd_vector, NDIM> dX;
-        for (integer d = 0; d < NDIM; ++d) {
-            dX[d] = X[d] - Y[d];
-        }
 
         // R_i in paper is the dX in the code
         // D is taylor expansion value for a given X expansion of the gravitational potential
@@ -436,6 +445,7 @@ namespace fmm {
       : local_expansions(local_expansions)
       , local_expansions_SoA(local_expansions)
       , center_of_masses(center_of_masses)
+      , center_of_masses_SoA(center_of_masses)
       , potential_expansions(potential_expansions)
       , angular_corrections(angular_corrections)
       , type(type) {

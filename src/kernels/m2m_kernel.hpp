@@ -4,8 +4,8 @@
 #include "interactions_iterators.hpp"
 #include "m2m_parameters.hpp"
 #include "multiindex.hpp"
-#include "taylor.hpp"
 #include "struct_of_array_data.hpp"
+#include "taylor.hpp"
 
 #include <vector>
 
@@ -20,6 +20,8 @@ namespace fmm {
 
         // com0 = *(com_ptr[0])
         std::vector<space_vector>& center_of_masses;
+        // down from 4 components
+        struct_of_array_data<space_vector, real, 3> center_of_masses_SoA;
 
         // multipole expansion on this cell (L)
         std::vector<expansion>& potential_expansions;
