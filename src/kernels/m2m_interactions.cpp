@@ -135,33 +135,14 @@ namespace fmm {
         std::cout << "result variables initialized" << std::endl;
     }
 
-    m2m_interactions::m2m_interactions()
-      : verbose(true) {
-        // allocate input variables with padding (so that the interactions spheres are always valid
-        // indices)
-
-        if (verbose) {
-            std::cout << "EXPANSION_COUNT_NOT_PADDED: " << EXPANSION_COUNT_NOT_PADDED << std::endl;
-            std::cout << "EXPANSION_COUNT_PADDED: " << EXPANSION_COUNT_PADDED << std::endl;
-        }
-        local_expansions = std::vector<expansion>(EXPANSION_COUNT_PADDED);
-        center_of_masses = std::vector<space_vector>(EXPANSION_COUNT_PADDED);
-
-        iterate_inner_cells_padded([this](const multiindex<>& i, const size_t flat_index,
-            const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
-            std::cout << "i is " << i << " i_unpadded is " << i_unpadded << std::endl;
-            std::cout << "flat_index: " << flat_index
-                      << " flat_index_unpadded: " << flat_index_unpadded << std::endl;
-        });
-
-        // allocate output variables without padding
-        potential_expansions = std::vector<expansion>(EXPANSION_COUNT_NOT_PADDED);
-        angular_corrections = std::vector<space_vector>(EXPANSION_COUNT_NOT_PADDED);
-    }
-
     void m2m_interactions::compute_interactions() {
-        m2m_kernel kernel(
-            local_expansions, center_of_masses, potential_expansions, angular_corrections, type);
+        struct_of_array_data<expansion, real, 20> local_expansions_SoA(local_expansions);
+        struct_of_array_data<space_vector, real, 3> center_of_masses_SoA(center_of_masses);
+        struct_of_array_data<expansion, real, 20> potential_expansions_SoA(potential_expansions);
+        struct_of_array_data<space_vector, real, 3> angular_corrections_SoA(angular_corrections);
+
+        m2m_kernel kernel(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
+            angular_corrections_SoA, type);
 // std::vector<multiindex>& stencil = stencils[0];
 // for (multiindex& m : stencil) {
 //     std::cout << "next stencil: " << m << std::endl;
@@ -172,6 +153,11 @@ namespace fmm {
 #else
         kernel.apply_stencils(stencils);
 #endif
+
+        // TODO: remove this after finalizing conversion
+        // copy back SoA data into non-SoA result
+        potential_expansions_SoA.to_non_SoA(potential_expansions);
+        angular_corrections_SoA.to_non_SoA(angular_corrections);
     }
 
     // void m2m_interactions::get_converted_local_expansions(std::vector<multipole>& M_ptr) {

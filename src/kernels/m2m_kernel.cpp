@@ -207,8 +207,9 @@ namespace fmm {
         for (size_t i = 0; i < current_potential.size(); i++) {
             current_potential[i] = 0.0;
         }
-        std::array<simd_vector, NDIM>
-            current_angular_correction;    // Not sure about correct type for this
+
+        // Not sure about correct type for this
+        std::array<simd_vector, NDIM> current_angular_correction;
         for (size_t i = 0; i < current_angular_correction.size(); i++) {
             current_angular_correction[i] = 0.0;
         }
@@ -283,11 +284,15 @@ namespace fmm {
 
         // TODO: remove this when switching back to non-copy (reference-based) approach
         // TODO: fix after SoA conversion but removing: [0]
-        expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded[0]];
+        // expansion& current_potential_result = potential_expansions[cell_flat_index_unpadded[0]];
+        struct_of_array_taylor<expansion, real, 20> current_potential_result =
+            potential_expansions_SoA.get_view(cell_flat_index_unpadded[0]);
 
         // TODO: fix after SoA conversion but removing: [0]
-        space_vector& current_angular_correction_result =
-            angular_corrections[cell_flat_index_unpadded[0]];
+        // space_vector& current_angular_correction_result =
+        //     angular_corrections[cell_flat_index_unpadded[0]];
+        struct_of_array_taylor<space_vector, real, 3> current_angular_correction_result =
+            angular_corrections_SoA.get_view(cell_flat_index_unpadded[0]);
 
         // indices on coarser level (for outer stencil boundary)
         multiindex<int_simd_vector> cell_index_coarse = cell_index;
@@ -349,7 +354,11 @@ namespace fmm {
             // simd_vector tmp = current_potential_result[i] + current_potential[i];
             // current_potential_result[i](mask) = tmp;
             if (mask[0]) {
-                current_potential_result[i] += current_potential[i][0];
+                // current_potential_result[i] += current_potential[i][0];
+                simd_vector tmp = current_potential_result.component(i) + current_potential[i];
+                // TODO: currently still an array out of bounds!
+                // tmp.store(current_potential_result.component_pointer(i));
+                *(current_potential_result.component_pointer(i)) = tmp[0];
             }
             // if (mask) {
             //     current_potential_result[i] += current_potential[i];
@@ -357,7 +366,10 @@ namespace fmm {
         }
         for (size_t i = 0; i < current_angular_correction.size(); i++) {
             if (mask[0]) {
-                current_angular_correction_result[i] += current_angular_correction[i][0];
+                // current_angular_correction_result[i] += current_angular_correction[i][0];
+                simd_vector tmp =
+                    current_angular_correction_result.component(i) + current_angular_correction[i];
+                *(current_angular_correction_result.component_pointer(i)) = tmp[0];
             }
             // if (mask) {
             //     current_angular_correction_result[i] += current_angular_correction[i];
@@ -439,15 +451,18 @@ namespace fmm {
         // }
     }
 
-    m2m_kernel::m2m_kernel(std::vector<expansion>& local_expansions,
-        std::vector<space_vector>& center_of_masses, std::vector<expansion>& potential_expansions,
-        std::vector<space_vector>& angular_corrections, gsolve_type type)
-      : local_expansions(local_expansions)
-      , local_expansions_SoA(local_expansions)
-      , center_of_masses(center_of_masses)
-      , center_of_masses_SoA(center_of_masses)
-      , potential_expansions(potential_expansions)
-      , angular_corrections(angular_corrections)
+    m2m_kernel::m2m_kernel(struct_of_array_data<expansion, real, 20>& local_expansions_SoA,
+        struct_of_array_data<space_vector, real, 3>& center_of_masses_SoA,
+        struct_of_array_data<expansion, real, 20>& potential_expansions_SoA,
+        struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA, gsolve_type type)
+      :    // local_expansions(local_expansions),
+      local_expansions_SoA(local_expansions_SoA)
+      // , center_of_masses(center_of_masses)
+      , center_of_masses_SoA(center_of_masses_SoA)
+      // , potential_expansions(potential_expansions)
+      , potential_expansions_SoA(potential_expansions_SoA)
+      // , angular_corrections(angular_corrections)
+      , angular_corrections_SoA(angular_corrections_SoA)
       , type(type) {
         std::cout << "kernel created" << std::endl;
     }

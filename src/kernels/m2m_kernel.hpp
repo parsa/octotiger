@@ -15,18 +15,20 @@ namespace fmm {
     class m2m_kernel
     {
     private:
-        std::vector<expansion>& local_expansions;
-        struct_of_array_data<expansion, real, 20> local_expansions_SoA;
+        // std::vector<expansion>& local_expansions;
+        struct_of_array_data<expansion, real, 20>& local_expansions_SoA;
 
         // com0 = *(com_ptr[0])
-        std::vector<space_vector>& center_of_masses;
+        // std::vector<space_vector>& center_of_masses;
         // down from 4 components
-        struct_of_array_data<space_vector, real, 3> center_of_masses_SoA;
+        struct_of_array_data<space_vector, real, 3>& center_of_masses_SoA;
 
         // multipole expansion on this cell (L)
-        std::vector<expansion>& potential_expansions;
+        // std::vector<expansion>& potential_expansions;
+        struct_of_array_data<expansion, real, 20>& potential_expansions_SoA;
         // angular momentum correction on this cell (L_c)
-        std::vector<space_vector>& angular_corrections;
+        // std::vector<space_vector>& angular_corrections;
+        struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA;
 
         gsolve_type type;
 
@@ -99,10 +101,14 @@ namespace fmm {
             const int_simd_vector interaction_partner_flat_index);
 
     public:
-        m2m_kernel(std::vector<expansion>& local_expansions,
-            std::vector<space_vector>& center_of_masses,
-            std::vector<expansion>& potential_expansions,
-            std::vector<space_vector>& angular_corrections, gsolve_type type);
+        m2m_kernel(struct_of_array_data<expansion, real, 20>& local_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3>& center_of_masses_SoA,
+            struct_of_array_data<expansion, real, 20>& potential_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA, gsolve_type type);
+        // m2m_kernel(std::vector<expansion>& local_expansions,
+        //     std::vector<space_vector>& center_of_masses,
+        //     std::vector<expansion>& potential_expansions,
+        //     std::vector<space_vector>& angular_corrections, gsolve_type type);
 
         m2m_kernel(m2m_kernel& other) = delete;
 

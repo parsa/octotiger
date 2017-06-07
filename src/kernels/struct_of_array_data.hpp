@@ -54,6 +54,15 @@ namespace fmm {
             return struct_of_array_view<AoS_type, component_type, num_components>(
                 *this, flat_index);
         }
+
+        // write back into non-SoA style array
+        void to_non_SoA(std::vector<AoS_type> &org) {
+        for (size_t component = 0; component < num_components; component++) {
+            for (size_t entry = 0; entry < org.size(); entry++) {
+                org[entry][component] = data[component * entries_per_component + entry];
+            }
+        }
+        }
     };
 
 }    // namespace fmm

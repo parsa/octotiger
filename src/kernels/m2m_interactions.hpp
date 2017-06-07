@@ -10,8 +10,8 @@
 #include "taylor.hpp"
 
 #include "interaction_constants.hpp"
-#include "multiindex.hpp"
 #include "m2m_parameters.hpp"
+#include "multiindex.hpp"
 
 namespace octotiger {
 namespace fmm {
@@ -56,9 +56,6 @@ namespace fmm {
             std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
             // grid& g,
             std::vector<neighbor_gravity_type>& neighbors, gsolve_type type);
-
-        // dummy constructor for debugging
-        m2m_interactions();
 
         void compute_interactions();
 
