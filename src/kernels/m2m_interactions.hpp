@@ -22,7 +22,6 @@ namespace fmm {
     class m2m_interactions
     {
     private:
-        bool verbose;
 #ifdef M2M_SUPERIMPOSED_STENCIL
         std::vector<multiindex<>> stencil;
 #else

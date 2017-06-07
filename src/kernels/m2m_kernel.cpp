@@ -37,7 +37,6 @@ namespace fmm {
         // TODO: replace by simd_vector for vectorization or get rid of temporary
         std::array<simd_vector, NDIM> dX;
         for (integer d = 0; d < NDIM; ++d) {
-            // dX[d] = X[d] - Y[d];
             dX[d] = X.component(d) - Y.component(d);
         }
 

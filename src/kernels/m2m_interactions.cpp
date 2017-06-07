@@ -16,8 +16,7 @@ namespace fmm {
         std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
         // grid& g,
         std::vector<neighbor_gravity_type>& neighbors, gsolve_type type)
-      : verbose(true)
-      , type(type) {
+      : type(type) {
 #ifdef M2M_SUPERIMPOSED_STENCIL
         stencil = calculate_stencil();
 #else
