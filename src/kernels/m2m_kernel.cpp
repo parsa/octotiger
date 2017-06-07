@@ -147,9 +147,9 @@ namespace fmm {
 
             // TODO: remove this by switching padding value to 1.0? or masking?
             simd_vector m_cell_grad_0 = m_cell.grad_0();
-            for (size_t j = 1; j < m_cell_grad_0.size(); j++) {
-                m_cell_grad_0[j] = 1.0;    // for division to work
-            }
+            // for (size_t j = 1; j < m_cell_grad_0.size(); j++) {
+            //     m_cell_grad_0[j] = 1.0;    // for division to work
+            // }
 
             // simd_vector const tmp1 = m_partner() / m_cell();
             simd_vector const tmp1 = m_partner.grad_0() / m_cell_grad_0;
@@ -293,10 +293,18 @@ namespace fmm {
             angular_corrections_SoA.get_view(cell_flat_index_unpadded);
 
         // indices on coarser level (for outer stencil boundary)
-        multiindex<> cell_index_coarse = cell_index;
+        // implicitly broadcasts to vector
+        multiindex<int_simd_vector> cell_index_coarse(cell_index);
+        for (size_t j = 0; j < int_simd_vector::Size; j++) {
+            cell_index_coarse.z[j] += j;
+        }
         cell_index_coarse.transform_coarse();
 
-        multiindex<> interaction_partner_index_coarse = interaction_partner_index;
+        // implicitly broadcasts to vector
+        multiindex<int_simd_vector> interaction_partner_index_coarse(interaction_partner_index);
+        for (size_t j = 0; j < int_simd_vector::Size; j++) {
+            interaction_partner_index_coarse.z[j] += j;
+        }
         interaction_partner_index_coarse.transform_coarse();
 
         const int_simd_vector theta_f_rec_sqared =
@@ -351,24 +359,31 @@ namespace fmm {
         for (size_t i = 0; i < current_potential.size(); i++) {
             // simd_vector tmp = current_potential_result[i] + current_potential[i];
             // current_potential_result[i](mask) = tmp;
-            if (mask[0]) {
-                // current_potential_result[i] += current_potential[i][0];
-                simd_vector tmp = current_potential_result.component(i) + current_potential[i];
-                // TODO: currently still an array out of bounds!
-                // tmp.store(current_potential_result.component_pointer(i));
-                *(current_potential_result.component_pointer(i)) = tmp[0];
-            }
+            simd_vector tmp = current_potential_result.component(i) + current_potential[i];
+            tmp.store(current_potential_result.component_pointer(i), mask);
+            // if (mask[0]) {
+            //     // current_potential_result[i] += current_potential[i][0];
+            //     simd_vector tmp = current_potential_result.component(i) + current_potential[i];
+            //     // TODO: currently still an array out of bounds!
+            //     tmp.store(current_potential_result.component_pointer(i));
+            //     // *(current_potential_result.component_pointer(i)) = tmp[0];
+            // }
             // if (mask) {
             //     current_potential_result[i] += current_potential[i];
             // }
         }
         for (size_t i = 0; i < current_angular_correction.size(); i++) {
-            if (mask[0]) {
-                // current_angular_correction_result[i] += current_angular_correction[i][0];
-                simd_vector tmp =
-                    current_angular_correction_result.component(i) + current_angular_correction[i];
-                *(current_angular_correction_result.component_pointer(i)) = tmp[0];
-            }
+            simd_vector tmp =
+                current_angular_correction_result.component(i) + current_angular_correction[i];
+            tmp.store(current_angular_correction_result.component_pointer(i), mask);
+            // if (mask[0]) {
+            //     // current_angular_correction_result[i] += current_angular_correction[i][0];
+            //     simd_vector tmp =
+            //         current_angular_correction_result.component(i) +
+            //         current_angular_correction[i];
+            //     tmp.store(current_angular_correction_result.component_pointer(i));
+            //     // *(current_angular_correction_result.component_pointer(i)) = tmp[0];
+            // }
             // if (mask) {
             //     current_angular_correction_result[i] += current_angular_correction[i];
             // }

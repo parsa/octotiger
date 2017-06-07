@@ -37,8 +37,8 @@ namespace fmm {
         void iterate_inner_cells_padded_stencil(multiindex<>& stencil_element, F& f) {
             for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
                 for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
-                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
-                    // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += simd_vector::Size) {
+                    // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
+                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += simd_vector::Size) {
                         const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
                             i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
                         // BUG: indexing has to be done with uint32_t because of Vc limitation
@@ -94,10 +94,8 @@ namespace fmm {
         //     }
         // }
 
-        void operator()(const multiindex<>& cell_index,
-            const int64_t cell_flat_index,
-            const multiindex<>& cell_index_unpadded,
-            const int64_t cell_flat_index_unpadded,
+        void operator()(const multiindex<>& cell_index, const int64_t cell_flat_index,
+            const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
             const multiindex<>& interaction_partner_index,
             const int64_t interaction_partner_flat_index);
 

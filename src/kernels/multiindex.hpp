@@ -25,6 +25,13 @@ namespace fmm {
             // std::cout << "this->x: " << this->x << std::endl;
         }
 
+        template <typename U>
+        multiindex(const multiindex<U>& other) {
+            x = other.x;
+            y = other.y;
+            z = other.z;
+        }
+
         // // remove when vectorization is fully enabled
         // multiindex(size_t x, size_t y, size_t z)
         //   : x(x)
