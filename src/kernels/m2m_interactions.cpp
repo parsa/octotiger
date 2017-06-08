@@ -9,24 +9,19 @@
 // Big picture questions:
 // - use any kind of tiling?
 
+size_t total_neighbors = 0;
+size_t missing_neighbors = 0;
+
 namespace octotiger {
 namespace fmm {
+
+    std::vector<multiindex<>> m2m_interactions::stencil;
 
     m2m_interactions::m2m_interactions(std::vector<multipole>& M_ptr,
         std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
         // grid& g,
         std::vector<neighbor_gravity_type>& neighbors, gsolve_type type)
       : type(type) {
-#ifdef M2M_SUPERIMPOSED_STENCIL
-        stencil = calculate_stencil();
-#else
-        stencils = calculate_stencil();
-#endif
-        // std::vector<multipole>& M_ptr = g.get_M();
-        // std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr = g.get_com_ptr();
-        // allocate input variables with padding (so that the interactions spheres are always valid
-        // indices)
-
         local_expansions = std::vector<expansion>(EXPANSION_COUNT_PADDED);
         center_of_masses = std::vector<space_vector>(EXPANSION_COUNT_PADDED);
 
@@ -35,34 +30,19 @@ namespace fmm {
         iterate_inner_cells_padded(
             [this, M_ptr, com0](const multiindex<>& i, const size_t flat_index,
                 const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
-                // std::cout << "flat_index: " << flat_index
-                //           << " flat_index_unpadded: " << flat_index_unpadded << std::endl;
                 local_expansions.at(flat_index) = M_ptr.at(flat_index_unpadded);
                 center_of_masses.at(flat_index) = com0.at(flat_index_unpadded);
             });
 
-        // for (const geo::direction& dir : geo::direction::full_set()) {
-        //     std::cout << "dir 0: " << dir[0] << " 1: " << dir[1] << " 2: " << dir[2] <<
-        //     std::endl;
-        // for (neighbor_gravity_type& neighbor : neighbors) {
+        total_neighbors += 27;
+
         for (const geo::direction& dir : geo::direction::full_set()) {
             // don't use neighbor.direction, is always zero for empty cells!
             neighbor_gravity_type& neighbor = neighbors[dir];
 
-            // std::cout << "dir: " << dir << " neighbor.direction: " << neighbor.direction;
-            // std::cout << " is_neighbor_monopole: " << std::boolalpha << neighbor.is_monopole
-            //           << std::endl;
             // this dir is setup as a multipole
             if (!neighbor.is_monopole) {
                 if (!neighbor.data.M) {
-                    // std::cout << " neighbor M empty";
-                    // if (!neighbor.data.x) {
-                    //     std::cout << ", neighbor x also empty";
-                    // }
-                    // if (!neighbor.data.m) {
-                    //     std::cout << ", neighbor m also empty";
-                    // }
-                    // std::cout << std::endl;
                     // TODO: ask Dominic why !is_monopole and stuff still empty
                     iterate_inner_cells_padding(
                         dir, [this](const multiindex<>& i, const size_t flat_index,
@@ -72,25 +52,14 @@ namespace fmm {
                             // initializes x,y,z vector
                             center_of_masses.at(flat_index) = 0.0;
                         });
+                    missing_neighbors += 1;
                 } else {
-                    // if (!neighbor.data.x) {
-                    //     throw "neighbor x empty";
-                    // }
                     std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
                     std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
                     iterate_inner_cells_padding(
                         dir, [this, neighbor_M_ptr, neighbor_com0](const multiindex<>& i,
                                  const size_t flat_index, const multiindex<>& i_unpadded,
                                  const size_t flat_index_unpadded) {
-                            // if (flat_index == 0) {
-                            //     std::cout << "debug! flat_index: " << flat_index
-                            //               << " flat_index_unpadded: " << flat_index_unpadded
-                            //               << std::endl;
-                            //     std::cout << "center_of_masses set to: "
-                            //               << neighbor_com0.at(flat_index_unpadded) << std::endl;
-                            //     std::cout << "local_expansions set to: "
-                            //               << neighbor_M_ptr.at(flat_index_unpadded) << std::endl;
-                            // }
                             local_expansions.at(flat_index) =
                                 neighbor_M_ptr.at(flat_index_unpadded);
                             center_of_masses.at(flat_index) = neighbor_com0.at(flat_index_unpadded);
@@ -107,6 +76,7 @@ namespace fmm {
                         // initializes x,y,z vector
                         center_of_masses.at(flat_index) = 0.0;
                     });
+                missing_neighbors += 1;
             }
         }
 
@@ -117,9 +87,6 @@ namespace fmm {
             [this](const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
                 expansion& e = potential_expansions.at(flat_index_unpadded);
                 e = 0.0;
-                // for (size_t j = 0; j < e.size(); j++) {
-                //     e[j] = 0.0;
-                // }
             });
         angular_corrections = std::vector<space_vector>(EXPANSION_COUNT_NOT_PADDED);
         // TODO/BUG: expansion don't initialize to zero by default
@@ -127,9 +94,6 @@ namespace fmm {
             [this](const multiindex<>& i_unpadded, const size_t flat_index_unpadded) {
                 space_vector& s = angular_corrections.at(flat_index_unpadded);
                 s = 0.0;
-                // for (size_t j = 0; j < s.size(); j++) {
-                //     s[j] = 0.0;
-                // }
             });
         std::cout << "result variables initialized" << std::endl;
     }
@@ -142,16 +106,14 @@ namespace fmm {
 
         m2m_kernel kernel(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
             angular_corrections_SoA, type);
-// std::vector<multiindex>& stencil = stencils[0];
-// for (multiindex& m : stencil) {
-//     std::cout << "next stencil: " << m << std::endl;
-//     kernel.apply_stencil_element(m);
-// }
-#ifdef M2M_SUPERIMPOSED_STENCIL
+
+        auto start = std::chrono::high_resolution_clock::now();
+
         kernel.apply_stencil(stencil);
-#else
-        kernel.apply_stencils(stencils);
-#endif
+        auto end = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double, std::milli> duration = end - start;
+        std::cout << "new interaction kernel apply only (ms): " << duration.count() << std::endl;
 
         // TODO: remove this after finalizing conversion
         // copy back SoA data into non-SoA result
@@ -159,45 +121,17 @@ namespace fmm {
         angular_corrections_SoA.to_non_SoA(angular_corrections);
     }
 
-    // void m2m_interactions::get_converted_local_expansions(std::vector<multipole>& M_ptr) {
-    //     iterate_inner_cells_padded([this, &M_ptr](const multiindex& i, const size_t flat_index,
-    //         const multiindex& i_unpadded, const size_t flat_index_unpadded) {
-    //         M_ptr[flat_index_unpadded] = local_expansions[flat_index];
-    //     });
-    // }
-
     std::vector<expansion>& m2m_interactions::get_local_expansions() {
         return local_expansions;
     }
-
-    // void m2m_interactions::get_converted_center_of_masses(
-    //     std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr) {
-    //     std::vector<space_vector>& com0 = *(com_ptr[0]);
-    //     iterate_inner_cells_padded([this, &com0](const multiindex& i, const size_t flat_index,
-    //         const multiindex& i_unpadded, const size_t flat_index_unpadded) {
-    //         com0[flat_index_unpadded] = center_of_masses[flat_index];
-    //     });
-    // }
 
     std::vector<space_vector>& m2m_interactions::get_center_of_masses() {
         return center_of_masses;
     }
 
-    // void m2m_interactions::get_converted_potential_expansions(std::vector<expansion>& L) {
-    //     iterate_inner_cells_not_padded([this, &L](multiindex& i, size_t flat_index) {
-    //         L[flat_index] = potential_expansions[flat_index];
-    //     });
-    // }
-
     std::vector<expansion>& m2m_interactions::get_potential_expansions() {
         return potential_expansions;
     }
-
-    // void m2m_interactions::get_converted_angular_corrections(std::vector<space_vector>& L_c) {
-    //     iterate_inner_cells_not_padded([this, &L_c](multiindex& i, size_t flat_index) {
-    //         L_c[flat_index] = angular_corrections[flat_index];
-    //     });
-    // }
 
     std::vector<space_vector>& m2m_interactions::get_angular_corrections() {
         return angular_corrections;

@@ -19,9 +19,9 @@ extern options opts;
 namespace octotiger {
 namespace fmm {
 
-    void m2m_kernel::operator()(const multiindex<>& cell_index, const int64_t cell_flat_index,
-        const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
-        const multiindex<>& interaction_partner_index,
+    void m2m_kernel::single_interaction(const multiindex<>& cell_index,
+        const int64_t cell_flat_index, const multiindex<>& cell_index_unpadded,
+        const int64_t cell_flat_index_unpadded, const multiindex<>& interaction_partner_index,
         const int64_t interaction_partner_flat_index) {
         // const real theta0 = opts.theta;
         const simd_vector theta_rec_sqared = sqr(1.0 / opts.theta);
@@ -108,7 +108,7 @@ namespace fmm {
         for (integer a = 0; a < NDIM; ++a) {
             int const* ab_idx_map = to_ab_idx_map3[a];
             int const* abc_idx_map = to_abc_idx_map3[a];
-            
+
             current_potential(a) += m_partner.grad_0() * D(a);
             for (integer i = 0; i != 6; ++i) {
                 if (type != RHO && i < 3) {
@@ -205,12 +205,45 @@ namespace fmm {
     }
 
     void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
-        for (multiindex<>& stencil_element : stencil) {
+        // for (multiindex<>& stencil_element : stencil) {
+        for (size_t outer_stencil_index = 0; outer_stencil_index < stencil.size();
+             outer_stencil_index += STENCIL_BLOCKING) {
             // std::cout << "stencil_element: " << stencil_element << std::endl;
             // TODO: remove after proper vectorization
-            multiindex<> se(stencil_element.x, stencil_element.y, stencil_element.z);
+            // multiindex<> se(stencil_element.x, stencil_element.y, stencil_element.z);
             // std::cout << "se: " << se << std::endl;
-            iterate_inner_cells_padded_stencil(se, *this);
+            // iterate_inner_cells_padded_stencil(se, *this);
+            for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
+                for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
+                    // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
+                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += simd_vector::Size) {
+                        const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
+                            i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
+                        // BUG: indexing has to be done with uint32_t because of Vc limitation
+                        const int64_t cell_flat_index = to_flat_index_padded(cell_index);
+                        const multiindex<> cell_index_unpadded(i0, i1, i2);
+                        const int64_t cell_flat_index_unpadded =
+                            to_inner_flat_index_not_padded(cell_index_unpadded);
+
+                        for (size_t inner_stencil_index = 0;
+                             inner_stencil_index < STENCIL_BLOCKING &&
+                             outer_stencil_index + inner_stencil_index < stencil.size();
+                             inner_stencil_index += 1) {
+                            const multiindex<>& stencil_element =
+                                stencil[outer_stencil_index + inner_stencil_index];
+                            const multiindex<> interaction_partner_index(
+                                cell_index.x + stencil_element.x, cell_index.y + stencil_element.y,
+                                cell_index.z + stencil_element.z);
+
+                            const int64_t interaction_flat_partner_index =
+                                to_flat_index_padded(interaction_partner_index);
+                            this->single_interaction(cell_index, cell_flat_index,
+                                cell_index_unpadded, cell_flat_index_unpadded,
+                                interaction_partner_index, interaction_flat_partner_index);
+                        }
+                    }
+                }
+            }
         }
     }
 

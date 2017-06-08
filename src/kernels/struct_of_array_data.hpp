@@ -1,5 +1,7 @@
 #pragma once
 
+#include "interaction_constants.hpp"
+
 namespace octotiger {
 namespace fmm {
 
@@ -38,16 +40,24 @@ namespace fmm {
     public:
         struct_of_array_data(const std::vector<AoS_type>& org)
           : entries_per_component(org.size()) {
-            data = std::vector<component_type>(num_components * org.size());
+            data = std::vector<component_type>(num_components * (org.size() + SOA_PADDING));
             for (size_t component = 0; component < num_components; component++) {
                 for (size_t entry = 0; entry < org.size(); entry++) {
-                    data[component * entries_per_component + entry] = org[entry][component];
+                    data[component * (entries_per_component + SOA_PADDING) + entry] =
+                        org[entry][component];
                 }
             }
         }
 
+        struct_of_array_data(const size_t entries_per_component)
+          : entries_per_component(entries_per_component) {
+            data =
+                std::vector<component_type>(num_components * (entries_per_component + SOA_PADDING));
+        }
+
         inline component_type* access(const size_t component_index, const size_t flat_entry_index) {
-            return &data[component_index * entries_per_component + flat_entry_index];
+            return &data[component_index * (entries_per_component + SOA_PADDING) +
+                flat_entry_index];
         }
 
         struct_of_array_view<AoS_type, component_type, num_components> get_view(size_t flat_index) {
@@ -56,12 +66,13 @@ namespace fmm {
         }
 
         // write back into non-SoA style array
-        void to_non_SoA(std::vector<AoS_type> &org) {
-        for (size_t component = 0; component < num_components; component++) {
-            for (size_t entry = 0; entry < org.size(); entry++) {
-                org[entry][component] = data[component * entries_per_component + entry];
+        void to_non_SoA(std::vector<AoS_type>& org) {
+            for (size_t component = 0; component < num_components; component++) {
+                for (size_t entry = 0; entry < org.size(); entry++) {
+                    org[entry][component] =
+                        data[component * (entries_per_component + SOA_PADDING) + entry];
+                }
             }
-        }
         }
     };
 

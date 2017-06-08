@@ -10,11 +10,7 @@ extern options opts;
 namespace octotiger {
 namespace fmm {
 
-#ifdef M2M_SUPERIMPOSED_STENCIL
     std::vector<multiindex<>> calculate_stencil() {
-#else
-    std::array<std::vector<multiindex>, 8> calculate_stencil() {
-#endif
         std::array<std::vector<multiindex<>>, 8> stencils;
 
         // used to check the radiuses of the outer and inner sphere
@@ -96,80 +92,76 @@ namespace fmm {
                       << std::endl;
         }
 
-// for (size_t i = 0; i < 8; i++) {
-//     std::cout << "-------------- " << i << " ---------------" << std::endl;
-//     std::cout << "x, y, z" << std::endl;
-//     std::vector<multiindex>& stencil = stencils[i];
-//     for (multiindex& stencil_element : stencil) {
-//         std::cout << stencil_element << std::endl;
-//     }
-//     std::cout << std::endl;
-// }
+        // for (size_t i = 0; i < 8; i++) {
+        //     std::cout << "-------------- " << i << " ---------------" << std::endl;
+        //     std::cout << "x, y, z" << std::endl;
+        //     std::vector<multiindex>& stencil = stencils[i];
+        //     for (multiindex& stencil_element : stencil) {
+        //         std::cout << stencil_element << std::endl;
+        //     }
+        //     std::cout << std::endl;
+        // }
 
-// std::vector<multiindex> common_stencil;
-// // use the first stencil to filter the elements that are in all other stencils
-// std::vector<multiindex>& first_stencil = stencils[0];
-// for (multiindex& first_element : first_stencil) {
-//     bool all_found = true;
-//     for (size_t i = 1; i < 8; i++) {
-//         bool found = false;
-//         for (multiindex& second_element : stencils[i]) {
-//             if (first_element.compare(second_element)) {
-//                 found = true;
-//                 break;
-//             }
-//         }
-//         if (!found) {
-//             all_found = false;
-//             break;
-//         }
-//     }
-//     if (all_found) {
-//         common_stencil.push_back(first_element);
-//     }
-// }
+        // std::vector<multiindex> common_stencil;
+        // // use the first stencil to filter the elements that are in all other stencils
+        // std::vector<multiindex>& first_stencil = stencils[0];
+        // for (multiindex& first_element : first_stencil) {
+        //     bool all_found = true;
+        //     for (size_t i = 1; i < 8; i++) {
+        //         bool found = false;
+        //         for (multiindex& second_element : stencils[i]) {
+        //             if (first_element.compare(second_element)) {
+        //                 found = true;
+        //                 break;
+        //             }
+        //         }
+        //         if (!found) {
+        //             all_found = false;
+        //             break;
+        //         }
+        //     }
+        //     if (all_found) {
+        //         common_stencil.push_back(first_element);
+        //     }
+        // }
 
-// std::cout << "-------------- common_stencil"
-//           << " size: " << common_stencil.size() << " ---------------" << std::endl;
-// std::cout << "x, y, z" << std::endl;
-// for (multiindex& stencil_element : common_stencil) {
-//     std::cout << stencil_element << std::endl;
-// }
-// std::cout << std::endl;
+        // std::cout << "-------------- common_stencil"
+        //           << " size: " << common_stencil.size() << " ---------------" << std::endl;
+        // std::cout << "x, y, z" << std::endl;
+        // for (multiindex& stencil_element : common_stencil) {
+        //     std::cout << stencil_element << std::endl;
+        // }
+        // std::cout << std::endl;
 
-// std::array<std::vector<multiindex>, 8> diff_stencils;
+        // std::array<std::vector<multiindex>, 8> diff_stencils;
 
-// for (size_t i = 0; i < 8; i++) {
-//     for (multiindex& element : stencils[i]) {
-//         bool found = false;
-//         for (multiindex& common_element : common_stencil) {
-//             if (element.compare(common_element)) {
-//                 found = true;
-//                 break;
-//             }
-//         }
-//         if (!found) {
-//             diff_stencils[i].push_back(element);
-//         }
-//     }
-// }
+        // for (size_t i = 0; i < 8; i++) {
+        //     for (multiindex& element : stencils[i]) {
+        //         bool found = false;
+        //         for (multiindex& common_element : common_stencil) {
+        //             if (element.compare(common_element)) {
+        //                 found = true;
+        //                 break;
+        //             }
+        //         }
+        //         if (!found) {
+        //             diff_stencils[i].push_back(element);
+        //         }
+        //     }
+        // }
 
-// for (size_t i = 0; i < 8; i++) {
-//     std::cout << "-------------- diff_stencil: " << i
-//               << " size: " << diff_stencils[i].size() << " ---------------" << std::endl;
-//     std::cout << "x, y, z" << std::endl;
-//     std::vector<multiindex>& stencil = diff_stencils[i];
-//     for (multiindex& stencil_element : stencil) {
-//         std::cout << stencil_element << std::endl;
-//     }
-//     std::cout << std::endl;
-// }
+        // for (size_t i = 0; i < 8; i++) {
+        //     std::cout << "-------------- diff_stencil: " << i
+        //               << " size: " << diff_stencils[i].size() << " ---------------" << std::endl;
+        //     std::cout << "x, y, z" << std::endl;
+        //     std::vector<multiindex>& stencil = diff_stencils[i];
+        //     for (multiindex& stencil_element : stencil) {
+        //         std::cout << stencil_element << std::endl;
+        //     }
+        //     std::cout << std::endl;
+        // }
 
-#ifdef M2M_SUPERIMPOSED_STENCIL
         return superimposed_stencil;
-#else
-        return stencils;
-#endif
     }
 
 }    // namespace fmm

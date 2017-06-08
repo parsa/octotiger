@@ -8,6 +8,9 @@
 #include "options.hpp"
 #include "problem.hpp"
 
+#include "kernels/calculate_stencil.hpp"
+#include "kernels/m2m_interactions.hpp"
+
 #include <chrono>
 #include <string>
 #include <utility>
@@ -23,6 +26,9 @@
 #include <hpx/hpx_init.hpp>
 #include <hpx/include/lcos.hpp>
 #include <hpx/lcos/broadcast.hpp>
+
+extern size_t total_neighbors;
+extern size_t missing_neighbors;
 
 options opts;
 
@@ -106,6 +112,7 @@ void initialize(options _opts, std::vector<hpx::id_type> const& localities) {
     node_server::set_hydro(hydro_on);
     compute_factor();
     compute_ilist();
+    octotiger::fmm::m2m_interactions::stencil = octotiger::fmm::calculate_stencil();
 }
 
 HPX_PLAIN_ACTION(initialize, initialize_action);
@@ -193,6 +200,10 @@ int hpx_main(int argc, char* argv[]) {
     } catch (...) {
         throw;
     }
+
+    std::cout << "total_neighbors: " << total_neighbors << std::endl;
+    std::cout << "missing_neighbors: " << missing_neighbors << std::endl;
+    
     printf("Exiting...\n");
     return hpx::finalize();
 }

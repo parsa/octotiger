@@ -510,6 +510,8 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr = grid_ptr->get_com_ptr();
         // octotiger::fmm::m2m_interactions interactor(*grid_ptr, all_neighbor_interaction_data,
         // type);
+        auto start_with_construct = std::chrono::high_resolution_clock::now();
+
         octotiger::fmm::m2m_interactions interactor(
             M_ptr, com_ptr, all_neighbor_interaction_data, type);
 
@@ -557,7 +559,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
         ////////////////////////////////////////// end input comparisons /////////////////////////////////////////
 
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start_with_SoA_conv = std::chrono::high_resolution_clock::now();
 
         interactor.compute_interactions();    // includes boundary
 
@@ -613,8 +615,12 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         }
 
         auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> duration = end - start;
-        std::cout << "new interaction kernel (ms): " << duration.count() << std::endl;
+        std::chrono::duration<double, std::milli> duration = end - start_with_construct;
+        std::cout << "new interaction kernel  (with construct, ms): " << duration.count()
+                  << std::endl;
+        duration = end - start_with_SoA_conv;
+        std::cout << "new interaction kernel (with SoA conv, ms): " << duration.count()
+                  << std::endl;
 
         // // kernel call generated debugging ilist, compare it now
         // compare_interaction_lists();

@@ -10,7 +10,6 @@
 #include "taylor.hpp"
 
 #include "interaction_constants.hpp"
-#include "m2m_parameters.hpp"
 #include "multiindex.hpp"
 
 namespace octotiger {
@@ -22,12 +21,6 @@ namespace fmm {
     class m2m_interactions
     {
     private:
-#ifdef M2M_SUPERIMPOSED_STENCIL
-        std::vector<multiindex<>> stencil;
-#else
-        std::array<std::vector<multiindex<>>, 8> stencils;
-#endif
-
         /*
          * logical structure of all arrays:
          * cube of 8x8x8 cells of configurable size,
@@ -36,19 +29,21 @@ namespace fmm {
          */
 
         // M_ptr
-        std::vector<expansion> local_expansions;    // TODO: needs to be converted to SoA
+        std::vector<expansion> local_expansions;
 
         // com0 = *(com_ptr[0])
-        std::vector<space_vector> center_of_masses;    // TODO: needs to be converted to SoA
+        std::vector<space_vector> center_of_masses;
 
         // multipole expansion on this cell (L)
-        std::vector<expansion> potential_expansions;    // TODO: needs to be converted to SoA
+        std::vector<expansion> potential_expansions;
         // angular momentum correction on this cell (L_c)
-        std::vector<space_vector> angular_corrections;    // TODO: needs to be converted to SoA
+        std::vector<space_vector> angular_corrections;
 
         gsolve_type type;
 
     public:
+        static std::vector<multiindex<>> stencil;
+
         // at this point, uses the old datamembers of the grid class as input
         // and converts them to the new data structure
         m2m_interactions(std::vector<multipole>& M_ptr,
