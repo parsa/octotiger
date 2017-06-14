@@ -36,6 +36,9 @@ namespace fmm {
 
         total_neighbors += 27;
 
+        size_t current_missing = 0;
+        size_t current_monopole = 0;
+
         for (const geo::direction& dir : geo::direction::full_set()) {
             // don't use neighbor.direction, is always zero for empty cells!
             neighbor_gravity_type& neighbor = neighbors[dir];
@@ -53,6 +56,7 @@ namespace fmm {
                             center_of_masses.at(flat_index) = 0.0;
                         });
                     missing_neighbors += 1;
+                    current_missing += 1;
                 } else {
                     std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
                     std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
@@ -77,8 +81,18 @@ namespace fmm {
                         center_of_masses.at(flat_index) = 0.0;
                     });
                 missing_neighbors += 1;
+                current_monopole += 1;
             }
         }
+
+        std::cout << "----------------------" << std::endl;
+        std::cout << current_monopole << " out of 27 are monopoles ( "
+                  << (static_cast<double>(current_monopole) / 27.0) << ")" << std::endl;
+        std::cout << current_missing << " out of 27 are empty ( "
+                  << (static_cast<double>(current_missing) / 27.0) << ")" << std::endl;
+        
+        std::cout << (current_missing + current_monopole) << " out of 27 are empty/monopole ( "
+                  << (static_cast<double>(current_monopole + current_missing) / 27.0) << ")" << std::endl;
 
         // allocate output variables without padding
         potential_expansions = std::vector<expansion>(EXPANSION_COUNT_NOT_PADDED);

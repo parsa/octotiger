@@ -592,6 +592,8 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             // TODO: at this time, do have to trigger old-style multipole-monopole interactions
             // for directions that are monopoles
             // TODO: replace by a monopole-multipole interactions kernel
+
+            auto start_monopoles = std::chrono::high_resolution_clock::now();
             for (const geo::direction& dir : geo::direction::full_set()) {
                 // TODO: does this ever trigger? no monopoles in neighbor cell maybe?
                 if (!neighbors[dir].empty()) {
@@ -603,6 +605,11 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
                     }
                 }
             }
+            auto end_monopoles = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> duration_monopoles =
+                end_monopoles - start_monopoles;
+            std::cout << "old monopole boundary interactions (ms): " << duration_monopoles.count()
+                      << std::endl;
 
             interactor.add_to_potential_expansions(L);
             interactor.add_to_center_of_masses(L_c);

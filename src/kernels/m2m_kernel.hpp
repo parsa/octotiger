@@ -31,6 +31,8 @@ namespace fmm {
 
         gsolve_type type;
 
+        const simd_vector theta_rec_sqared;
+
         // // for superimposed stencil
         // template <typename F>
         // void iterate_inner_cells_padded_stencil(multiindex<>& stencil_element, F& f) {
@@ -95,6 +97,7 @@ namespace fmm {
         // }
 
         void single_interaction(const multiindex<>& cell_index, const int64_t cell_flat_index,
+            const multiindex<int_simd_vector>& cell_index_coarse,
             const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
             const multiindex<>& interaction_partner_index,
             const int64_t interaction_partner_flat_index);
