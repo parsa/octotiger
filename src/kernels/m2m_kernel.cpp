@@ -1,16 +1,12 @@
 #include "m2m_kernel.hpp"
 
 #include "defs.hpp"
-#include "grid_flattened_indices.hpp"
-#include "helper.hpp"
 #include "interaction_types.hpp"
 #include "options.hpp"
 #include "struct_of_array_taylor.hpp"
 
 #include <array>
 #include <functional>
-
-extern taylor<4, real> factor;
 
 // std::vector<interaction_type> ilist_debugging;
 
@@ -66,22 +62,20 @@ namespace fmm {
                         }
                         cell_index_coarse.transform_coarse();
 
-                        for (size_t inner_stencil_index = 0;
-                             inner_stencil_index < STENCIL_BLOCKING &&
-                             outer_stencil_index + inner_stencil_index < stencil.size();
-                             inner_stencil_index += 1) {
-                            const multiindex<>& stencil_element =
-                                stencil[outer_stencil_index + inner_stencil_index];
-                            const multiindex<> interaction_partner_index(
-                                cell_index.x + stencil_element.x, cell_index.y + stencil_element.y,
-                                cell_index.z + stencil_element.z);
+                        // for (size_t inner_stencil_index = 0;
+                        //      inner_stencil_index < STENCIL_BLOCKING &&
+                        //      outer_stencil_index + inner_stencil_index < stencil.size();
+                        //      inner_stencil_index += 1) {
+                        this->single_interaction(cell_index, cell_flat_index, cell_index_coarse,
+                            cell_index_unpadded, cell_flat_index_unpadded, stencil,
+                            outer_stencil_index);
+                        // }
 
-                            const int64_t interaction_flat_partner_index =
-                                to_flat_index_padded(interaction_partner_index);
-                            this->single_interaction(cell_index, cell_flat_index, cell_index_coarse,
-                                cell_index_unpadded, cell_flat_index_unpadded,
-                                interaction_partner_index, interaction_flat_partner_index);
-                        }
+                        // this->single_interaction(
+                        //     cell_index, cell_flat_index, cell_index_coarse, cell_index_unpadded,
+                        //     cell_flat_index_unpadded, stencil, outer_stencil_index
+                        //     // interaction_partner_index, interaction_flat_partner_index
+                        //     );
                     }
                 }
             }
