@@ -19,6 +19,7 @@ namespace fmm {
         struct_of_array_data<space_vector, real, 3>& center_of_masses_SoA,
         struct_of_array_data<expansion, real, 20>& potential_expansions_SoA,
         struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA,
+        std::vector<bool>& neighbor_empty,
         gsolve_type type)
       :    // local_expansions(local_expansions),
       local_expansions_SoA(local_expansions_SoA)
@@ -28,6 +29,7 @@ namespace fmm {
       , potential_expansions_SoA(potential_expansions_SoA)
       // , angular_corrections(angular_corrections)
       , angular_corrections_SoA(angular_corrections_SoA)
+      , neighbor_empty(neighbor_empty)
       , type(type)
       , theta_rec_sqared(sqr(1.0 / opts.theta)) {
         std::cout << "kernel created" << std::endl;
@@ -62,20 +64,9 @@ namespace fmm {
                         }
                         cell_index_coarse.transform_coarse();
 
-                        // for (size_t inner_stencil_index = 0;
-                        //      inner_stencil_index < STENCIL_BLOCKING &&
-                        //      outer_stencil_index + inner_stencil_index < stencil.size();
-                        //      inner_stencil_index += 1) {
                         this->single_interaction(cell_index, cell_flat_index, cell_index_coarse,
                             cell_index_unpadded, cell_flat_index_unpadded, stencil,
                             outer_stencil_index);
-                        // }
-
-                        // this->single_interaction(
-                        //     cell_index, cell_flat_index, cell_index_coarse, cell_index_unpadded,
-                        //     cell_flat_index_unpadded, stencil, outer_stencil_index
-                        //     // interaction_partner_index, interaction_flat_partner_index
-                        //     );
                     }
                 }
             }

@@ -21,7 +21,8 @@ namespace fmm {
         std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
         // grid& g,
         std::vector<neighbor_gravity_type>& neighbors, gsolve_type type)
-      : type(type) {
+      : neighbor_empty(27)
+      , type(type) {
         local_expansions = std::vector<expansion>(EXPANSION_COUNT_PADDED);
         center_of_masses = std::vector<space_vector>(EXPANSION_COUNT_PADDED);
 
@@ -38,6 +39,10 @@ namespace fmm {
 
         size_t current_missing = 0;
         size_t current_monopole = 0;
+
+        for (size_t i = 0; i < neighbor_empty.size(); i++) {
+            neighbor_empty[i] = false;
+        }
 
         for (const geo::direction& dir : geo::direction::full_set()) {
             // don't use neighbor.direction, is always zero for empty cells!
@@ -57,6 +62,7 @@ namespace fmm {
                         });
                     missing_neighbors += 1;
                     current_missing += 1;
+                    neighbor_empty[dir.flat_index_with_center()] = true;
                 } else {
                     std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
                     std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
@@ -82,17 +88,30 @@ namespace fmm {
                     });
                 missing_neighbors += 1;
                 current_monopole += 1;
+                neighbor_empty[dir.flat_index_with_center()] = true;
             }
         }
+
+        neighbor_empty[13] = false;
 
         std::cout << "----------------------" << std::endl;
         std::cout << current_monopole << " out of 27 are monopoles ( "
                   << (static_cast<double>(current_monopole) / 27.0) << ")" << std::endl;
         std::cout << current_missing << " out of 27 are empty ( "
                   << (static_cast<double>(current_missing) / 27.0) << ")" << std::endl;
-        
+
         std::cout << (current_missing + current_monopole) << " out of 27 are empty/monopole ( "
-                  << (static_cast<double>(current_monopole + current_missing) / 27.0) << ")" << std::endl;
+                  << (static_cast<double>(current_monopole + current_missing) / 27.0) << ")"
+                  << std::endl;
+
+        std::cout << std::boolalpha;
+        for (size_t i = 0; i < 27; i++) {
+            if (i > 0) {
+                std::cout << ", ";
+            }
+            std::cout << i << " -> " << neighbor_empty[dir];
+        }
+        std::cout << std::endl;
 
         // allocate output variables without padding
         potential_expansions = std::vector<expansion>(EXPANSION_COUNT_NOT_PADDED);
@@ -119,7 +138,7 @@ namespace fmm {
         struct_of_array_data<space_vector, real, 3> angular_corrections_SoA(angular_corrections);
 
         m2m_kernel kernel(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
-            angular_corrections_SoA, type);
+            angular_corrections_SoA, neighbor_empty, type);
 
         auto start = std::chrono::high_resolution_clock::now();
 

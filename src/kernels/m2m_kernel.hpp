@@ -29,6 +29,8 @@ namespace fmm {
         // std::vector<space_vector>& angular_corrections;
         struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA;
 
+        std::vector<bool> &neighbor_empty;
+
         gsolve_type type;
 
         const simd_vector theta_rec_sqared;
@@ -109,7 +111,8 @@ namespace fmm {
         m2m_kernel(struct_of_array_data<expansion, real, 20>& local_expansions_SoA,
             struct_of_array_data<space_vector, real, 3>& center_of_masses_SoA,
             struct_of_array_data<expansion, real, 20>& potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA, gsolve_type type);
+            struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA,
+            std::vector<bool>& neighbor_empty, gsolve_type type);
 
         m2m_kernel(m2m_kernel& other) = delete;
 

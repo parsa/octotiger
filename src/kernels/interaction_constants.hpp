@@ -21,7 +21,7 @@ namespace fmm {
     constexpr uint64_t DIMENSION = 3;
 
     // number of expansions in each cell per direction
-    constexpr uint64_t INNER_CELLS_PER_DIRECTION = 8;
+    constexpr int64_t INNER_CELLS_PER_DIRECTION = 8;
 
     // number of expansions in each cell (inner cells)
     constexpr uint64_t INNER_CELLS = detail::const_pow(INNER_CELLS_PER_DIRECTION, DIMENSION);

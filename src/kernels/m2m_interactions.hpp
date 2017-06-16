@@ -39,6 +39,8 @@ namespace fmm {
         // angular momentum correction on this cell (L_c)
         std::vector<space_vector> angular_corrections;
 
+        std::vector<bool> neighbor_empty;
+
         gsolve_type type;
 
     public:

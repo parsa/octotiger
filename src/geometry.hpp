@@ -172,6 +172,11 @@ public:
     integer flat_index() const {
         return (i < 14) ? i : (i - 1);
     }
+
+    integer flat_index_with_center() const {
+        return i;
+    }
+    
     static constexpr integer count() {
         return _count;
     }
