@@ -34,7 +34,7 @@ namespace fmm {
     constexpr uint64_t EXPANSION_COUNT_PADDED = detail::const_pow(PADDED_STRIDE, DIMENSION);
     constexpr uint64_t EXPANSION_COUNT_NOT_PADDED = INNER_CELLS;
 
-    constexpr uint64_t STENCIL_BLOCKING = 2;
+    constexpr uint64_t STENCIL_BLOCKING = 8;
     constexpr uint64_t SOA_PADDING = 19; // to prevent some of the 4k aliasing
 
 }    // namespace fmm

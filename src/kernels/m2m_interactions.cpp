@@ -109,7 +109,7 @@ namespace fmm {
             if (i > 0) {
                 std::cout << ", ";
             }
-            std::cout << i << " -> " << neighbor_empty[dir];
+            std::cout << i << " -> " << neighbor_empty[i];
         }
         std::cout << std::endl;
 

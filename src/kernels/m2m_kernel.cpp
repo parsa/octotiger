@@ -64,7 +64,7 @@ namespace fmm {
                         }
                         cell_index_coarse.transform_coarse();
 
-                        this->single_interaction(cell_index, cell_flat_index, cell_index_coarse,
+                        this->blocked_interaction(cell_index, cell_flat_index, cell_index_coarse,
                             cell_index_unpadded, cell_flat_index_unpadded, stencil,
                             outer_stencil_index);
                     }

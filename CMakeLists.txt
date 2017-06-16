@@ -121,7 +121,7 @@ set(source_files ${source_files}
     src/kernels/m2m_kernel.cpp
     src/kernels/compare_interaction_lists.cpp
     src/kernels/interactions_iterators.cpp
-    src/kernels/m2m_kernel_single_interaction.cpp
+    src/kernels/m2m_kernel_blocked_interaction.cpp
 )
 
 set(header_files
