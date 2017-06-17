@@ -26,6 +26,12 @@ namespace fmm {
             return (sqr(i.x - j.x) + sqr(i.y - j.y) + sqr(i.z - j.z));
         }
 
+	inline int32_t distance_squared_int(const multiindex<>& i, const multiindex<>& j) {
+            // protect against sqrt(0)
+            // return 1.0 / (std::sqrt(tmp));    // TODO: use squared theta instead for compariso
+            return static_cast<int32_t>(sqr(i.x - j.x) + sqr(i.y - j.y) + sqr(i.z - j.z));
+        }
+
         // calculates 1/distance between i and j
         // TODO: change to simd_vector
         inline int_simd_vector distance_squared(

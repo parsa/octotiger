@@ -404,12 +404,18 @@ public:
 
 #if defined(Vc_HAVE_AVX512F)
 using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx512>;
+using int_simd_vector = Vc::datapar<int32_t, Vc::datapar_abi::avx512>;
 using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
 #elif defined(Vc_HAVE_AVX)
 using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
+using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 8>::type;
 using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
 #else
 // those are Vc::simd_array types (similar to std::valarray)
+// using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx2>;
+// using int_simd_vector = Vc::datapar<int32_t, Vc::datapar_abi::avx2>;
+// using v4sd = Vc::datapar<double, Vc::datapar_abi::avx2>;
+
 using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
 using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 8>::type;
 using v4sd = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;

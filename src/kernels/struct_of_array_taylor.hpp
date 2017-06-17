@@ -19,17 +19,31 @@ namespace fmm {
 
         // accesses the coefficient of the first gradient of gravitational potential
         inline simd_vector grad_0() const {
+#if Vc_IS_VERSION_2 == 0
             return simd_vector(this->component_pointer(0));
+#else
+            return simd_vector(this->component_pointer(0), Vc::flags::element_aligned);
+#endif
         }
 
         // accesses the coefficients of the second gradient
         inline simd_vector grad_1(size_t grad1_index) const {
-            // skip grad 0 component
+// skip grad 0 component
+#if Vc_IS_VERSION_2 == 0
             return simd_vector(this->component_pointer(grad1_index + 1));
+#else
+            return simd_vector(
+                this->component_pointer(grad1_index + 1), Vc::flags::element_aligned);
+#endif
         }
 
         inline simd_vector component(size_t component_index) const {
+#if Vc_IS_VERSION_2 == 0
             return simd_vector(this->component_pointer(component_index));
+#else
+            return simd_vector(
+                this->component_pointer(component_index), Vc::flags::element_aligned);
+#endif
         }
     };
 

@@ -12,8 +12,7 @@ namespace fmm {
     void m2m_kernel::blocked_interaction(const multiindex<>& cell_index,
         const int64_t cell_flat_index, const multiindex<int_simd_vector>& cell_index_coarse,
         const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
-        const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index
-        ) {
+        const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index) {
         for (size_t inner_stencil_index = 0; inner_stencil_index < STENCIL_BLOCKING &&
              outer_stencil_index + inner_stencil_index < stencil.size();
              inner_stencil_index += 1) {
@@ -32,12 +31,21 @@ namespace fmm {
                 (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
                 (interaction_partner_index.z / INNER_CELLS_PER_DIRECTION) - 1);
 
+#if Vc_IS_VERSION_2 == 0
             const multiindex<> in_boundary_end(
                 (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
                 (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
                 ((interaction_partner_index.z + int_simd_vector::Size) /
                     INNER_CELLS_PER_DIRECTION) -
                     1);
+#else
+            const multiindex<> in_boundary_end(
+                (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
+                (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
+                ((interaction_partner_index.z + int_simd_vector::size()) /
+                    INNER_CELLS_PER_DIRECTION) -
+                    1);
+#endif
 
             // std::cout << "in_boundary_start x: " << in_boundary_start.x
             //           << " y: " << in_boundary_start.y << " z: " << in_boundary_start.z
@@ -68,13 +76,18 @@ namespace fmm {
 
             // implicitly broadcasts to vector
             multiindex<int_simd_vector> interaction_partner_index_coarse(interaction_partner_index);
+
+#if Vc_IS_VERSION_2 == 0
             for (size_t j = 0; j < int_simd_vector::Size; j++) {
+#else
+            for (size_t j = 0; j < int_simd_vector::size(); j++) {
+#endif
                 interaction_partner_index_coarse.z[j] += j;
             }
             interaction_partner_index_coarse.transform_coarse();
 
             const int_simd_vector theta_f_rec_sqared =
-                detail::distance_squared(cell_index, interaction_partner_index);
+                detail::distance_squared_int(cell_index, interaction_partner_index);
 
             const int_simd_vector theta_c_rec_sqared =
                 detail::distance_squared(cell_index_coarse, interaction_partner_index_coarse);
@@ -220,12 +233,23 @@ namespace fmm {
 
             for (size_t i = 0; i < current_potential.size(); i++) {
                 simd_vector tmp = current_potential_result.component(i) + current_potential[i];
+#if Vc_IS_VERSION_2 == 0
                 tmp.store(current_potential_result.component_pointer(i), mask);
+#else
+                Vc::where(mask, tmp).memstore(
+                    current_potential_result.component_pointer(i), Vc::flags::element_aligned);
+#endif
             }
             for (size_t i = 0; i < current_angular_correction.size(); i++) {
                 simd_vector tmp =
                     current_angular_correction_result.component(i) + current_angular_correction[i];
+#if Vc_IS_VERSION_2 == 0
                 tmp.store(current_angular_correction_result.component_pointer(i), mask);
+#else
+                Vc::where(mask, tmp).memstore(
+                    current_angular_correction_result.component_pointer(i),
+                    Vc::flags::element_aligned);
+#endif
             }
         }
     }

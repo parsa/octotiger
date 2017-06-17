@@ -46,8 +46,12 @@ namespace fmm {
             // iterate_inner_cells_padded_stencil(se, *this);
             for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
                 for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
-                    // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
+// for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
+#if Vc_IS_VERSION_2 == 0
                     for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += simd_vector::Size) {
+#else
+                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += simd_vector::size()) {
+#endif
                         const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
                             i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
                         // BUG: indexing has to be done with uint32_t because of Vc limitation
@@ -59,7 +63,11 @@ namespace fmm {
                         // indices on coarser level (for outer stencil boundary)
                         // implicitly broadcasts to vector
                         multiindex<int_simd_vector> cell_index_coarse(cell_index);
+#if Vc_IS_VERSION_2 == 0
                         for (size_t j = 0; j < int_simd_vector::Size; j++) {
+#else
+                        for (size_t j = 0; j < int_simd_vector::size(); j++) {
+#endif
                             cell_index_coarse.z[j] += j;
                         }
                         cell_index_coarse.transform_coarse();
