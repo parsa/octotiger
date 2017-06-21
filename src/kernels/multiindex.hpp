@@ -9,7 +9,7 @@ namespace octotiger {
 namespace fmm {
 
     // is template to allow for vectorization
-    template <typename T = int64_t>
+    template <typename T = int32_t>
     class multiindex
     {
     public:
@@ -52,9 +52,14 @@ namespace fmm {
 
         // set this multiindex to the next coarser level index
         void transform_coarse() {
-            x = (x + INX) / 2 - INX / 2;
-            y = (y + INX) / 2 - INX / 2;
-            z = (z + INX) / 2 - INX / 2;
+            // x = (x + INX) / 2 - INX / 2;
+            // y = (y + INX) / 2 - INX / 2;
+            // z = (z + INX) / 2 - INX / 2;
+            T patch_size = static_cast<typename T::value_type>(INX);
+            T subtract = static_cast<typename T::value_type>(INX / 2);
+            x = (x + patch_size) / 2 - subtract;
+            y = (y + patch_size) / 2 - subtract;
+            z = (z + patch_size) / 2 - subtract;
         }
     };
 
