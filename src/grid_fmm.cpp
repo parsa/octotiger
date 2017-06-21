@@ -632,7 +632,7 @@ multipole_pass_type grid::compute_multipoles(
     M_ptr = std::make_shared<std::vector<multipole>>();
     mon_ptr = std::make_shared<std::vector<real>>();
     if (com_ptr[1] == nullptr) {
-        com_ptr[1] = std::make_shared<std::vector<space_vector>>(G_N3 / 8);
+        com_ptr[1] = std::make_shared<std::vector<space_vector>>(G_N3 / simd_len);
     }
     if (type == RHO) {
         com_ptr[0] = std::make_shared<std::vector<space_vector>>(G_N3);

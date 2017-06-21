@@ -12,8 +12,11 @@ namespace fmm {
     void m2m_kernel::blocked_interaction(const multiindex<>& cell_index,
         const int64_t cell_flat_index, const multiindex<int_simd_vector>& cell_index_coarse,
         const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
-        const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index
-        ) {
+        const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index) {
+        // TODO: should change name to something better (not taylor, but space_vector)
+        struct_of_array_taylor<space_vector, real, 3> X =
+            center_of_masses_SoA.get_view(cell_flat_index);
+
         for (size_t inner_stencil_index = 0; inner_stencil_index < STENCIL_BLOCKING &&
              outer_stencil_index + inner_stencil_index < stencil.size();
              inner_stencil_index += 1) {
@@ -85,10 +88,6 @@ namespace fmm {
             if (Vc::none_of(mask)) {
                 continue;
             }
-
-            // TODO: should change name to something better (not taylor, but space_vector)
-            struct_of_array_taylor<space_vector, real, 3> X =
-                center_of_masses_SoA.get_view(cell_flat_index);
 
             struct_of_array_taylor<space_vector, real, 3> Y =
                 center_of_masses_SoA.get_view(interaction_partner_flat_index);

@@ -12,9 +12,9 @@
 #include <cstdio>
 #include "immintrin.h"
 
-constexpr std::size_t simd_len = 8;
-
 #if !defined(HPX_HAVE_DATAPAR)
+
+constexpr std::size_t simd_len = 8;
 
 #ifdef USE_SIMD
 #if !defined(__MIC__) && !defined(__AVX512F__)
@@ -405,15 +405,20 @@ public:
 #if defined(Vc_HAVE_AVX512F)
 using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx512>;
 using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
+constexpr std::size_t simd_len = simd_vector::size();
 #elif defined(Vc_HAVE_AVX)
 using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
 using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
+constexpr std::size_t simd_len = simd_vector::Size;
 #else
 // those are Vc::simd_array types (similar to std::valarray)
-using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
-using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 8>::type;
+using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;
+using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 4>::type;
 using v4sd = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;
+constexpr std::size_t simd_len = simd_vector::Size;
 #endif
+
+
 
 #endif
 
