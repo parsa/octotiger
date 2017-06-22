@@ -402,27 +402,32 @@ public:
 #include <hpx/parallel/traits/vector_pack_type.hpp>
 #include <hpx/runtime/serialization/datapar.hpp>
 
-#if defined(Vc_HAVE_AVX512F)
-using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx512>;
-using int_simd_vector = Vc::datapar<int32_t, Vc::datapar_abi::avx512>;
-using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
-constexpr std::size_t simd_len = simd_vector::size();
-#elif defined(Vc_HAVE_AVX)
-using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
-using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 8>::type;
-using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
-constexpr std::size_t simd_len = simd_vector::Size;
-#else
-// those are Vc::simd_array types (similar to std::valarray)
+// #if defined(Vc_HAVE_AVX512F)
+// using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx512>;
+// using int_simd_vector = Vc::datapar<int32_t, Vc::datapar_abi::avx512>;
+// using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
+// constexpr std::size_t simd_len = simd_vector::size();
+// #elif defined(Vc_HAVE_AVX2)
 // using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx2>;
 // using int_simd_vector = Vc::datapar<int32_t, Vc::datapar_abi::avx2>;
 // using v4sd = Vc::datapar<double, Vc::datapar_abi::avx2>;
+// constexpr std::size_t simd_len = simd_vector::size();
+using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
+using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 8>::type;
+using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
+constexpr std::size_t simd_len = simd_vector::size();
+// #else
+// // those are Vc::simd_array types (similar to std::valarray)
+// using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx2>;
+// using int_simd_vector = Vc::datapar<int32_t, Vc::datapar_abi::avx2>;
+// using v4sd = Vc::datapar<double, Vc::datapar_abi::avx2>;
+// constexpr std::size_t simd_len = simd_vector::size();
 
-using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;
-using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 4>::type;
-using v4sd = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;
-constexpr std::size_t simd_len = simd_vector::Size;
-#endif
+// using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
+// using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 8>::type;
+// using v4sd = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;
+// constexpr std::size_t simd_len = simd_vector::Size;
+// #endif
 
 
 

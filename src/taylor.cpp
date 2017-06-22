@@ -7,33 +7,18 @@
 
 #include "taylor.hpp"
 
-integer taylor_consts::map2[3][3] = {
-    { 0, 1, 2 },
-    { 1, 3, 4 },
-    { 2, 4, 5 }
-};
-integer taylor_consts::map3[3][3][3] = {
-    { { 0, 1, 2 }, { 1, 3, 4 }, { 2, 4, 5 } },
-    { { 1, 3, 4 }, { 3, 6, 7 }, { 4, 7, 8 } },
-    { { 2, 4, 5 }, { 4, 7, 8 }, { 5, 8, 9 } }
-};
+integer taylor_consts::map2[3][3] = {{0, 1, 2}, {1, 3, 4}, {2, 4, 5}};
+integer taylor_consts::map3[3][3][3] = {{{0, 1, 2}, {1, 3, 4}, {2, 4, 5}},
+    {{1, 3, 4}, {3, 6, 7}, {4, 7, 8}}, {{2, 4, 5}, {4, 7, 8}, {5, 8, 9}}};
 integer taylor_consts::map4[3][3][3][3] = {
-    { { { 0,  1,  2 }, { 1,  3,  4 }, { 2,  4,  5 } },
-      { { 1,  3,  4 }, { 3,  6,  7 }, { 4,  7,  8 } },
-      { { 2,  4,  5 }, { 4,  7,  8 }, { 5,  8,  9 } } },
-    { { { 1,  3,  4 }, { 3,  6,  7 }, { 4,  7,  8 } },
-      { { 3,  6,  7 }, { 6, 10, 11 }, { 7, 11, 12 } },
-      { { 4,  7,  8 }, { 7, 11, 12 }, { 8, 12, 13 } } },
-    { { { 2,  4,  5 }, { 4,  7,  8 }, { 5,  8,  9 } },
-      { { 4,  7,  8 }, { 7, 11, 12 }, { 8, 12, 13 } },
-      { { 5,  8,  9 }, { 8, 12, 13 }, { 9, 13, 14 } } }
-};
+    {{{0, 1, 2}, {1, 3, 4}, {2, 4, 5}}, {{1, 3, 4}, {3, 6, 7}, {4, 7, 8}},
+        {{2, 4, 5}, {4, 7, 8}, {5, 8, 9}}},
+    {{{1, 3, 4}, {3, 6, 7}, {4, 7, 8}}, {{3, 6, 7}, {6, 10, 11}, {7, 11, 12}},
+        {{4, 7, 8}, {7, 11, 12}, {8, 12, 13}}},
+    {{{2, 4, 5}, {4, 7, 8}, {5, 8, 9}}, {{4, 7, 8}, {7, 11, 12}, {8, 12, 13}},
+        {{5, 8, 9}, {8, 12, 13}, {9, 13, 14}}}};
 
-const real taylor_consts::delta[3][3] = {
-    { ONE, ZERO, ZERO },
-    { ZERO, ONE, ZERO },
-    { ZERO, ZERO, ONE }
-};
+const real taylor_consts::delta[3][3] = {{ONE, ZERO, ZERO}, {ZERO, ONE, ZERO}, {ZERO, ZERO, ONE}};
 
 static /*__attribute__((constructor))*/ void init() {
     // The taylor coefficients for the various dimensions are all stored in an
@@ -95,10 +80,8 @@ static /*__attribute__((constructor))*/ void init() {
 
 struct init_taylor_data
 {
-    init_taylor_data()
-    {
+    init_taylor_data() {
         init();
     }
 };
 init_taylor_data init_taylor;
-

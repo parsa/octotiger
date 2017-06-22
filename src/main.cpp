@@ -7,6 +7,7 @@
 #include "node_server.hpp"
 #include "options.hpp"
 #include "problem.hpp"
+#include "simd.hpp"
 
 #include "kernels/calculate_stencil.hpp"
 #include "kernels/m2m_interactions.hpp"
@@ -131,12 +132,22 @@ int hpx_main(int argc, char* argv[]) {
     printf("Compiled for AVX512 SIMD architectures.\n");
 #elif defined(__AVX2__)
     printf("Compiled for AVX2 SIMD architectures.\n");
+#if defined(__FMA__)
+    printf("FMA is enabled, too.\n");
+#endif
 #elif defined(__AVX__)
     printf("Compiled for AVX SIMD architectures.\n");
 #elif defined(__SSE2__)
     printf("Compiled for SSE2 SIMD architectures.\n");
 #else
     printf("Not compiled for a known SIMD architecture.\n");
+#endif
+#if Vc_IS_VERSION_2 == 0
+    std::cout << "Using Vc, NOT using datapar" << std::endl;
+    std::cout << "Length of Vc SIMD vectors (>= isa size): " << simd_vector::Size << std::endl;
+#else
+    std::cout << "Using Vc, datapar is used" << std::endl;
+    std::cout << "Length of Vc SIMD vectors (>= isa size): " << simd_vector::size() << std::endl;
 #endif
     printf("###########################################################\n");
     printf("Running\n");
@@ -203,7 +214,7 @@ int hpx_main(int argc, char* argv[]) {
 
     std::cout << "total_neighbors: " << total_neighbors << std::endl;
     std::cout << "missing_neighbors: " << missing_neighbors << std::endl;
-    
+
     printf("Exiting...\n");
     return hpx::finalize();
 }
