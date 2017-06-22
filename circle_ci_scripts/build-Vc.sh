@@ -2,12 +2,16 @@
 set -x
 
 if [ ! -d "Vc/" ]; then
-    git clone https://github.com/STEllAR-GROUP/Vc.git
+    git clone https://github.com/VcDevel/Vc
 else
     cd Vc
     git pull
     cd ..
 fi
+
+cd Vc
+git checkout mkretz/datapar
+cd ..
 
 mkdir -p Vc/build
 cd Vc/build
