@@ -33,7 +33,9 @@ namespace fmm {
 
         gsolve_type type;
 
-        const simd_vector theta_rec_sqared;
+        const simd_vector theta_rec_squared;
+
+        // const double theta_rec_squared_scalar;
 
         // // for superimposed stencil
         // template <typename F>

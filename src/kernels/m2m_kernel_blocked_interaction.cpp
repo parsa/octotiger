@@ -87,16 +87,22 @@ namespace fmm {
 #endif
                 interaction_partner_index_coarse.z[j] += j;
             }
+            // note that this is the same for groups of 2x2x2 elements
+            // -> maps to the same for some SIMD lanes
             interaction_partner_index_coarse.transform_coarse();
 
-            const int_simd_vector theta_f_rec_sqared =
-                detail::distance_squared_int(cell_index, interaction_partner_index);
+            int_simd_vector theta_c_rec_squared_int = detail::distance_squared_reciprocal(
+                cell_index_coarse, interaction_partner_index_coarse);
 
-            const int_simd_vector theta_c_rec_sqared =
-                detail::distance_squared(cell_index_coarse, interaction_partner_index_coarse);
+            // simd_vector theta_c_rec_squared =
+            //     Vc::static_datapar_cast<double>(theta_c_rec_squared_int);
+            // TODO: use static_datapar_cast after issue is fixed
+            simd_vector theta_c_rec_squared;
+            for (size_t i = 0; i < simd_vector::size(); i++) {
+                theta_c_rec_squared[i] = static_cast<double>(theta_c_rec_squared_int[i]);
+            }
 
-            simd_vector::mask_type mask =
-                theta_rec_sqared > theta_c_rec_sqared && theta_rec_sqared <= theta_f_rec_sqared;
+            simd_vector::mask_type mask = theta_rec_squared > theta_c_rec_squared;
 
             if (Vc::none_of(mask)) {
                 continue;

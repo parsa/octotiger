@@ -399,8 +399,7 @@ public:
 
 #else
 
-#include <hpx/parallel/traits/vector_pack_type.hpp>
-#include <hpx/runtime/serialization/datapar.hpp>
+#include <Vc/Vc>
 
 #if defined(Vc_HAVE_AVX512F)
 using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx512>;
@@ -413,9 +412,9 @@ constexpr std::size_t simd_len = simd_vector::size();
 // using v4sd = Vc::datapar<double, Vc::datapar_abi::avx2>;
 // constexpr std::size_t simd_len = simd_vector::size();
 #else
-using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
-using int_simd_vector = typename hpx::parallel::traits::vector_pack_type<int32_t, 8>::type;
-using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
+using simd_vector = typename Vc::datapar<double, Vc::datapar_abi::fixed_size<8>>;
+using int_simd_vector = typename Vc::datapar<int32_t, Vc::datapar_abi::fixed_size<8>>;
+using v4sd = typename Vc::datapar<double, Vc::datapar_abi::fixed_size<4>>;
 constexpr std::size_t simd_len = simd_vector::size();
 // #else
 // // those are Vc::simd_array types (similar to std::valarray)

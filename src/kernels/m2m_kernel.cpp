@@ -31,9 +31,9 @@ namespace fmm {
       , angular_corrections_SoA(angular_corrections_SoA)
       , neighbor_empty(neighbor_empty)
       , type(type)
-      , theta_rec_sqared(sqr(1.0 / opts.theta)) {
-        std::cout << "kernel created" << std::endl;
-    }
+      , theta_rec_squared(sqr(1.0 / opts.theta))
+      // , theta_rec_squared_scalar(sqr(1.0 / opts.theta))
+    {}
 
     void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
         // for (multiindex<>& stencil_element : stencil) {
@@ -70,6 +70,8 @@ namespace fmm {
 #endif
                             cell_index_coarse.z[j] += j;
                         }
+                        // note that this is the same for groups of 2x2x2 elements
+                        // -> maps to the same for some SIMD lanes
                         cell_index_coarse.transform_coarse();
 
                         this->blocked_interaction(cell_index, cell_flat_index, cell_index_coarse,
