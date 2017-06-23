@@ -9,6 +9,13 @@ extern taylor<4, real> factor;
 namespace octotiger {
 namespace fmm {
 
+    //TODO:
+    // - check codegen and fix in Vc
+    // - check for amount of temporaries
+    // - try to replace expensive operations like sqrt
+    // - remove all sqr()
+    // - increase INX
+
     void m2m_kernel::blocked_interaction(const multiindex<>& cell_index,
         const int64_t cell_flat_index, const multiindex<int_simd_vector>& cell_index_coarse,
         const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
