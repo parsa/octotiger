@@ -94,24 +94,16 @@ namespace fmm {
 
         neighbor_empty[13] = false;
 
-        std::cout << "----------------------" << std::endl;
-        std::cout << current_monopole << " out of 27 are monopoles ( "
-                  << (static_cast<double>(current_monopole) / 27.0) << ")" << std::endl;
-        std::cout << current_missing << " out of 27 are empty ( "
-                  << (static_cast<double>(current_missing) / 27.0) << ")" << std::endl;
+        std::cout << current_monopole << " monopoles, " << current_monopole << " missing neighbors" << std::endl;
 
-        std::cout << (current_missing + current_monopole) << " out of 27 are empty/monopole ( "
-                  << (static_cast<double>(current_monopole + current_missing) / 27.0) << ")"
-                  << std::endl;
-
-        std::cout << std::boolalpha;
-        for (size_t i = 0; i < 27; i++) {
-            if (i > 0) {
-                std::cout << ", ";
-            }
-            std::cout << i << " -> " << neighbor_empty[i];
-        }
-        std::cout << std::endl;
+        // std::cout << std::boolalpha;
+        // for (size_t i = 0; i < 27; i++) {
+        //     if (i > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << i << " -> " << neighbor_empty[i];
+        // }
+        // std::cout << std::endl;
 
         // allocate output variables without padding
         potential_expansions = std::vector<expansion>(EXPANSION_COUNT_NOT_PADDED);
@@ -128,7 +120,6 @@ namespace fmm {
                 space_vector& s = angular_corrections.at(flat_index_unpadded);
                 s = 0.0;
             });
-        std::cout << "result variables initialized" << std::endl;
     }
 
     void m2m_interactions::compute_interactions() {

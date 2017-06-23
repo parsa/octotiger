@@ -60,7 +60,6 @@ namespace fmm {
 
         std::vector<multiindex<>> superimposed_stencil;
         for (size_t i = 0; i < 8; i++) {
-            std::cout << "stencil[" << i << "].size(): " << stencils[i].size() << std::endl;
             for (multiindex<>& stencil_element : stencils[i]) {
                 bool found = false;
                 for (multiindex<>& super_element : superimposed_stencil) {
@@ -74,23 +73,23 @@ namespace fmm {
                 }
             }
         }
-        std::cout << "superimposed_stencil.size(): " << superimposed_stencil.size() << std::endl;
+        // std::cout << "superimposed_stencil.size(): " << superimposed_stencil.size() << std::endl;
 
-        for (size_t i = 0; i < 8; i++) {
-            uint64_t common_elements = 0;
-            for (auto& element : stencils[i]) {
-                for (auto& super_element : superimposed_stencil) {
-                    if (element.compare(super_element)) {
-                        common_elements += 1;
-                        break;
-                    }
-                }
-            }
-            std::cout << "total_elements: " << stencils[i].size()
-                      << " common_elements: " << common_elements
-                      << " masked_elements: " << (superimposed_stencil.size() - common_elements)
-                      << std::endl;
-        }
+        // for (size_t i = 0; i < 8; i++) {
+        //     uint64_t common_elements = 0;
+        //     for (auto& element : stencils[i]) {
+        //         for (auto& super_element : superimposed_stencil) {
+        //             if (element.compare(super_element)) {
+        //                 common_elements += 1;
+        //                 break;
+        //             }
+        //         }
+        //     }
+        //     std::cout << "total_elements: " << stencils[i].size()
+        //               << " common_elements: " << common_elements
+        //               << " masked_elements: " << (superimposed_stencil.size() - common_elements)
+        //               << std::endl;
+        // }
 
         // for (size_t i = 0; i < 8; i++) {
         //     std::cout << "-------------- " << i << " ---------------" << std::endl;
