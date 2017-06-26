@@ -94,7 +94,8 @@ namespace fmm {
 
         neighbor_empty[13] = false;
 
-        std::cout << current_monopole << " monopoles, " << current_monopole << " missing neighbors" << std::endl;
+        std::cout << current_monopole << " monopoles, " << current_monopole << " missing neighbors"
+                  << std::endl;
 
         // std::cout << std::boolalpha;
         // for (size_t i = 0; i < 27; i++) {

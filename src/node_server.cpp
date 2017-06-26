@@ -8,7 +8,6 @@
 #include "node_server.hpp"
 #include "defs.hpp"
 #include "future.hpp"
-#include "kernels/compare_interaction_lists.hpp"
 #include "kernels/interactions_iterators.hpp"
 #include "kernels/m2m_interactions.hpp"
 #include "options.hpp"

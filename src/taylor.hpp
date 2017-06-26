@@ -374,9 +374,6 @@ constexpr integer to_c[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 1, 
 typedef taylor<4, real> multipole;
 typedef taylor<4, real> expansion;
 
-typedef taylor<4, simd_vector> multipole_v;
-typedef taylor<4, simd_vector> expansion_v;
-
 template <int N, class T = real>
 std::ostream& operator<<(std::ostream& os, const taylor<N, T>& t) {
     std::cout << "(";

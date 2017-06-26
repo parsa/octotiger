@@ -116,10 +116,8 @@ set(source_files ${source_files}
     src/compute_factor.cpp
     src/compute_ilist.cpp
     src/kernels/m2m_interactions.cpp
-    src/kernels/multiindex.cpp
     src/kernels/calculate_stencil.cpp
     src/kernels/m2m_kernel.cpp
-    src/kernels/compare_interaction_lists.cpp
     src/kernels/interactions_iterators.cpp
     src/kernels/m2m_kernel_blocked_interaction.cpp
 )
@@ -153,6 +151,8 @@ set(header_files
     src/kernels/calculate_stencil.hpp
     src/kernels/m2m_kernel.hpp
     src/kernels/compare_interaction_lists.hpp
+    src/kernels/m2m_simd_types.hpp
+    src/kernels/m2m_taylor_set_basis.hpp
 )
 
 add_hpx_executable(

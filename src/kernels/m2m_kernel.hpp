@@ -2,6 +2,7 @@
 
 #include "interaction_constants.hpp"
 #include "interactions_iterators.hpp"
+#include "m2m_simd_types.hpp"
 #include "multiindex.hpp"
 #include "struct_of_array_data.hpp"
 #include "taylor.hpp"
@@ -29,11 +30,11 @@ namespace fmm {
         // std::vector<space_vector>& angular_corrections;
         struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA;
 
-        std::vector<bool> &neighbor_empty;
+        std::vector<bool>& neighbor_empty;
 
         gsolve_type type;
 
-        const simd_vector theta_rec_squared;
+        const m2m_vector theta_rec_squared;
 
         // const double theta_rec_squared_scalar;
 
@@ -43,7 +44,7 @@ namespace fmm {
         //     for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
         //         for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
         //             // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
-        //             for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += simd_vector::Size)
+        //             for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += m2m_vector::Size)
         //             {
         //                 const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
         //                     i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
@@ -101,7 +102,7 @@ namespace fmm {
         // }
 
         void blocked_interaction(const multiindex<>& cell_index, const int64_t cell_flat_index,
-            const multiindex<int_simd_vector>& cell_index_coarse,
+            const multiindex<m2m_int_vector>& cell_index_coarse,
             const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
             const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index
             // const size_t inner_stencil_index

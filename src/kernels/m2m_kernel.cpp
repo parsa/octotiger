@@ -32,7 +32,7 @@ namespace fmm {
       , neighbor_empty(neighbor_empty)
       , type(type)
       , theta_rec_squared(sqr(1.0 / opts.theta))
-      // , theta_rec_squared_scalar(sqr(1.0 / opts.theta))
+    // , theta_rec_squared_scalar(sqr(1.0 / opts.theta))
     {}
 
     void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
@@ -48,9 +48,9 @@ namespace fmm {
                 for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
 // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
 #if Vc_IS_VERSION_2 == 0
-                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += simd_vector::Size) {
+                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += m2m_vector::Size) {
 #else
-                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += simd_vector::size()) {
+                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += m2m_vector::size()) {
 #endif
                         const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
                             i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
@@ -62,11 +62,11 @@ namespace fmm {
 
                         // indices on coarser level (for outer stencil boundary)
                         // implicitly broadcasts to vector
-                        multiindex<int_simd_vector> cell_index_coarse(cell_index);
+                        multiindex<m2m_int_vector> cell_index_coarse(cell_index);
 #if Vc_IS_VERSION_2 == 0
-                        for (size_t j = 0; j < int_simd_vector::Size; j++) {
+                        for (size_t j = 0; j < m2m_int_vector::Size; j++) {
 #else
-                        for (size_t j = 0; j < int_simd_vector::size(); j++) {
+                        for (size_t j = 0; j < m2m_int_vector::size(); j++) {
 #endif
                             cell_index_coarse.z[j] += j;
                         }

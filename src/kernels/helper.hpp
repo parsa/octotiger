@@ -1,6 +1,6 @@
 #pragma once
 
-#include "simd.hpp"
+#include "m2m_simd_types.hpp"
 
 namespace octotiger {
 namespace fmm {
@@ -19,9 +19,8 @@ namespace fmm {
         }
 
         // calculates 1/distance between i and j
-        // TODO: change to simd_vector
-        inline int_simd_vector distance_squared_reciprocal(
-            const multiindex<int_simd_vector>& i, const multiindex<int_simd_vector>& j) {
+        inline m2m_int_vector distance_squared_reciprocal(
+            const multiindex<m2m_int_vector>& i, const multiindex<m2m_int_vector>& j) {
             return (sqr(i.x - j.x) + sqr(i.y - j.y) + sqr(i.z - j.z));
         }
 

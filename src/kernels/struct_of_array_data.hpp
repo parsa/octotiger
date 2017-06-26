@@ -43,8 +43,7 @@ namespace fmm {
             data = std::vector<component_type>(num_components * (org.size() + SOA_PADDING));
             for (size_t component = 0; component < num_components; component++) {
                 for (size_t entry = 0; entry < org.size(); entry++) {
-                    data[component * padded_entries_per_component + entry] =
-                        org[entry][component];
+                    data[component * padded_entries_per_component + entry] = org[entry][component];
                 }
             }
         }
@@ -55,7 +54,8 @@ namespace fmm {
         }
 
         inline component_type* access(const size_t component_index, const size_t flat_entry_index) {
-            return data.data() + (component_index * padded_entries_per_component + flat_entry_index);
+            return data.data() +
+                (component_index * padded_entries_per_component + flat_entry_index);
         }
 
         struct_of_array_view<AoS_type, component_type, num_components> get_view(size_t flat_index) {

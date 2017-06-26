@@ -3,6 +3,7 @@
 #include "grid_flattened_indices.hpp"
 #include "helper.hpp"
 #include "struct_of_array_taylor.hpp"
+#include "m2m_taylor_set_basis.hpp"
 
 extern taylor<4, real> factor;
 
@@ -17,7 +18,7 @@ namespace fmm {
     // - increase INX
 
     void m2m_kernel::blocked_interaction(const multiindex<>& cell_index,
-        const int64_t cell_flat_index, const multiindex<int_simd_vector>& cell_index_coarse,
+        const int64_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
         const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
         const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index) {
         // TODO: should change name to something better (not taylor, but space_vector)
@@ -45,14 +46,14 @@ namespace fmm {
             const multiindex<> in_boundary_end(
                 (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
                 (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
-                ((interaction_partner_index.z + int_simd_vector::Size) /
+                ((interaction_partner_index.z + m2m_int_vector::Size) /
                     INNER_CELLS_PER_DIRECTION) -
                     1);
 #else
             const multiindex<> in_boundary_end(
                 (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
                 (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
-                ((interaction_partner_index.z + int_simd_vector::size()) /
+                ((interaction_partner_index.z + m2m_int_vector::size()) /
                     INNER_CELLS_PER_DIRECTION) -
                     1);
 #endif
@@ -85,12 +86,12 @@ namespace fmm {
                 to_flat_index_padded(interaction_partner_index);
 
             // implicitly broadcasts to vector
-            multiindex<int_simd_vector> interaction_partner_index_coarse(interaction_partner_index);
+            multiindex<m2m_int_vector> interaction_partner_index_coarse(interaction_partner_index);
 
 #if Vc_IS_VERSION_2 == 0
-            for (size_t j = 0; j < int_simd_vector::Size; j++) {
+            for (size_t j = 0; j < m2m_int_vector::Size; j++) {
 #else
-            for (size_t j = 0; j < int_simd_vector::size(); j++) {
+            for (size_t j = 0; j < m2m_int_vector::size(); j++) {
 #endif
                 interaction_partner_index_coarse.z[j] += j;
             }
@@ -98,18 +99,18 @@ namespace fmm {
             // -> maps to the same for some SIMD lanes
             interaction_partner_index_coarse.transform_coarse();
 
-            int_simd_vector theta_c_rec_squared_int = detail::distance_squared_reciprocal(
+            m2m_int_vector theta_c_rec_squared_int = detail::distance_squared_reciprocal(
                 cell_index_coarse, interaction_partner_index_coarse);
 
-            // simd_vector theta_c_rec_squared =
+            // m2m_vector theta_c_rec_squared =
             //     Vc::static_datapar_cast<double>(theta_c_rec_squared_int);
             // TODO: use static_datapar_cast after issue is fixed
-            simd_vector theta_c_rec_squared;
-            for (size_t i = 0; i < simd_vector::size(); i++) {
+            m2m_vector theta_c_rec_squared;
+            for (size_t i = 0; i < m2m_vector::size(); i++) {
                 theta_c_rec_squared[i] = static_cast<double>(theta_c_rec_squared_int[i]);
             }
 
-            simd_vector::mask_type mask = theta_rec_squared > theta_c_rec_squared;
+            m2m_vector::mask_type mask = theta_rec_squared > theta_c_rec_squared;
 
             if (Vc::none_of(mask)) {
                 continue;
@@ -119,8 +120,8 @@ namespace fmm {
                 center_of_masses_SoA.get_view(interaction_partner_flat_index);
 
             // distance between cells in all dimensions
-            // TODO: replace by simd_vector for vectorization or get rid of temporary
-            std::array<simd_vector, NDIM> dX;
+            // TODO: replace by m2m_vector for vectorization or get rid of temporary
+            std::array<m2m_vector, NDIM> dX;
             for (integer d = 0; d < NDIM; ++d) {
                 dX[d] = X.component(d) - Y.component(d);
             }
@@ -129,7 +130,7 @@ namespace fmm {
                 local_expansions_SoA.get_view(interaction_partner_flat_index);
 
             // TODO: replace by reference to get rid of temporary?
-            taylor<4, simd_vector> n0;
+            taylor<4, m2m_vector> n0;
 
             // Initalize moments and momentum
             if (type != RHO) {
@@ -142,7 +143,7 @@ namespace fmm {
                 struct_of_array_taylor<expansion, real, 20> m_cell =
                     local_expansions_SoA.get_view(cell_flat_index);
 
-                simd_vector const tmp1 = m_partner.grad_0() / m_cell.grad_0();
+                m2m_vector const tmp1 = m_partner.grad_0() / m_cell.grad_0();
 
                 // calculating the coefficients for formula (M are the octopole moments)
                 // the coefficients are calculated in (17) and (18)
@@ -155,7 +156,7 @@ namespace fmm {
             // D is taylor expansion value for a given X expansion of the gravitational
             // potential
             // (multipole expansion)
-            taylor<5, simd_vector> D;    // TODO: replace by simd_vector for vectorization
+            taylor<5, m2m_vector> D;    // TODO: replace by m2m_vector for vectorization
 
             // calculates all D-values, calculate all coefficients of 1/r (not the
             // potential),
@@ -173,7 +174,7 @@ namespace fmm {
                 current_potential[i] = 0.0;
             }
 
-            std::array<simd_vector, NDIM> current_angular_correction;
+            std::array<m2m_vector, NDIM> current_angular_correction;
             for (size_t i = 0; i < current_angular_correction.size(); i++) {
                 current_angular_correction[i] = 0.0;
             }
@@ -214,7 +215,7 @@ namespace fmm {
                     int const* abcd_idx_map = to_abcd_idx_map3[a];
                     for (integer i = 0; i != 10; ++i) {
                         const integer bcd_idx = bcd_idx_map[i];
-                        const simd_vector tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
+                        const m2m_vector tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
                         current_angular_correction[a] -= n0[bcd_idx] * tmp;
                     }
                 }
@@ -244,7 +245,7 @@ namespace fmm {
                 angular_corrections_SoA.get_view(cell_flat_index_unpadded);
 
             for (size_t i = 0; i < current_potential.size(); i++) {
-                simd_vector tmp = current_potential_result.component(i) + current_potential[i];
+                m2m_vector tmp = current_potential_result.component(i) + current_potential[i];
 #if Vc_IS_VERSION_2 == 0
                 tmp.store(current_potential_result.component_pointer(i), mask);
 #else
@@ -253,7 +254,7 @@ namespace fmm {
 #endif
             }
             for (size_t i = 0; i < current_angular_correction.size(); i++) {
-                simd_vector tmp =
+                m2m_vector tmp =
                     current_angular_correction_result.component(i) + current_angular_correction[i];
 #if Vc_IS_VERSION_2 == 0
                 tmp.store(current_angular_correction_result.component_pointer(i), mask);

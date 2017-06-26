@@ -31,7 +31,7 @@ namespace fmm {
     }
 
     // stride for multiple outer cells (and/or padding)
-    // Note: for int_simd_vector and integer
+    // Note: for m2m_int_vector and integer
     // Note: returns uint32_t vector because of Vc limitation
     template <typename T>
     inline T to_flat_index_padded(const multiindex<T>& m) {
@@ -39,7 +39,7 @@ namespace fmm {
     }
 
     // strides are only valid for single cell! (no padding)
-    // Note: for int_simd_vector and integer
+    // Note: for m2m_int_vector and integer
     // Note: returns uint32_t vector because of Vc limitation
     template <typename T>
     inline T to_inner_flat_index_not_padded(const multiindex<T>& m) {
