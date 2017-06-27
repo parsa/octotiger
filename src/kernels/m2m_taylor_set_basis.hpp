@@ -2,20 +2,20 @@
 
 #include "m2m_simd_types.hpp"
 
-// overload for kernel-specific simd type
-template <>
-inline void taylor<5, m2m_vector>::set_basis(const std::array<m2m_vector, NDIM>& X) {
-    constexpr integer N = 5;
-    using T = m2m_vector;
-    // PROF_BEGIN;
+namespace octotiger {
+namespace fmm {
 
-    // also highly optimized
+// overload for kernel-specific simd type
+taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>& X) {
+  
+    constexpr integer N = 5;
+    taylor<5, m2m_vector> A;
 
     // A is D in the paper in formula (6)
-    taylor<N, T>& A = *this;
+    // taylor<N, T>& A = *this;
 
-    const T r2 = sqr(X[0]) + sqr(X[1]) + sqr(X[2]);
-    T r2inv = 0.0;
+    const m2m_vector r2 = sqr(X[0]) + sqr(X[1]) + sqr(X[2]);
+    m2m_vector r2inv = 0.0;
     for (volatile integer i = 0; i != simd_len; ++i) {
         if (r2[i] > 0.0) {
             r2inv[i] = ONE / std::max(r2[i], 1.0e-20);
@@ -23,14 +23,14 @@ inline void taylor<5, m2m_vector>::set_basis(const std::array<m2m_vector, NDIM>&
     }
 
     // parts of formula (6)
-    const T d0 = -sqrt(r2inv);
+    const m2m_vector d0 = -sqrt(r2inv);
     // parts of formula (7)
-    const T d1 = -d0 * r2inv;
+    const m2m_vector d1 = -d0 * r2inv;
     // parts of formula (8)
-    const T d2 = T(-3) * d1 * r2inv;
+    const m2m_vector d2 = m2m_vector(-3) * d1 * r2inv;
     // parts of  formula (9)
-    const T d3 = T(-5) * d2 * r2inv;
-    //     const T d4 = -T(7) * d3 * r2inv;
+    const m2m_vector d3 = m2m_vector(-5) * d2 * r2inv;
+    //     const m2m_vector d4 = -m2m_vector(7) * d3 * r2inv;
 
     // formula (6)
     A[0] = d0;
@@ -39,13 +39,13 @@ inline void taylor<5, m2m_vector>::set_basis(const std::array<m2m_vector, NDIM>&
     A[2] = X[1] * d1;
     A[3] = X[2] * d1;
 
-    T X_00 = X[0] * X[0];
-    T X_11 = X[1] * X[1];
-    T X_22 = X[2] * X[2];
+    m2m_vector X_00 = X[0] * X[0];
+    m2m_vector X_11 = X[1] * X[1];
+    m2m_vector X_22 = X[2] * X[2];
 
-    T X_12 = X[1] * X[2];
-    T X_01 = X[0] * X[1];
-    T X_02 = X[0] * X[2];
+    m2m_vector X_12 = X[1] * X[2];
+    m2m_vector X_01 = X[0] * X[1];
+    m2m_vector X_02 = X[0] * X[2];
 
     A[4] = d2 * X_00;
     A[4] += d1;
@@ -60,7 +60,7 @@ inline void taylor<5, m2m_vector>::set_basis(const std::array<m2m_vector, NDIM>&
     A[9] += d1;
 
     A[10] = d3 * X_00 * X[0];
-    T d2_X0 = d2 * X[0];
+    m2m_vector d2_X0 = d2 * X[0];
     // A[10] += d2 * X[0];
     // A[10] += d2 * X[0];
     // A[10] += d2 * X[0];
@@ -79,7 +79,7 @@ inline void taylor<5, m2m_vector>::set_basis(const std::array<m2m_vector, NDIM>&
     A[15] += d2_X0;
 
     A[16] = d3 * X_11 * X[1];
-    T d2_X1 = d2 * X[1];
+    m2m_vector d2_X1 = d2 * X[1];
     // A[16] += d2 * X[1];
     // A[16] += d2 * X[1];
     // A[16] += d2 * X[1];
@@ -92,14 +92,14 @@ inline void taylor<5, m2m_vector>::set_basis(const std::array<m2m_vector, NDIM>&
     A[18] += d2 * X[1];
 
     A[19] = d3 * X_22 * X[2];
-    T d2_X2 = d2 * X[2];
+    m2m_vector d2_X2 = d2 * X[2];
     // A[19] += d2 * X[2];
     // A[19] += d2 * X[2];
     // A[19] += d2 * X[2];
     A[19] += 3.0 * d2_X2;
 
     A[20] = sqr(X[0]) * d3 + 2.0 * d2;
-    T d3_X00 = d3 * X_00;
+    m2m_vector d3_X00 = d3 * X_00;
     // A[20] += d3 * X_00;
     // A[20] += d3 * X_00;
     A[20] += d2;
@@ -107,26 +107,26 @@ inline void taylor<5, m2m_vector>::set_basis(const std::array<m2m_vector, NDIM>&
     // A[20] += d3 * X_00;
     // A[20] += d3 * X_00;
     A[20] += 5.0 * d3_X00;
-    T d3_X01 = d3 * X_01;
+    m2m_vector d3_X01 = d3 * X_01;
     // A[21] = d3 * X_01;
     // A[21] += d3 * X_01;
     // A[21] += d3 * X_01;
     A[21] = 3.0 * d3_X01;
-    T d3_X02 = d3 * X_02;
+    m2m_vector d3_X02 = d3 * X_02;
     // A[22] = d3 * X_02;
     // A[22] += d3 * X_02;
     // A[22] += d3 * X_02;
     A[22] = 3.0 * d3_X02;
     A[23] = d2;
-    T d3_X11 = d3 * X_11;
+    m2m_vector d3_X11 = d3 * X_11;
     // A[23] += d3 * X_11;
     A[23] += d3_X11;
     A[23] += d3 * X_00;
-    T d3_X12 = d3 * X_12;
+    m2m_vector d3_X12 = d3 * X_12;
     // A[24] = d3 * X_12;
     A[24] = d3_X12;
     A[25] = d2;
-    T d3_X22 = d3 * X_22;
+    m2m_vector d3_X22 = d3 * X_22;
     // A[25] += d3 * X_22;
     A[25] += d3_X22;
     // A[25] += d3 * X_00;
@@ -171,6 +171,8 @@ inline void taylor<5, m2m_vector>::set_basis(const std::array<m2m_vector, NDIM>&
     // A[34] += d3 * X_22;
     // A[34] += d3 * X_22;
     A[34] += 5.0 * d3_X22;
-
-    // PROF_END;
+    return A;
 }
+
+} // namespace fmm
+} // namespace octotiger

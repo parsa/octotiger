@@ -156,12 +156,12 @@ namespace fmm {
             // D is taylor expansion value for a given X expansion of the gravitational
             // potential
             // (multipole expansion)
-            taylor<5, m2m_vector> D;    // TODO: replace by m2m_vector for vectorization
 
             // calculates all D-values, calculate all coefficients of 1/r (not the
             // potential),
             // formula (6)-(9) and (19)
-            D.set_basis(dX);
+            // D.set_basis(dX);
+            taylor<5, m2m_vector> D = set_basis(dX);
 
             // output variable references
             // TODO: use these again after debugging individual components!
