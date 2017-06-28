@@ -2,15 +2,15 @@
 
 #include "grid_flattened_indices.hpp"
 #include "helper.hpp"
-#include "struct_of_array_taylor.hpp"
 #include "m2m_taylor_set_basis.hpp"
+#include "struct_of_array_taylor.hpp"
 
 extern taylor<4, real> factor;
 
 namespace octotiger {
 namespace fmm {
 
-    //TODO:
+    // TODO:
     // - check codegen and fix in Vc
     // - check for amount of temporaries
     // - try to replace expensive operations like sqrt
@@ -46,8 +46,7 @@ namespace fmm {
             const multiindex<> in_boundary_end(
                 (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
                 (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
-                ((interaction_partner_index.z + m2m_int_vector::Size) /
-                    INNER_CELLS_PER_DIRECTION) -
+                ((interaction_partner_index.z + m2m_int_vector::Size) / INNER_CELLS_PER_DIRECTION) -
                     1);
 #else
             const multiindex<> in_boundary_end(

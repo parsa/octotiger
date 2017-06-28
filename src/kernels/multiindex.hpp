@@ -57,9 +57,9 @@ namespace fmm {
             // z = (z + INX) / 2 - INX / 2;
             T patch_size = static_cast<typename T::value_type>(INX);
             T subtract = static_cast<typename T::value_type>(INX / 2);
-            x = (x + patch_size) / 2 - subtract;
-            y = (y + patch_size) / 2 - subtract;
-            z = (z + patch_size) / 2 - subtract;
+            x = ((x + patch_size) >> 1) - subtract;
+            y = ((y + patch_size) >> 1) - subtract;
+            z = ((z + patch_size) >> 1) - subtract;
         }
     };
 
