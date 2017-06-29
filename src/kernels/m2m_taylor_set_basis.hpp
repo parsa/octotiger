@@ -6,7 +6,7 @@ namespace octotiger {
 namespace fmm {
 
 // overload for kernel-specific simd type
-taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>& X) {
+static inline taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>& X) {
   
     constexpr integer N = 5;
     taylor<5, m2m_vector> A;

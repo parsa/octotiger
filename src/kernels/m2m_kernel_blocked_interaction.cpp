@@ -101,13 +101,14 @@ namespace fmm {
             m2m_int_vector theta_c_rec_squared_int = detail::distance_squared_reciprocal(
                 cell_index_coarse, interaction_partner_index_coarse);
 
-            // m2m_vector theta_c_rec_squared =
-            //     Vc::static_datapar_cast<double>(theta_c_rec_squared_int);
+            m2m_vector theta_c_rec_squared =
+                // Vc::static_datapar_cast<double>(theta_c_rec_squared_int);
+                Vc::static_datapar_cast_double_to_int(theta_c_rec_squared_int);
             // TODO: use static_datapar_cast after issue is fixed
-            m2m_vector theta_c_rec_squared;
-            for (size_t i = 0; i < m2m_vector::size(); i++) {
-                theta_c_rec_squared[i] = static_cast<double>(theta_c_rec_squared_int[i]);
-            }
+            // m2m_vector theta_c_rec_squared;
+            // for (size_t i = 0; i < m2m_vector::size(); i++) {
+            //     theta_c_rec_squared[i] = static_cast<double>(theta_c_rec_squared_int[i]);
+            // }
 
             m2m_vector::mask_type mask = theta_rec_squared > theta_c_rec_squared;
 
