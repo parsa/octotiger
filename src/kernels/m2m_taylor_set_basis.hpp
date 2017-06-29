@@ -6,7 +6,7 @@ namespace octotiger {
 namespace fmm {
 
 // overload for kernel-specific simd type
-static inline taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>& X) {
+taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>& X) {
   
     constexpr integer N = 5;
     taylor<5, m2m_vector> A;
@@ -14,13 +14,17 @@ static inline taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>
     // A is D in the paper in formula (6)
     // taylor<N, T>& A = *this;
 
-    const m2m_vector r2 = sqr(X[0]) + sqr(X[1]) + sqr(X[2]);
-    m2m_vector r2inv = 0.0;
-    for (volatile integer i = 0; i != simd_len; ++i) {
-        if (r2[i] > 0.0) {
-            r2inv[i] = ONE / std::max(r2[i], 1.0e-20);
-        }
-    }
+    
+    const m2m_vector r2 = X[0] * X[0] + X[1] * X[1] + X[2] * X[2];
+    // m2m_vector::mask_type mask = r2 > 0.0;
+    // m2m_vector r2inv = 0.0;
+    // // initialized to 1 to fix div by zero after masking
+    // m2m_vector tmp_max = 1.0;
+    // Vc::where(mask, tmp_max) = Vc::max(r2, m2m_vector(1.0e-20));
+    // m2m_vector tmp_one = 1.0;
+    // Vc::where(mask, r2inv) = ONE / tmp_max;
+    m2m_vector tmp_max = Vc::max(r2, m2m_vector(1.0e-20));
+    m2m_vector r2inv = ONE / tmp_max;
 
     // parts of formula (6)
     const m2m_vector d0 = -sqrt(r2inv);
@@ -98,7 +102,7 @@ static inline taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>
     // A[19] += d2 * X[2];
     A[19] += 3.0 * d2_X2;
 
-    A[20] = sqr(X[0]) * d3 + 2.0 * d2;
+    A[20] = X[0] * X[0] * d3 + 2.0 * d2;
     m2m_vector d3_X00 = d3 * X_00;
     // A[20] += d3 * X_00;
     // A[20] += d3 * X_00;
@@ -141,7 +145,7 @@ static inline taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>
     // A[29] += d3 * X_02;
     // A[29] += d3 * X_02;
     A[29] = 3.0 * d3_X02;
-    A[30] = sqr(X[1]) * d3 + 2.0 * d2;
+    A[30] = X[1] * X[1] * d3 + 2.0 * d2;
     // A[30] += d3 * X_11;
     // A[30] += d3 * X_11;
     A[30] += d2;
@@ -163,7 +167,7 @@ static inline taylor<5, m2m_vector> set_basis(const std::array<m2m_vector, NDIM>
     // A[33] += d3 * X_12;
     // A[33] += d3 * X_12;
     A[33] = 3.0 * d3_X12;
-    A[34] = sqr(X[2]) * d3 + 2.0 * d2;
+    A[34] = X[2] * X[2] * d3 + 2.0 * d2;
     // A[34] += d3 * X_22;
     // A[34] += d3 * X_22;
     A[34] += d2;
