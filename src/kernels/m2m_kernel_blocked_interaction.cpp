@@ -124,10 +124,18 @@ namespace fmm {
                 dX[d] = X.component(d) - Y.component(d);
             }
 
-            struct_of_array_taylor<expansion, real, 20> m_partner =
+            struct_of_array_taylor<expansion, real, 20> m_partner_view =
                 local_expansions_SoA.get_view(interaction_partner_flat_index);
 
-            m2m_vector grad_0 = m_partner.grad_0();
+            expansion_v m_partner;
+            for (size_t i = 0; i < m_partner.size(); i++) {
+                m_partner[i] = m_partner_view.component(i);
+            }
+
+            // m2m_vector grad_0 = m_partner.grad_0();
+            // m2m_vector grad_10 = m_partner.grad_1(0);
+            // m2m_vector grad_11 = m_partner.grad_1(1);
+            // m2m_vector grad_12 = m_partner.grad_1(2);
 
             // TODO: replace by reference to get rid of temporary?
             taylor<4, m2m_vector> n0;
@@ -143,12 +151,12 @@ namespace fmm {
                 struct_of_array_taylor<expansion, real, 20> m_cell =
                     local_expansions_SoA.get_view(cell_flat_index);
 
-                m2m_vector const tmp1 = grad_0 / m_cell.grad_0();
+                m2m_vector const tmp1 = m_partner[0] / m_cell.grad_0();
 
                 // calculating the coefficients for formula (M are the octopole moments)
                 // the coefficients are calculated in (17) and (18)
                 for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                    n0[j] = m_partner.component(j) - m_cell.component(j) * tmp1;
+                    n0[j] = m_partner[j] - m_cell.component(j) * tmp1;
                 }
             }
 
@@ -178,30 +186,66 @@ namespace fmm {
             }
 
             // the following loops calculate formula (10), potential from B->A
+            m2m_vector p_0 = m_partner[0] * D[0];
             // current_potential[0] += m_partner.component(0) * D[0];
-            m2m_vector tmp_c0 =
-                current_potential_result.component(0) + m_partner.component(0) * D[0];
+            // m2m_vector tmp_c0 =
+            //     current_potential_result.component(0) + m_partner.component(0) * D[0];
 
             if (type != RHO) {
-                for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
-                    // current_potential[0] -= m_partner.component(i) * D[i];
-                    tmp_c0 -= m_partner.component(i) * D[i];
-                }
-            }
-            for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
-                const auto tmp = D[i] * (factor[i] * HALF);
-                // current_potential[0] += m_partner.component(i) * tmp;
-                tmp_c0 += m_partner.component(i) * tmp;
-            }
-            for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
-                const auto tmp = D[i] * (factor[i] * SIXTH);
-                // current_potential[0] -= m_partner.component(i) * tmp;
-                tmp_c0 -= m_partner.component(i) * tmp;
+                // for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
+                //     current_potential[0] -= m_partner.component(i) * D[i];
+                //     // tmp_c0 -= m_partner.component(i) * D[i];
+                // }
+                // current_potential[0] -= m_partner.component(1) * D[1];
+                // current_potential[0] -= m_partner.component(2) * D[2];
+                // current_potential[0] -= m_partner.component(3) * D[3];
+
+                p_0 -= m_partner[1] * D[1];
+                p_0 -= m_partner[2] * D[2];
+                p_0 -= m_partner[3] * D[3];
             }
 
-            Vc::where(mask, tmp_c0)
-                .memstore(
-                    current_potential_result.component_pointer(0), Vc::flags::element_aligned);
+            // for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
+            //     const auto tmp = D[i] * (factor[i] * HALF);
+            //     current_potential[0] += m_partner.component(i) * tmp;
+            //     // tmp_c0 += m_partner.component(i) * tmp;
+            // }
+            // current_potential[0] += m_partner.component(4) * (D[4] * (factor[4] * HALF));
+            // current_potential[0] += m_partner.component(5) * (D[5] * (factor[5] * HALF));
+            // current_potential[0] += m_partner.component(6) * (D[6] * (factor[6] * HALF));
+            // current_potential[0] += m_partner.component(7) * (D[7] * (factor[7] * HALF));
+            // current_potential[0] += m_partner.component(8) * (D[8] * (factor[8] * HALF));
+            // current_potential[0] += m_partner.component(9) * (D[9] * (factor[9] * HALF));
+
+            p_0 += m_partner[4] * (D[4] * (factor[4] * HALF));
+            p_0 += m_partner[5] * (D[5] * (factor[5] * HALF));
+            p_0 += m_partner[6] * (D[6] * (factor[6] * HALF));
+            p_0 += m_partner[7] * (D[7] * (factor[7] * HALF));
+            p_0 += m_partner[8] * (D[8] * (factor[8] * HALF));
+            p_0 += m_partner[9] * (D[9] * (factor[9] * HALF));
+
+            // for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+            //     const auto tmp = D[i] * (factor[i] * SIXTH);
+            //     current_potential[0] -= m_partner.component(i) * tmp;
+            //     // tmp_c0 -= m_partner.component(i) * tmp;
+            // }
+
+            p_0 -= m_partner[10] * (D[10] * (factor[10] * SIXTH));
+            p_0 -= m_partner[11] * (D[11] * (factor[11] * SIXTH));
+            p_0 -= m_partner[12] * (D[12] * (factor[12] * SIXTH));
+            p_0 -= m_partner[13] * (D[13] * (factor[13] * SIXTH));
+            p_0 -= m_partner[14] * (D[14] * (factor[14] * SIXTH));
+            p_0 -= m_partner[15] * (D[15] * (factor[15] * SIXTH));
+            p_0 -= m_partner[16] * (D[16] * (factor[16] * SIXTH));
+            p_0 -= m_partner[17] * (D[17] * (factor[17] * SIXTH));
+            p_0 -= m_partner[18] * (D[18] * (factor[18] * SIXTH));
+            p_0 -= m_partner[19] * (D[19] * (factor[19] * SIXTH));
+
+            current_potential[0] = p_0;
+
+            // Vc::where(mask, tmp_c0)
+            //     .memstore(
+            //         current_potential_result.component_pointer(0), Vc::flags::element_aligned);
 
             if (type != RHO) {
                 // for (integer a = 0; a < NDIM; ++a) {
@@ -209,18 +253,18 @@ namespace fmm {
                 //     for (integer i = 0; i < 3; ++i) {
                 //         current_potential(a) -= m_partner.grad_1(a) * D[ab_idx_map[i]];
                 //     }
-                // }
-                current_potential(0) -= m_partner.grad_1(0) * D[4];
-                current_potential(0) -= m_partner.grad_1(0) * D[5];
-                current_potential(0) -= m_partner.grad_1(0) * D[6];
+                // } //m_partner.grad_1(0);
+                current_potential(0) -= m_partner[1] * D[4];
+                current_potential(0) -= m_partner[1] * D[5];
+                current_potential(0) -= m_partner[1] * D[6];
 
-                current_potential(1) -= m_partner.grad_1(1) * D[5];
-                current_potential(1) -= m_partner.grad_1(1) * D[7];
-                current_potential(1) -= m_partner.grad_1(1) * D[8];
+                current_potential(1) -= m_partner[2] * D[5];
+                current_potential(1) -= m_partner[2] * D[7];
+                current_potential(1) -= m_partner[2] * D[8];
 
-                current_potential(2) -= m_partner.grad_1(2) * D[6];
-                current_potential(2) -= m_partner.grad_1(2) * D[8];
-                current_potential(2) -= m_partner.grad_1(2) * D[9];
+                current_potential(2) -= m_partner[3] * D[6];
+                current_potential(2) -= m_partner[3] * D[8];
+                current_potential(2) -= m_partner[3] * D[9];
             }
 
             // for (integer a = 0; a < NDIM; ++a) {
@@ -233,42 +277,42 @@ namespace fmm {
             //     }
             // }
 
-            current_potential(0) += grad_0 * D(0);
-            current_potential(1) += grad_0 * D(1);
-            current_potential(2) += grad_0 * D(2);
+            current_potential(0) += m_partner[0] * D(0);
+            current_potential(1) += m_partner[0] * D(1);
+            current_potential(2) += m_partner[0] * D(2);
 
-            current_potential(0) += m_partner.component(4) * (D[10] * (factor[4] * HALF));
-            current_potential(0) += m_partner.component(5) * (D[11] * (factor[5] * HALF));
-            current_potential(0) += m_partner.component(6) * (D[12] * (factor[6] * HALF));
-            current_potential(0) += m_partner.component(7) * (D[13] * (factor[7] * HALF));
-            current_potential(0) += m_partner.component(8) * (D[14] * (factor[8] * HALF));
-            current_potential(0) += m_partner.component(9) * (D[15] * (factor[9] * HALF));
+            current_potential(0) += m_partner[4] * (D[10] * (factor[4] * HALF));
+            current_potential(0) += m_partner[5] * (D[11] * (factor[5] * HALF));
+            current_potential(0) += m_partner[6] * (D[12] * (factor[6] * HALF));
+            current_potential(0) += m_partner[7] * (D[13] * (factor[7] * HALF));
+            current_potential(0) += m_partner[8] * (D[14] * (factor[8] * HALF));
+            current_potential(0) += m_partner[9] * (D[15] * (factor[9] * HALF));
 
-            current_potential(1) += m_partner.component(4) * (D[11] * (factor[4] * HALF));
-            current_potential(1) += m_partner.component(5) * (D[13] * (factor[5] * HALF));
-            current_potential(1) += m_partner.component(6) * (D[14] * (factor[6] * HALF));
-            current_potential(1) += m_partner.component(7) * (D[16] * (factor[7] * HALF));
-            current_potential(1) += m_partner.component(8) * (D[17] * (factor[8] * HALF));
-            current_potential(1) += m_partner.component(9) * (D[18] * (factor[9] * HALF));
+            current_potential(1) += m_partner[4] * (D[11] * (factor[4] * HALF));
+            current_potential(1) += m_partner[5] * (D[13] * (factor[5] * HALF));
+            current_potential(1) += m_partner[6] * (D[14] * (factor[6] * HALF));
+            current_potential(1) += m_partner[7] * (D[16] * (factor[7] * HALF));
+            current_potential(1) += m_partner[8] * (D[17] * (factor[8] * HALF));
+            current_potential(1) += m_partner[9] * (D[18] * (factor[9] * HALF));
 
-            current_potential(2) += m_partner.component(4) * (D[12] * (factor[4] * HALF));
-            current_potential(2) += m_partner.component(5) * (D[14] * (factor[5] * HALF));
-            current_potential(2) += m_partner.component(6) * (D[15] * (factor[6] * HALF));
-            current_potential(2) += m_partner.component(7) * (D[17] * (factor[7] * HALF));
-            current_potential(2) += m_partner.component(8) * (D[18] * (factor[8] * HALF));
-            current_potential(2) += m_partner.component(9) * (D[19] * (factor[9] * HALF));
+            current_potential(2) += m_partner[4] * (D[12] * (factor[4] * HALF));
+            current_potential(2) += m_partner[5] * (D[14] * (factor[5] * HALF));
+            current_potential(2) += m_partner[6] * (D[15] * (factor[6] * HALF));
+            current_potential(2) += m_partner[7] * (D[17] * (factor[7] * HALF));
+            current_potential(2) += m_partner[8] * (D[18] * (factor[8] * HALF));
+            current_potential(2) += m_partner[9] * (D[19] * (factor[9] * HALF));
 
             // integer const ab_idx = {4,  5,  6,  7,  8,  9,};
             // for (integer i = 0; i != 6; ++i) {
             //     current_potential[ab_idx] += grad_0 * D[ab_idx];
             // }
 
-            current_potential[4] += grad_0 * D[4];
-            current_potential[5] += grad_0 * D[5];
-            current_potential[6] += grad_0 * D[6];
-            current_potential[7] += grad_0 * D[7];
-            current_potential[8] += grad_0 * D[8];
-            current_potential[9] += grad_0 * D[9];
+            current_potential[4] += m_partner[0] * D[4];
+            current_potential[5] += m_partner[0] * D[5];
+            current_potential[6] += m_partner[0] * D[6];
+            current_potential[7] += m_partner[0] * D[7];
+            current_potential[8] += m_partner[0] * D[8];
+            current_potential[9] += m_partner[0] * D[9];
 
             // int const* abc_idx_map6 = to_abc_idx_map6[i];
             // integer const ab_idx = {4, 5, 6, 7, 8, 9};
@@ -278,44 +322,44 @@ namespace fmm {
             //     }
             // }
 
-            current_potential[4] -= m_partner.grad_1(0) * D[10];
-            current_potential[4] -= m_partner.grad_1(1) * D[11];
-            current_potential[4] -= m_partner.grad_1(2) * D[12];
+            current_potential[4] -= m_partner[1] * D[10];
+            current_potential[4] -= m_partner[2] * D[11];
+            current_potential[4] -= m_partner[3] * D[12];
 
-            current_potential[5] -= m_partner.grad_1(0) * D[11];
-            current_potential[5] -= m_partner.grad_1(1) * D[13];
-            current_potential[5] -= m_partner.grad_1(2) * D[14];
+            current_potential[5] -= m_partner[1] * D[11];
+            current_potential[5] -= m_partner[2] * D[13];
+            current_potential[5] -= m_partner[3] * D[14];
 
-            current_potential[6] -= m_partner.grad_1(0) * D[12];
-            current_potential[6] -= m_partner.grad_1(1) * D[14];
-            current_potential[6] -= m_partner.grad_1(2) * D[15];
+            current_potential[6] -= m_partner[1] * D[12];
+            current_potential[6] -= m_partner[2] * D[14];
+            current_potential[6] -= m_partner[3] * D[15];
 
-            current_potential[7] -= m_partner.grad_1(0) * D[13];
-            current_potential[7] -= m_partner.grad_1(1) * D[16];
-            current_potential[7] -= m_partner.grad_1(2) * D[17];
+            current_potential[7] -= m_partner[1] * D[13];
+            current_potential[7] -= m_partner[2] * D[16];
+            current_potential[7] -= m_partner[3] * D[17];
 
-            current_potential[8] -= m_partner.grad_1(0) * D[14];
-            current_potential[8] -= m_partner.grad_1(1) * D[17];
-            current_potential[8] -= m_partner.grad_1(2) * D[18];
+            current_potential[8] -= m_partner[1] * D[14];
+            current_potential[8] -= m_partner[2] * D[17];
+            current_potential[8] -= m_partner[3] * D[18];
 
-            current_potential[9] -= m_partner.grad_1(0) * D[15];
-            current_potential[9] -= m_partner.grad_1(1) * D[18];
-            current_potential[9] -= m_partner.grad_1(2) * D[19];
+            current_potential[9] -= m_partner[1] * D[15];
+            current_potential[9] -= m_partner[2] * D[18];
+            current_potential[9] -= m_partner[3] * D[19];
 
             // for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
             //     current_potential[i] += grad_0 * D[i];
             // }
 
-            current_potential[10] += grad_0 * D[10];
-            current_potential[11] += grad_0 * D[11];
-            current_potential[12] += grad_0 * D[12];
-            current_potential[13] += grad_0 * D[13];
-            current_potential[14] += grad_0 * D[14];
-            current_potential[15] += grad_0 * D[15];
-            current_potential[16] += grad_0 * D[16];
-            current_potential[17] += grad_0 * D[17];
-            current_potential[18] += grad_0 * D[18];
-            current_potential[19] += grad_0 * D[19];
+            current_potential[10] += m_partner[0] * D[10];
+            current_potential[11] += m_partner[0] * D[11];
+            current_potential[12] += m_partner[0] * D[12];
+            current_potential[13] += m_partner[0] * D[13];
+            current_potential[14] += m_partner[0] * D[14];
+            current_potential[15] += m_partner[0] * D[15];
+            current_potential[16] += m_partner[0] * D[16];
+            current_potential[17] += m_partner[0] * D[17];
+            current_potential[18] += m_partner[0] * D[18];
+            current_potential[19] += m_partner[0] * D[19];
 
             // TODO: remove this when switching back to non-copy (reference-based)
             // approach
