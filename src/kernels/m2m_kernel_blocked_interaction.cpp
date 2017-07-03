@@ -32,34 +32,55 @@ namespace fmm {
             const multiindex<> interaction_partner_index(cell_index.x + stencil_element.x,
                 cell_index.y + stencil_element.y, cell_index.z + stencil_element.z);
 
-            // std::cout << " interaction_partner_index x: " << interaction_partner_index.x
-            //           << " y: " << interaction_partner_index.y
-            //           << " z: " << interaction_partner_index.z << std::endl;
+            // // check whether all vector elements are in empty border
+            // const multiindex<> in_boundary_start(
+            //     (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
+            //     (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
+            //     (interaction_partner_index.z / INNER_CELLS_PER_DIRECTION) - 1);
 
-            // check whether all vector elements are in empty border
-            const multiindex<> in_boundary_start(
-                (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
-                (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
-                (interaction_partner_index.z / INNER_CELLS_PER_DIRECTION) - 1);
+            // const multiindex<> in_boundary_end(
+            //     (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
+            //     (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
+            //     ((interaction_partner_index.z + m2m_int_vector::size()) /
+            //         INNER_CELLS_PER_DIRECTION) -
+            //         1);
 
-            const multiindex<> in_boundary_end(
-                (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
-                (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
-                ((interaction_partner_index.z + m2m_int_vector::size()) /
-                    INNER_CELLS_PER_DIRECTION) -
-                    1);
-
-            geo::direction dir_start;
-            dir_start.set(in_boundary_start.x, in_boundary_start.y, in_boundary_start.z);
-            geo::direction dir_end;
-            dir_end.set(in_boundary_end.x, in_boundary_end.y, in_boundary_end.z);
-            if (neighbor_empty[dir_start.flat_index_with_center()] &&
-                neighbor_empty[dir_end.flat_index_with_center()]) {
-                continue;
-            }
+            // geo::direction dir_start;
+            // dir_start.set(in_boundary_start.x, in_boundary_start.y, in_boundary_start.z);
+            // geo::direction dir_end;
+            // dir_end.set(in_boundary_end.x, in_boundary_end.y, in_boundary_end.z);
 
             const int64_t interaction_partner_flat_index =
                 to_flat_index_padded(interaction_partner_index);
+
+            // if (neighbor_empty[dir_start.flat_index_with_center()] &&
+            //     neighbor_empty[dir_end.flat_index_with_center()]) {
+            //     if (!vector_is_empty[interaction_partner_flat_index]) {
+            //         std::cout << "not true, but should be" << std::endl;
+            //         // std::cout << "interaction_partner_index:" << interaction_partner_index
+            //         //           << std::endl;
+            //         // std::cout << "interaction_partner_flat_index: "
+            //         //           << interaction_partner_flat_index << std::endl;
+            //         // std::cout << "dir_start.flat_index_with_center(): "
+            //         //           << dir_start.flat_index_with_center() << std::endl;
+            //         // std::cout << "dir_end.flat_index_with_center(): "
+            //         //           << dir_end.flat_index_with_center() << std::endl;
+	    // 	    // std::cout << "in_boundary_end: " << in_boundary_end << std::endl;
+            //     }
+            //     continue;
+            // } else {
+            //     if (vector_is_empty[interaction_partner_flat_index]) {
+            //         std::cout << "expected false, got true" << std::endl;
+            //         // std::cout << "dir_start.flat_index_with_center(): "
+            //         //           << dir_start.flat_index_with_center() << std::endl;
+            //         // std::cout << "dir_end.flat_index_with_center(): "
+            //         //           << dir_end.flat_index_with_center() << std::endl;
+            //     }
+            // }
+
+            if (vector_is_empty[interaction_partner_flat_index]) {
+            	continue;
+            }
 
             // implicitly broadcasts to vector
             multiindex<m2m_int_vector> interaction_partner_index_coarse(interaction_partner_index);

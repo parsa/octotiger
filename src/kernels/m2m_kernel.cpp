@@ -34,9 +34,11 @@ namespace fmm {
       , theta_rec_squared(sqr(1.0 / opts.theta))
     // , theta_rec_squared_scalar(sqr(1.0 / opts.theta))
     {
+
         for (size_t i = 0; i < m2m_int_vector::size(); i++) {
             offset_vector[i] = i;
         }
+        vectors_check_empty();
     }
 
     void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
@@ -90,6 +92,53 @@ namespace fmm {
     //     // std::cout << "potential_expansions[0]: " << potential_expansions[0];
     //     // std::cout << std::endl;
     // }
+
+    void m2m_kernel::vectors_check_empty() {
+        vector_is_empty = std::vector<bool>(PADDED_STRIDE * PADDED_STRIDE * PADDED_STRIDE);
+        for (size_t i0 = 0; i0 < PADDED_STRIDE; i0 += 1) {
+            for (size_t i1 = 0; i1 < PADDED_STRIDE; i1 += 1) {
+                for (size_t i2 = 0; i2 < PADDED_STRIDE; i2 += 1) {
+                    const multiindex<> cell_index(i0, i1, i2);
+                    const int64_t cell_flat_index = to_flat_index_padded(cell_index);
+                    // std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
+
+                    const multiindex<> in_boundary_start(
+                        (cell_index.x / INNER_CELLS_PER_DIRECTION) - 1,
+                        (cell_index.y / INNER_CELLS_PER_DIRECTION) - 1,
+                        (cell_index.z / INNER_CELLS_PER_DIRECTION) - 1);
+
+                    const multiindex<> in_boundary_end(in_boundary_start.x, in_boundary_start.y,
+                        ((cell_index.z + m2m_int_vector::size()) / INNER_CELLS_PER_DIRECTION) - 1);
+
+                    geo::direction dir_start;
+                    dir_start.set(in_boundary_start.x, in_boundary_start.y, in_boundary_start.z);
+                    geo::direction dir_end;
+                    dir_end.set(in_boundary_end.x, in_boundary_end.y, in_boundary_end.z);
+
+                    if (neighbor_empty[dir_start.flat_index_with_center()] &&
+                        neighbor_empty[dir_end.flat_index_with_center()]) {
+                        vector_is_empty[cell_flat_index] = true;
+                        // std::cout << "prepare true cell_index:" << cell_index << std::endl;
+                        // std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
+                        // std::cout << "dir_start.flat_index_with_center(): "
+                        //           << dir_start.flat_index_with_center() << std::endl;
+                        // std::cout << "dir_end.flat_index_with_center(): "
+                        //           << dir_end.flat_index_with_center() << std::endl;
+			// std::cout << "in_boundary_end: " << in_boundary_end << std::endl;
+
+                    } else {
+                        vector_is_empty[cell_flat_index] = false;
+                        // std::cout << "prepare false cell_index:" << cell_index << std::endl;
+                        // std::cout << "cell_flat_index: " << cell_flat_index << std::endl;
+                        // std::cout << "dir_start.flat_index_with_center(): "
+                        //           << dir_start.flat_index_with_center() << std::endl;
+                        // std::cout << "dir_end.flat_index_with_center(): "
+                        //           << dir_end.flat_index_with_center() << std::endl;
+                    }
+                }
+            }
+        }
+    }
 
 }    // namespace fmm
 }    // namespace octotiger
