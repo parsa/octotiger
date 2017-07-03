@@ -19,29 +19,17 @@ namespace fmm {
 
         // accesses the coefficient of the first gradient of gravitational potential
         inline m2m_vector grad_0() const {
-#if Vc_IS_VERSION_2 == 0
-            return m2m_vector(this->component_pointer(0));
-#else
             return m2m_vector(this->component_pointer(0), Vc::flags::element_aligned);
-#endif
         }
 
         // accesses the coefficients of the second gradient
         inline m2m_vector grad_1(size_t grad1_index) const {
-// skip grad 0 component
-#if Vc_IS_VERSION_2 == 0
-            return m2m_vector(this->component_pointer(grad1_index + 1));
-#else
+            // skip grad 0 component
             return m2m_vector(this->component_pointer(grad1_index + 1), Vc::flags::element_aligned);
-#endif
         }
 
         inline m2m_vector component(size_t component_index) const {
-#if Vc_IS_VERSION_2 == 0
-            return m2m_vector(this->component_pointer(component_index));
-#else
             return m2m_vector(this->component_pointer(component_index), Vc::flags::element_aligned);
-#endif
         }
     };
 

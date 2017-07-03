@@ -127,6 +127,8 @@ namespace fmm {
             struct_of_array_taylor<expansion, real, 20> m_partner =
                 local_expansions_SoA.get_view(interaction_partner_flat_index);
 
+            m2m_vector grad_0 = m_partner.grad_0();
+
             // TODO: replace by reference to get rid of temporary?
             taylor<4, m2m_vector> n0;
 
@@ -141,7 +143,7 @@ namespace fmm {
                 struct_of_array_taylor<expansion, real, 20> m_cell =
                     local_expansions_SoA.get_view(cell_flat_index);
 
-                m2m_vector const tmp1 = m_partner.grad_0() / m_cell.grad_0();
+                m2m_vector const tmp1 = grad_0 / m_cell.grad_0();
 
                 // calculating the coefficients for formula (M are the octopole moments)
                 // the coefficients are calculated in (17) and (18)
@@ -223,7 +225,7 @@ namespace fmm {
 
             // for (integer a = 0; a < NDIM; ++a) {
             //     int const* abc_idx_map = to_abc_idx_map3[a];
-            //     current_potential(a) += m_partner.grad_0() * D(a);
+            //     current_potential(a) += grad_0 * D(a);
             //     for (integer i = 0; i != 6; ++i) {
             //         const integer cb_idx = cb_idx_map[i];
             //         const auto tmp1 = D[abc_idx_map[i]] * (factor[cb_idx] * HALF);
@@ -231,9 +233,9 @@ namespace fmm {
             //     }
             // }
 
-            current_potential(0) += m_partner.grad_0() * D(0);
-            current_potential(1) += m_partner.grad_0() * D(1);
-            current_potential(2) += m_partner.grad_0() * D(2);
+            current_potential(0) += grad_0 * D(0);
+            current_potential(1) += grad_0 * D(1);
+            current_potential(2) += grad_0 * D(2);
 
             current_potential(0) += m_partner.component(4) * (D[10] * (factor[4] * HALF));
             current_potential(0) += m_partner.component(5) * (D[11] * (factor[5] * HALF));
@@ -258,15 +260,15 @@ namespace fmm {
 
             // integer const ab_idx = {4,  5,  6,  7,  8,  9,};
             // for (integer i = 0; i != 6; ++i) {
-            //     current_potential[ab_idx] += m_partner.grad_0() * D[ab_idx];
+            //     current_potential[ab_idx] += grad_0 * D[ab_idx];
             // }
 
-            current_potential[4] += m_partner.grad_0() * D[4];
-            current_potential[5] += m_partner.grad_0() * D[5];
-            current_potential[6] += m_partner.grad_0() * D[6];
-            current_potential[7] += m_partner.grad_0() * D[7];
-            current_potential[8] += m_partner.grad_0() * D[8];
-            current_potential[9] += m_partner.grad_0() * D[9];
+            current_potential[4] += grad_0 * D[4];
+            current_potential[5] += grad_0 * D[5];
+            current_potential[6] += grad_0 * D[6];
+            current_potential[7] += grad_0 * D[7];
+            current_potential[8] += grad_0 * D[8];
+            current_potential[9] += grad_0 * D[9];
 
             // int const* abc_idx_map6 = to_abc_idx_map6[i];
             // integer const ab_idx = {4, 5, 6, 7, 8, 9};
@@ -301,19 +303,19 @@ namespace fmm {
             current_potential[9] -= m_partner.grad_1(2) * D[19];
 
             // for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
-            //     current_potential[i] += m_partner.grad_0() * D[i];
+            //     current_potential[i] += grad_0 * D[i];
             // }
 
-            current_potential[10] += m_partner.grad_0() * D[10];
-            current_potential[11] += m_partner.grad_0() * D[11];
-            current_potential[12] += m_partner.grad_0() * D[12];
-            current_potential[13] += m_partner.grad_0() * D[13];
-            current_potential[14] += m_partner.grad_0() * D[14];
-            current_potential[15] += m_partner.grad_0() * D[15];
-            current_potential[16] += m_partner.grad_0() * D[16];
-            current_potential[17] += m_partner.grad_0() * D[17];
-            current_potential[18] += m_partner.grad_0() * D[18];
-            current_potential[19] += m_partner.grad_0() * D[19];
+            current_potential[10] += grad_0 * D[10];
+            current_potential[11] += grad_0 * D[11];
+            current_potential[12] += grad_0 * D[12];
+            current_potential[13] += grad_0 * D[13];
+            current_potential[14] += grad_0 * D[14];
+            current_potential[15] += grad_0 * D[15];
+            current_potential[16] += grad_0 * D[16];
+            current_potential[17] += grad_0 * D[17];
+            current_potential[18] += grad_0 * D[18];
+            current_potential[19] += grad_0 * D[19];
 
             // TODO: remove this when switching back to non-copy (reference-based)
             // approach
