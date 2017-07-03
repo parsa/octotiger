@@ -169,7 +169,8 @@ namespace fmm {
             // potential),
             // formula (6)-(9) and (19)
             // D.set_basis(dX);
-            taylor<5, m2m_vector> D = set_basis(dX);
+            taylor<5, m2m_vector> D;
+            octotiger::fmm::set_basis(D, dX);
 
             // output variable references
             // TODO: use these again after debugging individual components!
