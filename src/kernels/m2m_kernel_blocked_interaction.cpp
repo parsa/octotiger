@@ -120,17 +120,40 @@ namespace fmm {
             // distance between cells in all dimensions
             // TODO: replace by m2m_vector for vectorization or get rid of temporary
             std::array<m2m_vector, NDIM> dX;
-            for (integer d = 0; d < NDIM; ++d) {
-                dX[d] = X.component(d) - Y.component(d);
-            }
+            // for (integer d = 0; d < NDIM; ++d) {
+            //     dX[d] = X.component(d) - Y.component(d);
+            // }
+            dX[0] = X.component(0) - Y.component(0);
+            dX[1] = X.component(1) - Y.component(1);
+            dX[2] = X.component(2) - Y.component(2);
 
             struct_of_array_taylor<expansion, real, 20> m_partner_view =
                 local_expansions_SoA.get_view(interaction_partner_flat_index);
 
             expansion_v m_partner;
-            for (size_t i = 0; i < m_partner.size(); i++) {
-                m_partner[i] = m_partner_view.component(i);
-            }
+            // for (size_t i = 0; i < m_partner.size(); i++) {
+            //     m_partner[i] = m_partner_view.component(i);
+            // }
+            m_partner[0] = m_partner_view.component(0);
+            m_partner[1] = m_partner_view.component(1);
+            m_partner[2] = m_partner_view.component(2);
+            m_partner[3] = m_partner_view.component(3);
+            m_partner[4] = m_partner_view.component(4);
+            m_partner[5] = m_partner_view.component(5);
+            m_partner[6] = m_partner_view.component(6);
+            m_partner[7] = m_partner_view.component(7);
+            m_partner[8] = m_partner_view.component(8);
+            m_partner[9] = m_partner_view.component(9);
+            m_partner[10] = m_partner_view.component(10);
+            m_partner[11] = m_partner_view.component(11);
+            m_partner[12] = m_partner_view.component(12);
+            m_partner[13] = m_partner_view.component(13);
+            m_partner[14] = m_partner_view.component(14);
+            m_partner[15] = m_partner_view.component(15);
+            m_partner[16] = m_partner_view.component(16);
+            m_partner[17] = m_partner_view.component(17);
+            m_partner[18] = m_partner_view.component(18);
+            m_partner[19] = m_partner_view.component(19);
 
             // m2m_vector grad_0 = m_partner.grad_0();
             // m2m_vector grad_10 = m_partner.grad_1(0);
