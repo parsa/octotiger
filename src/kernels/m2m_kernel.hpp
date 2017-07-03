@@ -32,6 +32,9 @@ namespace fmm {
 
         std::vector<bool>& neighbor_empty;
 
+	// so skip non-existing interaction partners faster, one entry per vector variable
+	std::vector<bool> vector_is_empty;
+
         gsolve_type type;
 
         const m2m_vector theta_rec_squared;
@@ -109,6 +112,8 @@ namespace fmm {
             // const multiindex<>& interaction_partner_index
             // const int64_t interaction_partner_flat_index
             );
+
+	void vectors_check_empty();
 
     public:
         m2m_kernel(struct_of_array_data<expansion, real, 20>& local_expansions_SoA,
