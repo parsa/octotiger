@@ -32,8 +32,12 @@ namespace fmm {
 
         std::vector<bool>& neighbor_empty;
 
-	// so skip non-existing interaction partners faster, one entry per vector variable
-	std::vector<bool> vector_is_empty;
+        // so skip non-existing interaction partners faster, one entry per vector variable
+        std::vector<bool> vector_is_empty;
+
+        // std::vector<int32_t> coarse_x;
+        // std::vector<int32_t> coarse_y;
+        // std::vector<int32_t> coarse_z;
 
         gsolve_type type;
 
@@ -114,7 +118,9 @@ namespace fmm {
             // const int64_t interaction_partner_flat_index
             );
 
-	void vectors_check_empty();
+        void vectors_check_empty();
+
+        // void calculate_coarse_indices();
 
     public:
         m2m_kernel(struct_of_array_data<expansion, real, 20>& local_expansions_SoA,

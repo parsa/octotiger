@@ -65,7 +65,7 @@ namespace fmm {
             //         //           << dir_start.flat_index_with_center() << std::endl;
             //         // std::cout << "dir_end.flat_index_with_center(): "
             //         //           << dir_end.flat_index_with_center() << std::endl;
-	    // 	    // std::cout << "in_boundary_end: " << in_boundary_end << std::endl;
+            // 	    // std::cout << "in_boundary_end: " << in_boundary_end << std::endl;
             //     }
             //     continue;
             // } else {
@@ -79,24 +79,22 @@ namespace fmm {
             // }
 
             if (vector_is_empty[interaction_partner_flat_index]) {
-            	continue;
+                continue;
             }
 
             // implicitly broadcasts to vector
             multiindex<m2m_int_vector> interaction_partner_index_coarse(interaction_partner_index);
-
-            // #if Vc_IS_VERSION_2 == 0
-            //             for (size_t j = 0; j < m2m_int_vector::Size; j++) {
-            // #else
-            //             for (size_t j = 0; j < m2m_int_vector::size(); j++) {
-            // #endif
-            //                 interaction_partner_index_coarse.z[j] += j;
-            //             }
-
             interaction_partner_index_coarse.z += offset_vector;
             // note that this is the same for groups of 2x2x2 elements
             // -> maps to the same for some SIMD lanes
             interaction_partner_index_coarse.transform_coarse();
+            // m2m_int_vector c_x;
+            // c_x.memload(&coarse_x[interaction_partner_flat_index], Vc::flags::element_aligned);
+            // m2m_int_vector c_y;
+            // c_y.memload(&coarse_y[interaction_partner_flat_index], Vc::flags::element_aligned);
+            // m2m_int_vector c_z;
+            // c_z.memload(&coarse_z[interaction_partner_flat_index], Vc::flags::element_aligned);
+            // multiindex<m2m_int_vector> interaction_partner_index_coarse(c_x, c_y, c_z);
 
             m2m_int_vector theta_c_rec_squared_int = detail::distance_squared_reciprocal(
                 cell_index_coarse, interaction_partner_index_coarse);
@@ -169,92 +167,224 @@ namespace fmm {
             // potential_expansions[cell_flat_index_unpadded];
             // space_vector& current_angular_correction =
             // angular_corrections[cell_flat_index_unpadded];
+
+            struct_of_array_taylor<expansion, real, 20> current_potential_result =
+                potential_expansions_SoA.get_view(cell_flat_index_unpadded);
             expansion_v current_potential;
             for (size_t i = 0; i < current_potential.size(); i++) {
                 current_potential[i] = 0.0;
             }
 
-            std::array<m2m_vector, NDIM> current_angular_correction;
-            for (size_t i = 0; i < current_angular_correction.size(); i++) {
-                current_angular_correction[i] = 0.0;
-            }
-
             // the following loops calculate formula (10), potential from B->A
-            current_potential[0] += m_partner.component(0) * D[0];
+            // current_potential[0] += m_partner.component(0) * D[0];
+            m2m_vector tmp_c0 =
+                current_potential_result.component(0) + m_partner.component(0) * D[0];
+
             if (type != RHO) {
                 for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
-                    current_potential[0] -= m_partner.component(i) * D[i];
+                    // current_potential[0] -= m_partner.component(i) * D[i];
+                    tmp_c0 -= m_partner.component(i) * D[i];
                 }
             }
             for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
                 const auto tmp = D[i] * (factor[i] * HALF);
-                current_potential[0] += m_partner.component(i) * tmp;
+                // current_potential[0] += m_partner.component(i) * tmp;
+                tmp_c0 += m_partner.component(i) * tmp;
             }
             for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
                 const auto tmp = D[i] * (factor[i] * SIXTH);
-                current_potential[0] -= m_partner.component(i) * tmp;
+                // current_potential[0] -= m_partner.component(i) * tmp;
+                tmp_c0 -= m_partner.component(i) * tmp;
             }
 
-            for (integer a = 0; a < NDIM; ++a) {
-                int const* ab_idx_map = to_ab_idx_map3[a];
-                int const* abc_idx_map = to_abc_idx_map3[a];
+            Vc::where(mask, tmp_c0)
+                .memstore(
+                    current_potential_result.component_pointer(0), Vc::flags::element_aligned);
 
-                current_potential(a) += m_partner.grad_0() * D(a);
-                for (integer i = 0; i != 6; ++i) {
-                    if (type != RHO && i < 3) {
-                        current_potential(a) -= m_partner.grad_1(a) * D[ab_idx_map[i]];
-                    }
-                    const integer cb_idx = cb_idx_map[i];
-                    const auto tmp1 = D[abc_idx_map[i]] * (factor[cb_idx] * HALF);
-                    current_potential(a) += m_partner.component(cb_idx) * tmp1;
-                }
+            if (type != RHO) {
+                // for (integer a = 0; a < NDIM; ++a) {
+                //     int const* ab_idx_map = to_ab_idx_map3[a];
+                //     for (integer i = 0; i < 3; ++i) {
+                //         current_potential(a) -= m_partner.grad_1(a) * D[ab_idx_map[i]];
+                //     }
+                // }
+                current_potential(0) -= m_partner.grad_1(0) * D[4];
+                current_potential(0) -= m_partner.grad_1(0) * D[5];
+                current_potential(0) -= m_partner.grad_1(0) * D[6];
+
+                current_potential(1) -= m_partner.grad_1(1) * D[5];
+                current_potential(1) -= m_partner.grad_1(1) * D[7];
+                current_potential(1) -= m_partner.grad_1(1) * D[8];
+
+                current_potential(2) -= m_partner.grad_1(2) * D[6];
+                current_potential(2) -= m_partner.grad_1(2) * D[8];
+                current_potential(2) -= m_partner.grad_1(2) * D[9];
             }
 
-            if (type == RHO) {
-                for (integer a = 0; a != NDIM; ++a) {
-                    int const* abcd_idx_map = to_abcd_idx_map3[a];
-                    for (integer i = 0; i != 10; ++i) {
-                        const integer bcd_idx = bcd_idx_map[i];
-                        const m2m_vector tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
-                        current_angular_correction[a] -= n0[bcd_idx] * tmp;
-                    }
-                }
-            }
+            // for (integer a = 0; a < NDIM; ++a) {
+            //     int const* abc_idx_map = to_abc_idx_map3[a];
+            //     current_potential(a) += m_partner.grad_0() * D(a);
+            //     for (integer i = 0; i != 6; ++i) {
+            //         const integer cb_idx = cb_idx_map[i];
+            //         const auto tmp1 = D[abc_idx_map[i]] * (factor[cb_idx] * HALF);
+            //         current_potential(a) += m_partner.component(cb_idx) * tmp1;
+            //     }
+            // }
 
-            for (integer i = 0; i != 6; ++i) {
-                int const* abc_idx_map6 = to_abc_idx_map6[i];
+            current_potential(0) += m_partner.grad_0() * D(0);
+            current_potential(1) += m_partner.grad_0() * D(1);
+            current_potential(2) += m_partner.grad_0() * D(2);
 
-                integer const ab_idx = ab_idx_map6[i];
-                current_potential[ab_idx] += m_partner.grad_0() * D[ab_idx];
-                for (integer c = 0; c < NDIM; ++c) {
-                    const auto& tmp = D[abc_idx_map6[c]];
-                    current_potential[ab_idx] -= m_partner.grad_1(c) * tmp;
-                }
-            }
+            current_potential(0) += m_partner.component(4) * (D[10] * (factor[4] * HALF));
+            current_potential(0) += m_partner.component(5) * (D[11] * (factor[5] * HALF));
+            current_potential(0) += m_partner.component(6) * (D[12] * (factor[6] * HALF));
+            current_potential(0) += m_partner.component(7) * (D[13] * (factor[7] * HALF));
+            current_potential(0) += m_partner.component(8) * (D[14] * (factor[8] * HALF));
+            current_potential(0) += m_partner.component(9) * (D[15] * (factor[9] * HALF));
 
-            for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
-                const auto& tmp = D[i];
-                current_potential[i] += m_partner.grad_0() * tmp;
-            }
+            current_potential(1) += m_partner.component(4) * (D[11] * (factor[4] * HALF));
+            current_potential(1) += m_partner.component(5) * (D[13] * (factor[5] * HALF));
+            current_potential(1) += m_partner.component(6) * (D[14] * (factor[6] * HALF));
+            current_potential(1) += m_partner.component(7) * (D[16] * (factor[7] * HALF));
+            current_potential(1) += m_partner.component(8) * (D[17] * (factor[8] * HALF));
+            current_potential(1) += m_partner.component(9) * (D[18] * (factor[9] * HALF));
+
+            current_potential(2) += m_partner.component(4) * (D[12] * (factor[4] * HALF));
+            current_potential(2) += m_partner.component(5) * (D[14] * (factor[5] * HALF));
+            current_potential(2) += m_partner.component(6) * (D[15] * (factor[6] * HALF));
+            current_potential(2) += m_partner.component(7) * (D[17] * (factor[7] * HALF));
+            current_potential(2) += m_partner.component(8) * (D[18] * (factor[8] * HALF));
+            current_potential(2) += m_partner.component(9) * (D[19] * (factor[9] * HALF));
+
+            // integer const ab_idx = {4,  5,  6,  7,  8,  9,};
+            // for (integer i = 0; i != 6; ++i) {
+            //     current_potential[ab_idx] += m_partner.grad_0() * D[ab_idx];
+            // }
+
+            current_potential[4] += m_partner.grad_0() * D[4];
+            current_potential[5] += m_partner.grad_0() * D[5];
+            current_potential[6] += m_partner.grad_0() * D[6];
+            current_potential[7] += m_partner.grad_0() * D[7];
+            current_potential[8] += m_partner.grad_0() * D[8];
+            current_potential[9] += m_partner.grad_0() * D[9];
+
+            // int const* abc_idx_map6 = to_abc_idx_map6[i];
+            // integer const ab_idx = {4, 5, 6, 7, 8, 9};
+            // for (integer i = 0; i != 6; ++i) {
+            //     for (integer c = 0; c < NDIM; ++c) {
+            //         current_potential[ab_idx] -= m_partner.grad_1(c) * D[abc_idx_map6[c]];
+            //     }
+            // }
+
+            current_potential[4] -= m_partner.grad_1(0) * D[10];
+            current_potential[4] -= m_partner.grad_1(1) * D[11];
+            current_potential[4] -= m_partner.grad_1(2) * D[12];
+
+            current_potential[5] -= m_partner.grad_1(0) * D[11];
+            current_potential[5] -= m_partner.grad_1(1) * D[13];
+            current_potential[5] -= m_partner.grad_1(2) * D[14];
+
+            current_potential[6] -= m_partner.grad_1(0) * D[12];
+            current_potential[6] -= m_partner.grad_1(1) * D[14];
+            current_potential[6] -= m_partner.grad_1(2) * D[15];
+
+            current_potential[7] -= m_partner.grad_1(0) * D[13];
+            current_potential[7] -= m_partner.grad_1(1) * D[16];
+            current_potential[7] -= m_partner.grad_1(2) * D[17];
+
+            current_potential[8] -= m_partner.grad_1(0) * D[14];
+            current_potential[8] -= m_partner.grad_1(1) * D[17];
+            current_potential[8] -= m_partner.grad_1(2) * D[18];
+
+            current_potential[9] -= m_partner.grad_1(0) * D[15];
+            current_potential[9] -= m_partner.grad_1(1) * D[18];
+            current_potential[9] -= m_partner.grad_1(2) * D[19];
+
+            // for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+            //     current_potential[i] += m_partner.grad_0() * D[i];
+            // }
+
+            current_potential[10] += m_partner.grad_0() * D[10];
+            current_potential[11] += m_partner.grad_0() * D[11];
+            current_potential[12] += m_partner.grad_0() * D[12];
+            current_potential[13] += m_partner.grad_0() * D[13];
+            current_potential[14] += m_partner.grad_0() * D[14];
+            current_potential[15] += m_partner.grad_0() * D[15];
+            current_potential[16] += m_partner.grad_0() * D[16];
+            current_potential[17] += m_partner.grad_0() * D[17];
+            current_potential[18] += m_partner.grad_0() * D[18];
+            current_potential[19] += m_partner.grad_0() * D[19];
 
             // TODO: remove this when switching back to non-copy (reference-based)
             // approach
-            struct_of_array_taylor<expansion, real, 20> current_potential_result =
-                potential_expansions_SoA.get_view(cell_flat_index_unpadded);
-            struct_of_array_taylor<space_vector, real, 3> current_angular_correction_result =
-                angular_corrections_SoA.get_view(cell_flat_index_unpadded);
 
             for (size_t i = 0; i < current_potential.size(); i++) {
                 m2m_vector tmp = current_potential_result.component(i) + current_potential[i];
                 Vc::where(mask, tmp).memstore(
                     current_potential_result.component_pointer(i), Vc::flags::element_aligned);
             }
-            for (size_t i = 0; i < current_angular_correction.size(); i++) {
-                m2m_vector tmp =
-                    current_angular_correction_result.component(i) + current_angular_correction[i];
-                Vc::where(mask, tmp).memstore(
-                    current_angular_correction_result.component_pointer(i),
-                    Vc::flags::element_aligned);
+
+            // TODO: move this in a separate kernel
+            ////////////// angular momentum correction, if enabled /////////////////////////
+
+            if (type == RHO) {
+                struct_of_array_taylor<space_vector, real, 3> current_angular_correction_result =
+                    angular_corrections_SoA.get_view(cell_flat_index_unpadded);
+
+                std::array<m2m_vector, NDIM> current_angular_correction;
+                for (size_t i = 0; i < current_angular_correction.size(); i++) {
+                    current_angular_correction[i] = 0.0;
+                }
+
+                // for (integer a = 0; a != NDIM; ++a) {
+                //     int const* abcd_idx_map = to_abcd_idx_map3[a];
+                //     for (integer i = 0; i != 10; ++i) {
+                //         const integer bcd_idx = bcd_idx_map[i];
+                //         const m2m_vector tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
+                //         current_angular_correction[a] -= n0[bcd_idx] * tmp;
+                //     }
+                // }
+
+                current_angular_correction[0] -= n0[10] * (D[20] * (factor[10] * SIXTH));
+                current_angular_correction[0] -= n0[11] * (D[21] * (factor[11] * SIXTH));
+                current_angular_correction[0] -= n0[12] * (D[22] * (factor[12] * SIXTH));
+                current_angular_correction[0] -= n0[13] * (D[23] * (factor[13] * SIXTH));
+                current_angular_correction[0] -= n0[14] * (D[24] * (factor[14] * SIXTH));
+                current_angular_correction[0] -= n0[15] * (D[25] * (factor[15] * SIXTH));
+                current_angular_correction[0] -= n0[16] * (D[26] * (factor[16] * SIXTH));
+                current_angular_correction[0] -= n0[17] * (D[27] * (factor[17] * SIXTH));
+                current_angular_correction[0] -= n0[18] * (D[28] * (factor[18] * SIXTH));
+                current_angular_correction[0] -= n0[19] * (D[29] * (factor[19] * SIXTH));
+
+                current_angular_correction[1] -= n0[10] * (D[21] * (factor[10] * SIXTH));
+                current_angular_correction[1] -= n0[11] * (D[23] * (factor[11] * SIXTH));
+                current_angular_correction[1] -= n0[12] * (D[24] * (factor[12] * SIXTH));
+                current_angular_correction[1] -= n0[13] * (D[26] * (factor[13] * SIXTH));
+                current_angular_correction[1] -= n0[14] * (D[27] * (factor[14] * SIXTH));
+                current_angular_correction[1] -= n0[15] * (D[28] * (factor[15] * SIXTH));
+                current_angular_correction[1] -= n0[16] * (D[30] * (factor[16] * SIXTH));
+                current_angular_correction[1] -= n0[17] * (D[31] * (factor[17] * SIXTH));
+                current_angular_correction[1] -= n0[18] * (D[32] * (factor[18] * SIXTH));
+                current_angular_correction[1] -= n0[19] * (D[33] * (factor[19] * SIXTH));
+
+                current_angular_correction[2] -= n0[10] * (D[22] * (factor[10] * SIXTH));
+                current_angular_correction[2] -= n0[11] * (D[24] * (factor[11] * SIXTH));
+                current_angular_correction[2] -= n0[12] * (D[25] * (factor[12] * SIXTH));
+                current_angular_correction[2] -= n0[13] * (D[27] * (factor[13] * SIXTH));
+                current_angular_correction[2] -= n0[14] * (D[28] * (factor[14] * SIXTH));
+                current_angular_correction[2] -= n0[15] * (D[29] * (factor[15] * SIXTH));
+                current_angular_correction[2] -= n0[16] * (D[31] * (factor[16] * SIXTH));
+                current_angular_correction[2] -= n0[17] * (D[32] * (factor[17] * SIXTH));
+                current_angular_correction[2] -= n0[18] * (D[33] * (factor[18] * SIXTH));
+                current_angular_correction[2] -= n0[19] * (D[34] * (factor[19] * SIXTH));
+
+                for (size_t i = 0; i < current_angular_correction.size(); i++) {
+                    m2m_vector tmp = current_angular_correction_result.component(i) +
+                        current_angular_correction[i];
+                    Vc::where(mask, tmp).memstore(
+                        current_angular_correction_result.component_pointer(i),
+                        Vc::flags::element_aligned);
+                }
             }
         }
     }

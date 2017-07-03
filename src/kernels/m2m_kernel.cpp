@@ -34,11 +34,11 @@ namespace fmm {
       , theta_rec_squared(sqr(1.0 / opts.theta))
     // , theta_rec_squared_scalar(sqr(1.0 / opts.theta))
     {
-
         for (size_t i = 0; i < m2m_int_vector::size(); i++) {
             offset_vector[i] = i;
         }
         vectors_check_empty();
+        // calculate_coarse_indices();
     }
 
     void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
@@ -124,7 +124,7 @@ namespace fmm {
                         //           << dir_start.flat_index_with_center() << std::endl;
                         // std::cout << "dir_end.flat_index_with_center(): "
                         //           << dir_end.flat_index_with_center() << std::endl;
-			// std::cout << "in_boundary_end: " << in_boundary_end << std::endl;
+                        // std::cout << "in_boundary_end: " << in_boundary_end << std::endl;
 
                     } else {
                         vector_is_empty[cell_flat_index] = false;
@@ -139,6 +139,26 @@ namespace fmm {
             }
         }
     }
+
+    // void m2m_kernel::calculate_coarse_indices() {
+    //     coarse_x = std::vector<int32_t>(PADDED_STRIDE * PADDED_STRIDE * PADDED_STRIDE);
+    //     coarse_y = std::vector<int32_t>(PADDED_STRIDE * PADDED_STRIDE * PADDED_STRIDE);
+    //     coarse_z = std::vector<int32_t>(PADDED_STRIDE * PADDED_STRIDE * PADDED_STRIDE);
+
+    //     const int32_t patch_size = static_cast<int32_t>(INX);
+    //     const int32_t subtract = static_cast<int32_t>(INX / 2);
+    //     for (size_t i0 = 0; i0 < PADDED_STRIDE; i0 += 1) {
+    //         for (size_t i1 = 0; i1 < PADDED_STRIDE; i1 += 1) {
+    //             for (size_t i2 = 0; i2 < PADDED_STRIDE; i2 += 1) {
+    //                 const multiindex<> cell_index(i0, i1, i2);
+    //                 const int64_t cell_flat_index = to_flat_index_padded(cell_index);
+    //                 coarse_x[cell_flat_index] = ((cell_index.x + patch_size) >> 1) - subtract;
+    //                 coarse_y[cell_flat_index] = ((cell_index.y + patch_size) >> 1) - subtract;
+    //                 coarse_z[cell_flat_index] = ((cell_index.z + patch_size) >> 1) - subtract;
+    //             }
+    //         }
+    //     }
+    // }
 
 }    // namespace fmm
 }    // namespace octotiger
