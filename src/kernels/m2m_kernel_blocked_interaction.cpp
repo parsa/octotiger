@@ -42,40 +42,17 @@ namespace fmm {
                 (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
                 (interaction_partner_index.z / INNER_CELLS_PER_DIRECTION) - 1);
 
-#if Vc_IS_VERSION_2 == 0
-            const multiindex<> in_boundary_end(
-                (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
-                (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
-                ((interaction_partner_index.z + m2m_int_vector::Size) / INNER_CELLS_PER_DIRECTION) -
-                    1);
-#else
             const multiindex<> in_boundary_end(
                 (interaction_partner_index.x / INNER_CELLS_PER_DIRECTION) - 1,
                 (interaction_partner_index.y / INNER_CELLS_PER_DIRECTION) - 1,
                 ((interaction_partner_index.z + m2m_int_vector::size()) /
                     INNER_CELLS_PER_DIRECTION) -
                     1);
-#endif
-
-            // std::cout << "in_boundary_start x: " << in_boundary_start.x
-            //           << " y: " << in_boundary_start.y << " z: " << in_boundary_start.z
-            //           << std::endl;
-
-            // std::cout << "in_boundary_end x: " << in_boundary_end.x << " y: " <<
-            // in_boundary_end.y
-            //           << " z: " << in_boundary_end.z << std::endl;
 
             geo::direction dir_start;
             dir_start.set(in_boundary_start.x, in_boundary_start.y, in_boundary_start.z);
-
-            // std::cout << "dir_start flat_index: " << dir_start.flat_index_with_center()
-            //           << std::endl;
-
             geo::direction dir_end;
             dir_end.set(in_boundary_end.x, in_boundary_end.y, in_boundary_end.z);
-
-            // std::cout << "dir_end flat_index: " << dir_end.flat_index_with_center() << std::endl;
-
             if (neighbor_empty[dir_start.flat_index_with_center()] &&
                 neighbor_empty[dir_end.flat_index_with_center()]) {
                 continue;
@@ -87,13 +64,15 @@ namespace fmm {
             // implicitly broadcasts to vector
             multiindex<m2m_int_vector> interaction_partner_index_coarse(interaction_partner_index);
 
-#if Vc_IS_VERSION_2 == 0
-            for (size_t j = 0; j < m2m_int_vector::Size; j++) {
-#else
-            for (size_t j = 0; j < m2m_int_vector::size(); j++) {
-#endif
-                interaction_partner_index_coarse.z[j] += j;
-            }
+            // #if Vc_IS_VERSION_2 == 0
+            //             for (size_t j = 0; j < m2m_int_vector::Size; j++) {
+            // #else
+            //             for (size_t j = 0; j < m2m_int_vector::size(); j++) {
+            // #endif
+            //                 interaction_partner_index_coarse.z[j] += j;
+            //             }
+
+            interaction_partner_index_coarse.z += offset_vector;
             // note that this is the same for groups of 2x2x2 elements
             // -> maps to the same for some SIMD lanes
             interaction_partner_index_coarse.transform_coarse();
@@ -246,23 +225,15 @@ namespace fmm {
 
             for (size_t i = 0; i < current_potential.size(); i++) {
                 m2m_vector tmp = current_potential_result.component(i) + current_potential[i];
-#if Vc_IS_VERSION_2 == 0
-                tmp.store(current_potential_result.component_pointer(i), mask);
-#else
                 Vc::where(mask, tmp).memstore(
                     current_potential_result.component_pointer(i), Vc::flags::element_aligned);
-#endif
             }
             for (size_t i = 0; i < current_angular_correction.size(); i++) {
                 m2m_vector tmp =
                     current_angular_correction_result.component(i) + current_angular_correction[i];
-#if Vc_IS_VERSION_2 == 0
-                tmp.store(current_angular_correction_result.component_pointer(i), mask);
-#else
                 Vc::where(mask, tmp).memstore(
                     current_angular_correction_result.component_pointer(i),
                     Vc::flags::element_aligned);
-#endif
             }
         }
     }

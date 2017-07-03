@@ -33,7 +33,11 @@ namespace fmm {
       , type(type)
       , theta_rec_squared(sqr(1.0 / opts.theta))
     // , theta_rec_squared_scalar(sqr(1.0 / opts.theta))
-    {}
+    {
+        for (size_t i = 0; i < m2m_int_vector::size(); i++) {
+            offset_vector[i] = i;
+        }
+    }
 
     void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
         // for (multiindex<>& stencil_element : stencil) {
@@ -46,12 +50,8 @@ namespace fmm {
             // iterate_inner_cells_padded_stencil(se, *this);
             for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
                 for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
-// for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
-#if Vc_IS_VERSION_2 == 0
-                    for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += m2m_vector::Size) {
-#else
+                    // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
                     for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2 += m2m_vector::size()) {
-#endif
                         const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
                             i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
                         // BUG: indexing has to be done with uint32_t because of Vc limitation
@@ -63,11 +63,7 @@ namespace fmm {
                         // indices on coarser level (for outer stencil boundary)
                         // implicitly broadcasts to vector
                         multiindex<m2m_int_vector> cell_index_coarse(cell_index);
-#if Vc_IS_VERSION_2 == 0
-                        for (size_t j = 0; j < m2m_int_vector::Size; j++) {
-#else
                         for (size_t j = 0; j < m2m_int_vector::size(); j++) {
-#endif
                             cell_index_coarse.z[j] += j;
                         }
                         // note that this is the same for groups of 2x2x2 elements

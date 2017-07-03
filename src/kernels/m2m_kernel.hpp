@@ -35,6 +35,7 @@ namespace fmm {
         gsolve_type type;
 
         const m2m_vector theta_rec_squared;
+        m2m_int_vector offset_vector;
 
         // const double theta_rec_squared_scalar;
 
