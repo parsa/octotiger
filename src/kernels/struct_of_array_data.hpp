@@ -97,7 +97,7 @@ namespace fmm {
             component_offset = data.padded_entries_per_component;
         }
 
-        inline component_type* operator*() {
+        inline component_type* pointer() {
             return current;
         }
 
@@ -110,7 +110,11 @@ namespace fmm {
         }
         inline void decrement(size_t num) {
             current -= component_offset * num;
-        }                
+        }
+
+        inline m2m_vector value() {
+            return m2m_vector(this->pointer(), Vc::flags::element_aligned);
+        }
     };
 
 }    // namespace fmm

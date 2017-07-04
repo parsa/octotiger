@@ -129,16 +129,19 @@ namespace fmm {
             // dX[0] = X.component(0) - Y.component(0);
             // dX[1] = X.component(1) - Y.component(1);
             // dX[2] = X.component(2) - Y.component(2);
-            dX[0] = m2m_vector(*X, Vc::flags::element_aligned) -
-                m2m_vector(*Y, Vc::flags::element_aligned);
+            // dX[0] = m2m_vector(*X, Vc::flags::element_aligned) -
+            //     m2m_vector(*Y, Vc::flags::element_aligned);
+            dX[0] = X.value() - Y.value();
             X++;
             Y++;
-            dX[1] = m2m_vector(*X, Vc::flags::element_aligned) -
-                m2m_vector(*Y, Vc::flags::element_aligned);
+            // dX[1] = m2m_vector(*X, Vc::flags::element_aligned) -
+            //     m2m_vector(*Y, Vc::flags::element_aligned);
+            dX[1] = X.value() - Y.value();
             X++;
             Y++;
-            dX[2] = m2m_vector(*X, Vc::flags::element_aligned) -
-                m2m_vector(*Y, Vc::flags::element_aligned);
+            // dX[2] = m2m_vector(*X, Vc::flags::element_aligned) -
+            //     m2m_vector(*Y, Vc::flags::element_aligned);
+            dX[2] = X.value() - Y.value();
 
             // reset X for next iteration
             X.decrement(2);
@@ -156,45 +159,45 @@ namespace fmm {
             {
                 struct_of_array_iterator<expansion, real, 20> m_partner_iterator(
                     local_expansions_SoA, interaction_partner_flat_index);
-                m_partner[0] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[0] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[1] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[1] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[2] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[2] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[3] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[3] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[4] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[4] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[5] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[5] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[6] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[6] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[7] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[7] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[8] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[8] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[9] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[9] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[10] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[10] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[11] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[11] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[12] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[12] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[13] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[13] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[14] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[14] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[15] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[15] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[16] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[16] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[17] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[17] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[18] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[18] = m_partner_iterator.value();
                 m_partner_iterator++;
-                m_partner[19] = m2m_vector(*m_partner_iterator, Vc::flags::element_aligned);
+                m_partner[19] = m_partner_iterator.value();
                 m_partner_iterator++;
             }
 
@@ -241,8 +244,7 @@ namespace fmm {
                     local_expansions_SoA, cell_flat_index);
 
                 // m2m_vector const tmp1 = m_partner[0] / m_cell.grad_0();
-                m2m_vector const tmp1 =
-                    m_partner[0] / m2m_vector(*m_cell_iterator, Vc::flags::element_aligned);
+                m2m_vector const tmp1 = m_partner[0] / m_cell_iterator.value();
 
                 m_cell_iterator.increment(10);
 
@@ -251,38 +253,28 @@ namespace fmm {
                 // for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
                 //     // n0[j] = m_partner[j] - m_cell.component(j) * tmp1;
                 //     n0[j] = m_partner[j] -
-                //         m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                //         m_cell_iterator.value() * tmp1;
                 //     m_cell_iterator++;
                 // }
-                n0[10] =
-                    m_partner[10] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[10] = m_partner[10] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[11] =
-                    m_partner[11] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[11] = m_partner[11] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[12] =
-                    m_partner[12] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[12] = m_partner[12] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[13] =
-                    m_partner[13] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[13] = m_partner[13] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[14] =
-                    m_partner[14] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[14] = m_partner[14] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[15] =
-                    m_partner[15] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[15] = m_partner[15] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[16] =
-                    m_partner[16] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[16] = m_partner[16] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[17] =
-                    m_partner[17] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[17] = m_partner[17] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[18] =
-                    m_partner[18] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[18] = m_partner[18] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
-                n0[19] =
-                    m_partner[19] - m2m_vector(*m_cell_iterator, Vc::flags::element_aligned) * tmp1;
+                n0[19] = m_partner[19] - m_cell_iterator.value() * tmp1;
                 m_cell_iterator++;
             }
 
@@ -402,9 +394,9 @@ namespace fmm {
             struct_of_array_iterator<expansion, real, 20> current_potential_result(
                 potential_expansions_SoA, cell_flat_index_unpadded);
 
-            m2m_vector tmp =
-                m2m_vector(*current_potential_result, Vc::flags::element_aligned) + p_0;
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            m2m_vector tmp = current_potential_result.value() + p_0;
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
 
             // Vc::where(mask, tmp_c0)
@@ -503,14 +495,17 @@ namespace fmm {
             cur_pot[2] += m_partner[8] * (D[18] * (factor[8] * HALF));
             cur_pot[2] += m_partner[9] * (D[19] * (factor[9] * HALF));
 
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[0];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[0];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[1];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[1];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[2];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[2];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
 
             // integer const ab_idx = {4,  5,  6,  7,  8,  9,};
@@ -604,23 +599,29 @@ namespace fmm {
             //     current_potential_result++;
             // }
 
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[3];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[3];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[4];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[4];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[5];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[5];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[6];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[6];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[7];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[7];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[8];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + cur_pot[8];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;    // don't remove this
 
             // for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
@@ -641,45 +642,45 @@ namespace fmm {
             // current_potential[18] += m_partner[0] * D[18];
             // current_potential[19] += m_partner[0] * D[19];
 
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[10];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[10];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[11];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[11];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[12];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[12];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[13];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[13];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[14];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[14];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[15];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[15];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[16];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[16];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[17];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[17];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[18];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[18];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                m_partner[0] * D[19];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            tmp = current_potential_result.value() + m_partner[0] * D[19];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
 
             // TODO: remove this when switching back to non-copy (reference-based)
             // approach
@@ -755,20 +756,17 @@ namespace fmm {
                 //     current_angular_correction_result++;
                 // }
                 m2m_vector tmp =
-                    m2m_vector(*current_angular_correction_result, Vc::flags::element_aligned) +
-                    current_angular_correction[0];
+                    current_angular_correction_result.value() + current_angular_correction[0];
                 Vc::where(mask, tmp).memstore(
-                    *current_angular_correction_result, Vc::flags::element_aligned);
+                    current_angular_correction_result.pointer(), Vc::flags::element_aligned);
                 current_angular_correction_result++;
-                tmp = m2m_vector(*current_angular_correction_result, Vc::flags::element_aligned) +
-                    current_angular_correction[1];
+                tmp = current_angular_correction_result.value() + current_angular_correction[1];
                 Vc::where(mask, tmp).memstore(
-                    *current_angular_correction_result, Vc::flags::element_aligned);
+                    current_angular_correction_result.pointer(), Vc::flags::element_aligned);
                 current_angular_correction_result++;
-                tmp = m2m_vector(*current_angular_correction_result, Vc::flags::element_aligned) +
-                    current_angular_correction[2];
+                tmp = current_angular_correction_result.value() + current_angular_correction[2];
                 Vc::where(mask, tmp).memstore(
-                    *current_angular_correction_result, Vc::flags::element_aligned);
+                    current_angular_correction_result.pointer(), Vc::flags::element_aligned);
             }
         }
     }
