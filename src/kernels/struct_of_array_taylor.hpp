@@ -27,10 +27,6 @@ namespace fmm {
             // skip grad 0 component
             return m2m_vector(this->component_pointer(grad1_index + 1), Vc::flags::element_aligned);
         }
-
-        inline m2m_vector component(size_t component_index) const {
-            return m2m_vector(this->component_pointer(component_index), Vc::flags::element_aligned);
-        }
     };
 
 }    // namespace fmm

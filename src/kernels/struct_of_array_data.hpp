@@ -9,6 +9,9 @@ namespace fmm {
     class struct_of_array_data;
 
     template <typename AoS_type, typename component_type, size_t num_components>
+    class struct_of_array_iterator;
+
+    template <typename AoS_type, typename component_type, size_t num_components>
     class struct_of_array_view
     {
     protected:
@@ -20,6 +23,10 @@ namespace fmm {
             struct_of_array_data<AoS_type, component_type, num_components>& data, size_t flat_index)
           : data(data)
           , flat_index(flat_index) {}
+
+        inline m2m_vector component(size_t component_index) const {
+            return m2m_vector(this->component_pointer(component_index), Vc::flags::element_aligned);
+        }
 
         // returning pointer so that Vc can convert into simdarray
         // (notice: a reference would be silently broadcasted)
@@ -36,6 +43,8 @@ namespace fmm {
         // data in SoA form
         std::vector<component_type> data;
         const size_t padded_entries_per_component;
+
+        friend class struct_of_array_iterator<AoS_type, component_type, num_components>;
 
     public:
         struct_of_array_data(const std::vector<AoS_type>& org)
@@ -71,6 +80,37 @@ namespace fmm {
                 }
             }
         }
+    };
+
+    template <typename AoS_type, typename component_type, size_t num_components>
+    class struct_of_array_iterator
+    {
+    private:
+        component_type* current;
+        size_t component_offset;
+
+    public:
+        struct_of_array_iterator(
+            struct_of_array_data<AoS_type, component_type, num_components>& data,
+            size_t flat_index) {
+            current = data.data.data() + flat_index;
+            component_offset = data.padded_entries_per_component;
+        }
+
+        inline component_type* operator*() {
+            return current;
+        }
+
+        // int is dummy parameter
+        inline void operator++(int) {
+            current += component_offset;
+        }
+        inline void increment(size_t num) {
+            current += component_offset * num;
+        }
+        inline void decrement(size_t num) {
+            current -= component_offset * num;
+        }                
     };
 
 }    // namespace fmm
