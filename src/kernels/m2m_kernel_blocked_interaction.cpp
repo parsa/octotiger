@@ -22,8 +22,9 @@ namespace fmm {
         const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
         const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index) {
         // TODO: should change name to something better (not taylor, but space_vector)
-        struct_of_array_taylor<space_vector, real, 3> X =
-            center_of_masses_SoA.get_view(cell_flat_index);
+        // struct_of_array_taylor<space_vector, real, 3> X =
+        //     center_of_masses_SoA.get_view(cell_flat_index);
+        struct_of_array_iterator<space_vector, real, 3> X(center_of_masses_SoA, cell_flat_index);
         for (size_t inner_stencil_index = 0; inner_stencil_index < STENCIL_BLOCKING &&
              outer_stencil_index + inner_stencil_index < stencil.size();
              inner_stencil_index += 1) {
@@ -114,8 +115,10 @@ namespace fmm {
                 continue;
             }
 
-            struct_of_array_taylor<space_vector, real, 3> Y =
-                center_of_masses_SoA.get_view(interaction_partner_flat_index);
+            // struct_of_array_taylor<space_vector, real, 3> Y =
+            //     center_of_masses_SoA.get_view(interaction_partner_flat_index);
+            struct_of_array_iterator<space_vector, real, 3> Y(
+                center_of_masses_SoA, interaction_partner_flat_index);
 
             // distance between cells in all dimensions
             // TODO: replace by m2m_vector for vectorization or get rid of temporary
@@ -123,12 +126,25 @@ namespace fmm {
             // for (integer d = 0; d < NDIM; ++d) {
             //     dX[d] = X.component(d) - Y.component(d);
             // }
-            dX[0] = X.component(0) - Y.component(0);
-            dX[1] = X.component(1) - Y.component(1);
-            dX[2] = X.component(2) - Y.component(2);
+            // dX[0] = X.component(0) - Y.component(0);
+            // dX[1] = X.component(1) - Y.component(1);
+            // dX[2] = X.component(2) - Y.component(2);
+            dX[0] = m2m_vector(*X, Vc::flags::element_aligned) -
+                m2m_vector(*Y, Vc::flags::element_aligned);
+            X++;
+            Y++;
+            dX[1] = m2m_vector(*X, Vc::flags::element_aligned) -
+                m2m_vector(*Y, Vc::flags::element_aligned);
+            X++;
+            Y++;
+            dX[2] = m2m_vector(*X, Vc::flags::element_aligned) -
+                m2m_vector(*Y, Vc::flags::element_aligned);
 
-            struct_of_array_taylor<expansion, real, 20> m_partner_view =
-                local_expansions_SoA.get_view(interaction_partner_flat_index);
+            // reset X for next iteration
+            X.decrement(2);
+
+            // struct_of_array_taylor<expansion, real, 20> m_partner_view =
+            //     local_expansions_SoA.get_view(interaction_partner_flat_index);
 
             expansion_v m_partner;
             // for (size_t i = 0; i < m_partner.size(); i++) {
@@ -289,20 +305,31 @@ namespace fmm {
             // space_vector& current_angular_correction =
             // angular_corrections[cell_flat_index_unpadded];
 
-            expansion_v current_potential;
+            // expansion_v current_potential;
+            m2m_vector cur_pot[9];
             // for (size_t i = 0; i < current_potential.size(); i++) {
             //     current_potential[i] = 0.0;
             // }
-            current_potential[0] = 0.0;
-            current_potential[1] = 0.0;
-            current_potential[2] = 0.0;
-            current_potential[3] = 0.0;
-            current_potential[4] = 0.0;
-            current_potential[5] = 0.0;
-            current_potential[6] = 0.0;
-            current_potential[7] = 0.0;
-            current_potential[8] = 0.0;
-            current_potential[9] = 0.0;
+            // current_potential[0] = 0.0;
+            // current_potential[1] = 0.0;
+            // current_potential[2] = 0.0;
+            // current_potential[3] = 0.0;
+            // current_potential[4] = 0.0;
+            // current_potential[5] = 0.0;
+            // current_potential[6] = 0.0;
+            // current_potential[7] = 0.0;
+            // current_potential[8] = 0.0;
+            // current_potential[9] = 0.0;
+            cur_pot[0] = 0.0;
+            cur_pot[1] = 0.0;
+            cur_pot[2] = 0.0;
+            cur_pot[3] = 0.0;
+            cur_pot[4] = 0.0;
+            cur_pot[5] = 0.0;
+            cur_pot[6] = 0.0;
+            cur_pot[7] = 0.0;
+            cur_pot[8] = 0.0;
+
             // 10-19 not cached
             // current_potential[10] = 0.0;
             // current_potential[11] = 0.0;
@@ -391,17 +418,29 @@ namespace fmm {
                 //         current_potential(a) -= m_partner.grad_1(a) * D[ab_idx_map[i]];
                 //     }
                 // } //m_partner.grad_1(0);
-                current_potential(0) -= m_partner[1] * D[4];
-                current_potential(0) -= m_partner[1] * D[5];
-                current_potential(0) -= m_partner[1] * D[6];
+                // current_potential(0) -= m_partner[1] * D[4];
+                // current_potential(0) -= m_partner[1] * D[5];
+                // current_potential(0) -= m_partner[1] * D[6];
 
-                current_potential(1) -= m_partner[2] * D[5];
-                current_potential(1) -= m_partner[2] * D[7];
-                current_potential(1) -= m_partner[2] * D[8];
+                // current_potential(1) -= m_partner[2] * D[5];
+                // current_potential(1) -= m_partner[2] * D[7];
+                // current_potential(1) -= m_partner[2] * D[8];
 
-                current_potential(2) -= m_partner[3] * D[6];
-                current_potential(2) -= m_partner[3] * D[8];
-                current_potential(2) -= m_partner[3] * D[9];
+                // current_potential(2) -= m_partner[3] * D[6];
+                // current_potential(2) -= m_partner[3] * D[8];
+                // current_potential(2) -= m_partner[3] * D[9];
+
+                cur_pot[0] -= m_partner[1] * D[4];
+                cur_pot[0] -= m_partner[1] * D[5];
+                cur_pot[0] -= m_partner[1] * D[6];
+
+                cur_pot[1] -= m_partner[2] * D[5];
+                cur_pot[1] -= m_partner[2] * D[7];
+                cur_pot[1] -= m_partner[2] * D[8];
+
+                cur_pot[2] -= m_partner[3] * D[6];
+                cur_pot[2] -= m_partner[3] * D[8];
+                cur_pot[2] -= m_partner[3] * D[9];
             }
 
             // for (integer a = 0; a < NDIM; ++a) {
@@ -414,42 +453,84 @@ namespace fmm {
             //     }
             // }
 
-            current_potential(0) += m_partner[0] * D(0);
-            current_potential(1) += m_partner[0] * D(1);
-            current_potential(2) += m_partner[0] * D(2);
+            // current_potential(0) += m_partner[0] * D(0);
+            // current_potential(1) += m_partner[0] * D(1);
+            // current_potential(2) += m_partner[0] * D(2);
 
-            current_potential(0) += m_partner[4] * (D[10] * (factor[4] * HALF));
-            current_potential(0) += m_partner[5] * (D[11] * (factor[5] * HALF));
-            current_potential(0) += m_partner[6] * (D[12] * (factor[6] * HALF));
-            current_potential(0) += m_partner[7] * (D[13] * (factor[7] * HALF));
-            current_potential(0) += m_partner[8] * (D[14] * (factor[8] * HALF));
-            current_potential(0) += m_partner[9] * (D[15] * (factor[9] * HALF));
+            cur_pot[0] += m_partner[0] * D(0);
+            cur_pot[1] += m_partner[0] * D(1);
+            cur_pot[2] += m_partner[0] * D(2);
 
-            current_potential(1) += m_partner[4] * (D[11] * (factor[4] * HALF));
-            current_potential(1) += m_partner[5] * (D[13] * (factor[5] * HALF));
-            current_potential(1) += m_partner[6] * (D[14] * (factor[6] * HALF));
-            current_potential(1) += m_partner[7] * (D[16] * (factor[7] * HALF));
-            current_potential(1) += m_partner[8] * (D[17] * (factor[8] * HALF));
-            current_potential(1) += m_partner[9] * (D[18] * (factor[9] * HALF));
+            // current_potential(0) += m_partner[4] * (D[10] * (factor[4] * HALF));
+            // current_potential(0) += m_partner[5] * (D[11] * (factor[5] * HALF));
+            // current_potential(0) += m_partner[6] * (D[12] * (factor[6] * HALF));
+            // current_potential(0) += m_partner[7] * (D[13] * (factor[7] * HALF));
+            // current_potential(0) += m_partner[8] * (D[14] * (factor[8] * HALF));
+            // current_potential(0) += m_partner[9] * (D[15] * (factor[9] * HALF));
 
-            current_potential(2) += m_partner[4] * (D[12] * (factor[4] * HALF));
-            current_potential(2) += m_partner[5] * (D[14] * (factor[5] * HALF));
-            current_potential(2) += m_partner[6] * (D[15] * (factor[6] * HALF));
-            current_potential(2) += m_partner[7] * (D[17] * (factor[7] * HALF));
-            current_potential(2) += m_partner[8] * (D[18] * (factor[8] * HALF));
-            current_potential(2) += m_partner[9] * (D[19] * (factor[9] * HALF));
+            cur_pot[0] += m_partner[4] * (D[10] * (factor[4] * HALF));
+            cur_pot[0] += m_partner[5] * (D[11] * (factor[5] * HALF));
+            cur_pot[0] += m_partner[6] * (D[12] * (factor[6] * HALF));
+            cur_pot[0] += m_partner[7] * (D[13] * (factor[7] * HALF));
+            cur_pot[0] += m_partner[8] * (D[14] * (factor[8] * HALF));
+            cur_pot[0] += m_partner[9] * (D[15] * (factor[9] * HALF));
+
+            // current_potential(1) += m_partner[4] * (D[11] * (factor[4] * HALF));
+            // current_potential(1) += m_partner[5] * (D[13] * (factor[5] * HALF));
+            // current_potential(1) += m_partner[6] * (D[14] * (factor[6] * HALF));
+            // current_potential(1) += m_partner[7] * (D[16] * (factor[7] * HALF));
+            // current_potential(1) += m_partner[8] * (D[17] * (factor[8] * HALF));
+            // current_potential(1) += m_partner[9] * (D[18] * (factor[9] * HALF));
+
+            cur_pot[1] += m_partner[4] * (D[11] * (factor[4] * HALF));
+            cur_pot[1] += m_partner[5] * (D[13] * (factor[5] * HALF));
+            cur_pot[1] += m_partner[6] * (D[14] * (factor[6] * HALF));
+            cur_pot[1] += m_partner[7] * (D[16] * (factor[7] * HALF));
+            cur_pot[1] += m_partner[8] * (D[17] * (factor[8] * HALF));
+            cur_pot[1] += m_partner[9] * (D[18] * (factor[9] * HALF));
+
+            // current_potential(2) += m_partner[4] * (D[12] * (factor[4] * HALF));
+            // current_potential(2) += m_partner[5] * (D[14] * (factor[5] * HALF));
+            // current_potential(2) += m_partner[6] * (D[15] * (factor[6] * HALF));
+            // current_potential(2) += m_partner[7] * (D[17] * (factor[7] * HALF));
+            // current_potential(2) += m_partner[8] * (D[18] * (factor[8] * HALF));
+            // current_potential(2) += m_partner[9] * (D[19] * (factor[9] * HALF));
+
+            cur_pot[2] += m_partner[4] * (D[12] * (factor[4] * HALF));
+            cur_pot[2] += m_partner[5] * (D[14] * (factor[5] * HALF));
+            cur_pot[2] += m_partner[6] * (D[15] * (factor[6] * HALF));
+            cur_pot[2] += m_partner[7] * (D[17] * (factor[7] * HALF));
+            cur_pot[2] += m_partner[8] * (D[18] * (factor[8] * HALF));
+            cur_pot[2] += m_partner[9] * (D[19] * (factor[9] * HALF));
+
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[0];
+            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            current_potential_result++;
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[1];
+            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            current_potential_result++;
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[2];
+            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
+            current_potential_result++;
 
             // integer const ab_idx = {4,  5,  6,  7,  8,  9,};
             // for (integer i = 0; i != 6; ++i) {
             //     current_potential[ab_idx] += grad_0 * D[ab_idx];
             // }
 
-            current_potential[4] += m_partner[0] * D[4];
-            current_potential[5] += m_partner[0] * D[5];
-            current_potential[6] += m_partner[0] * D[6];
-            current_potential[7] += m_partner[0] * D[7];
-            current_potential[8] += m_partner[0] * D[8];
-            current_potential[9] += m_partner[0] * D[9];
+            // current_potential[4] += m_partner[0] * D[4];
+            // current_potential[5] += m_partner[0] * D[5];
+            // current_potential[6] += m_partner[0] * D[6];
+            // current_potential[7] += m_partner[0] * D[7];
+            // current_potential[8] += m_partner[0] * D[8];
+            // current_potential[9] += m_partner[0] * D[9];
+
+            cur_pot[3] += m_partner[0] * D[4];
+            cur_pot[4] += m_partner[0] * D[5];
+            cur_pot[5] += m_partner[0] * D[6];
+            cur_pot[6] += m_partner[0] * D[7];
+            cur_pot[7] += m_partner[0] * D[8];
+            cur_pot[8] += m_partner[0] * D[9];
 
             // int const* abc_idx_map6 = to_abc_idx_map6[i];
             // integer const ab_idx = {4, 5, 6, 7, 8, 9};
@@ -459,29 +540,53 @@ namespace fmm {
             //     }
             // }
 
-            current_potential[4] -= m_partner[1] * D[10];
-            current_potential[4] -= m_partner[2] * D[11];
-            current_potential[4] -= m_partner[3] * D[12];
+            // current_potential[4] -= m_partner[1] * D[10];
+            // current_potential[4] -= m_partner[2] * D[11];
+            // current_potential[4] -= m_partner[3] * D[12];
 
-            current_potential[5] -= m_partner[1] * D[11];
-            current_potential[5] -= m_partner[2] * D[13];
-            current_potential[5] -= m_partner[3] * D[14];
+            // current_potential[5] -= m_partner[1] * D[11];
+            // current_potential[5] -= m_partner[2] * D[13];
+            // current_potential[5] -= m_partner[3] * D[14];
 
-            current_potential[6] -= m_partner[1] * D[12];
-            current_potential[6] -= m_partner[2] * D[14];
-            current_potential[6] -= m_partner[3] * D[15];
+            // current_potential[6] -= m_partner[1] * D[12];
+            // current_potential[6] -= m_partner[2] * D[14];
+            // current_potential[6] -= m_partner[3] * D[15];
 
-            current_potential[7] -= m_partner[1] * D[13];
-            current_potential[7] -= m_partner[2] * D[16];
-            current_potential[7] -= m_partner[3] * D[17];
+            // current_potential[7] -= m_partner[1] * D[13];
+            // current_potential[7] -= m_partner[2] * D[16];
+            // current_potential[7] -= m_partner[3] * D[17];
 
-            current_potential[8] -= m_partner[1] * D[14];
-            current_potential[8] -= m_partner[2] * D[17];
-            current_potential[8] -= m_partner[3] * D[18];
+            // current_potential[8] -= m_partner[1] * D[14];
+            // current_potential[8] -= m_partner[2] * D[17];
+            // current_potential[8] -= m_partner[3] * D[18];
 
-            current_potential[9] -= m_partner[1] * D[15];
-            current_potential[9] -= m_partner[2] * D[18];
-            current_potential[9] -= m_partner[3] * D[19];
+            // current_potential[9] -= m_partner[1] * D[15];
+            // current_potential[9] -= m_partner[2] * D[18];
+            // current_potential[9] -= m_partner[3] * D[19];
+
+            cur_pot[3] -= m_partner[1] * D[10];
+            cur_pot[3] -= m_partner[2] * D[11];
+            cur_pot[3] -= m_partner[3] * D[12];
+
+            cur_pot[4] -= m_partner[1] * D[11];
+            cur_pot[4] -= m_partner[2] * D[13];
+            cur_pot[4] -= m_partner[3] * D[14];
+
+            cur_pot[5] -= m_partner[1] * D[12];
+            cur_pot[5] -= m_partner[2] * D[14];
+            cur_pot[5] -= m_partner[3] * D[15];
+
+            cur_pot[6] -= m_partner[1] * D[13];
+            cur_pot[6] -= m_partner[2] * D[16];
+            cur_pot[6] -= m_partner[3] * D[17];
+
+            cur_pot[7] -= m_partner[1] * D[14];
+            cur_pot[7] -= m_partner[2] * D[17];
+            cur_pot[7] -= m_partner[3] * D[18];
+
+            cur_pot[8] -= m_partner[1] * D[15];
+            cur_pot[8] -= m_partner[2] * D[18];
+            cur_pot[8] -= m_partner[3] * D[19];
 
             // struct_of_array_iterator<expansion, real, 20> current_potential_result(
             //     potential_expansions_SoA, cell_flat_index_unpadded);
@@ -499,40 +604,22 @@ namespace fmm {
             //     current_potential_result++;
             // }
 
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[1];
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[3];
             Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[2];
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[4];
             Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[3];
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[5];
             Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[4];
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[6];
             Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[5];
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[7];
             Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
             current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[6];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[7];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[8];
-            Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) +
-                current_potential[9];
+            tmp = m2m_vector(*current_potential_result, Vc::flags::element_aligned) + cur_pot[8];
             Vc::where(mask, tmp).memstore(*current_potential_result, Vc::flags::element_aligned);
             current_potential_result++;    // don't remove this
 
