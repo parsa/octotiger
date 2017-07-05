@@ -72,9 +72,15 @@ namespace fmm {
                         // -> maps to the same for some SIMD lanes
                         cell_index_coarse.transform_coarse();
 
-                        this->blocked_interaction(cell_index, cell_flat_index, cell_index_coarse,
-                            cell_index_unpadded, cell_flat_index_unpadded, stencil,
-                            outer_stencil_index);
+                        if (type == RHO) {
+                            this->blocked_interaction_rho(cell_index, cell_flat_index,
+                                cell_index_coarse, cell_index_unpadded, cell_flat_index_unpadded,
+                                stencil, outer_stencil_index);
+                        } else {
+                            this->blocked_interaction_non_rho(cell_index, cell_flat_index,
+                                cell_index_coarse, cell_index_unpadded, cell_flat_index_unpadded,
+                                stencil, outer_stencil_index);
+                        }
                     }
                 }
             }

@@ -109,14 +109,15 @@ namespace fmm {
         //     }
         // }
 
-        void blocked_interaction(const multiindex<>& cell_index, const int64_t cell_flat_index,
+        void blocked_interaction_rho(const multiindex<>& cell_index, const int64_t cell_flat_index,
             const multiindex<m2m_int_vector>& cell_index_coarse,
             const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
-            const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index
-            // const size_t inner_stencil_index
-            // const multiindex<>& interaction_partner_index
-            // const int64_t interaction_partner_flat_index
-            );
+            const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index);
+
+        void blocked_interaction_non_rho(const multiindex<>& cell_index,
+            const int64_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
+            const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
+            const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index);
 
         void vectors_check_empty();
 
