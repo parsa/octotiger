@@ -192,7 +192,7 @@ namespace fmm {
             // octotiger::fmm::set_basis(D, dX);
 
             // expansion_v current_potential;
-            m2m_vector cur_pot[9];
+            m2m_vector cur_pot[10];
             cur_pot[0] = 0.0;
             cur_pot[1] = 0.0;
             cur_pot[2] = 0.0;
@@ -202,88 +202,85 @@ namespace fmm {
             cur_pot[6] = 0.0;
             cur_pot[7] = 0.0;
             cur_pot[8] = 0.0;
+            cur_pot[9] = 0.0;
 
             // 10-19 are not cached!
 
             // the following loops calculate formula (10), potential from B->A
-            m2m_vector p_0 = m_partner[0] * D_lower[0];
+            cur_pot[0] = m_partner[0] * D_lower[0];
 
             if (type != RHO) {
-                p_0 -= m_partner[1] * D_lower[1];
-                p_0 -= m_partner[2] * D_lower[2];
-                p_0 -= m_partner[3] * D_lower[3];
+                cur_pot[0] -= m_partner[1] * D_lower[1];
+                cur_pot[0] -= m_partner[2] * D_lower[2];
+                cur_pot[0] -= m_partner[3] * D_lower[3];
             }
 
-            p_0 += m_partner[4] * (D_lower[4] * (factor[4] * HALF));
-            p_0 += m_partner[5] * (D_lower[5] * (factor[5] * HALF));
-            p_0 += m_partner[6] * (D_lower[6] * (factor[6] * HALF));
-            p_0 += m_partner[7] * (D_lower[7] * (factor[7] * HALF));
-            p_0 += m_partner[8] * (D_lower[8] * (factor[8] * HALF));
-            p_0 += m_partner[9] * (D_lower[9] * (factor[9] * HALF));
+            cur_pot[0] += m_partner[4] * (D_lower[4] * (factor[4] * HALF));
+            cur_pot[0] += m_partner[5] * (D_lower[5] * (factor[5] * HALF));
+            cur_pot[0] += m_partner[6] * (D_lower[6] * (factor[6] * HALF));
+            cur_pot[0] += m_partner[7] * (D_lower[7] * (factor[7] * HALF));
+            cur_pot[0] += m_partner[8] * (D_lower[8] * (factor[8] * HALF));
+            cur_pot[0] += m_partner[9] * (D_lower[9] * (factor[9] * HALF));
 
-            p_0 -= m_partner[10] * (D_lower[10] * (factor[10] * SIXTH));
-            p_0 -= m_partner[11] * (D_lower[11] * (factor[11] * SIXTH));
-            p_0 -= m_partner[12] * (D_lower[12] * (factor[12] * SIXTH));
-            p_0 -= m_partner[13] * (D_lower[13] * (factor[13] * SIXTH));
-            p_0 -= m_partner[14] * (D_lower[14] * (factor[14] * SIXTH));
-            p_0 -= m_partner[15] * (D_lower[15] * (factor[15] * SIXTH));
-            p_0 -= m_partner[16] * (D_lower[16] * (factor[16] * SIXTH));
-            p_0 -= m_partner[17] * (D_lower[17] * (factor[17] * SIXTH));
-            p_0 -= m_partner[18] * (D_lower[18] * (factor[18] * SIXTH));
-            p_0 -= m_partner[19] * (D_lower[19] * (factor[19] * SIXTH));
+            cur_pot[0] -= m_partner[10] * (D_lower[10] * (factor[10] * SIXTH));
+            cur_pot[0] -= m_partner[11] * (D_lower[11] * (factor[11] * SIXTH));
+            cur_pot[0] -= m_partner[12] * (D_lower[12] * (factor[12] * SIXTH));
+            cur_pot[0] -= m_partner[13] * (D_lower[13] * (factor[13] * SIXTH));
+            cur_pot[0] -= m_partner[14] * (D_lower[14] * (factor[14] * SIXTH));
+            cur_pot[0] -= m_partner[15] * (D_lower[15] * (factor[15] * SIXTH));
+            cur_pot[0] -= m_partner[16] * (D_lower[16] * (factor[16] * SIXTH));
+            cur_pot[0] -= m_partner[17] * (D_lower[17] * (factor[17] * SIXTH));
+            cur_pot[0] -= m_partner[18] * (D_lower[18] * (factor[18] * SIXTH));
+            cur_pot[0] -= m_partner[19] * (D_lower[19] * (factor[19] * SIXTH));
 
-            // current_potential[0] = p_0;
+            // current_potential[0] = cur_pot[0];
             struct_of_array_iterator<expansion, real, 20> current_potential_result(
                 potential_expansions_SoA, cell_flat_index_unpadded);
 
-            m2m_vector tmp = current_potential_result.value() + p_0;
+            m2m_vector tmp = current_potential_result.value() + cur_pot[0];
             Vc::where(mask, tmp).memstore(
                 current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
 
             if (type != RHO) {
-                cur_pot[0] -= m_partner[1] * D_lower[4];
-                cur_pot[0] -= m_partner[1] * D_lower[5];
-                cur_pot[0] -= m_partner[1] * D_lower[6];
+                cur_pot[1] -= m_partner[1] * D_lower[4];
+                cur_pot[1] -= m_partner[1] * D_lower[5];
+                cur_pot[1] -= m_partner[1] * D_lower[6];
 
-                cur_pot[1] -= m_partner[2] * D_lower[5];
-                cur_pot[1] -= m_partner[2] * D_lower[7];
-                cur_pot[1] -= m_partner[2] * D_lower[8];
+                cur_pot[2] -= m_partner[2] * D_lower[5];
+                cur_pot[2] -= m_partner[2] * D_lower[7];
+                cur_pot[2] -= m_partner[2] * D_lower[8];
 
-                cur_pot[2] -= m_partner[3] * D_lower[6];
-                cur_pot[2] -= m_partner[3] * D_lower[8];
-                cur_pot[2] -= m_partner[3] * D_lower[9];
+                cur_pot[3] -= m_partner[3] * D_lower[6];
+                cur_pot[3] -= m_partner[3] * D_lower[8];
+                cur_pot[3] -= m_partner[3] * D_lower[9];
             }
 
-            cur_pot[0] += m_partner[0] * D_lower[1];
-            cur_pot[1] += m_partner[0] * D_lower[2];
-            cur_pot[2] += m_partner[0] * D_lower[3];
+            cur_pot[1] += m_partner[0] * D_lower[1];
+            cur_pot[2] += m_partner[0] * D_lower[2];
+            cur_pot[3] += m_partner[0] * D_lower[3];
 
-            cur_pot[0] += m_partner[4] * (D_lower[10] * (factor[4] * HALF));
-            cur_pot[0] += m_partner[5] * (D_lower[11] * (factor[5] * HALF));
-            cur_pot[0] += m_partner[6] * (D_lower[12] * (factor[6] * HALF));
-            cur_pot[0] += m_partner[7] * (D_lower[13] * (factor[7] * HALF));
-            cur_pot[0] += m_partner[8] * (D_lower[14] * (factor[8] * HALF));
-            cur_pot[0] += m_partner[9] * (D_lower[15] * (factor[9] * HALF));
+            cur_pot[1] += m_partner[4] * (D_lower[10] * (factor[4] * HALF));
+            cur_pot[1] += m_partner[5] * (D_lower[11] * (factor[5] * HALF));
+            cur_pot[1] += m_partner[6] * (D_lower[12] * (factor[6] * HALF));
+            cur_pot[1] += m_partner[7] * (D_lower[13] * (factor[7] * HALF));
+            cur_pot[1] += m_partner[8] * (D_lower[14] * (factor[8] * HALF));
+            cur_pot[1] += m_partner[9] * (D_lower[15] * (factor[9] * HALF));
 
-            cur_pot[1] += m_partner[4] * (D_lower[11] * (factor[4] * HALF));
-            cur_pot[1] += m_partner[5] * (D_lower[13] * (factor[5] * HALF));
-            cur_pot[1] += m_partner[6] * (D_lower[14] * (factor[6] * HALF));
-            cur_pot[1] += m_partner[7] * (D_lower[16] * (factor[7] * HALF));
-            cur_pot[1] += m_partner[8] * (D_lower[17] * (factor[8] * HALF));
-            cur_pot[1] += m_partner[9] * (D_lower[18] * (factor[9] * HALF));
+            cur_pot[2] += m_partner[4] * (D_lower[11] * (factor[4] * HALF));
+            cur_pot[2] += m_partner[5] * (D_lower[13] * (factor[5] * HALF));
+            cur_pot[2] += m_partner[6] * (D_lower[14] * (factor[6] * HALF));
+            cur_pot[2] += m_partner[7] * (D_lower[16] * (factor[7] * HALF));
+            cur_pot[2] += m_partner[8] * (D_lower[17] * (factor[8] * HALF));
+            cur_pot[2] += m_partner[9] * (D_lower[18] * (factor[9] * HALF));
 
-            cur_pot[2] += m_partner[4] * (D_lower[12] * (factor[4] * HALF));
-            cur_pot[2] += m_partner[5] * (D_lower[14] * (factor[5] * HALF));
-            cur_pot[2] += m_partner[6] * (D_lower[15] * (factor[6] * HALF));
-            cur_pot[2] += m_partner[7] * (D_lower[17] * (factor[7] * HALF));
-            cur_pot[2] += m_partner[8] * (D_lower[18] * (factor[8] * HALF));
-            cur_pot[2] += m_partner[9] * (D_lower[19] * (factor[9] * HALF));
+            cur_pot[3] += m_partner[4] * (D_lower[12] * (factor[4] * HALF));
+            cur_pot[3] += m_partner[5] * (D_lower[14] * (factor[5] * HALF));
+            cur_pot[3] += m_partner[6] * (D_lower[15] * (factor[6] * HALF));
+            cur_pot[3] += m_partner[7] * (D_lower[17] * (factor[7] * HALF));
+            cur_pot[3] += m_partner[8] * (D_lower[18] * (factor[8] * HALF));
+            cur_pot[3] += m_partner[9] * (D_lower[19] * (factor[9] * HALF));
 
-            tmp = current_potential_result.value() + cur_pot[0];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
             tmp = current_potential_result.value() + cur_pot[1];
             Vc::where(mask, tmp).memstore(
                 current_potential_result.pointer(), Vc::flags::element_aligned);
@@ -292,42 +289,42 @@ namespace fmm {
             Vc::where(mask, tmp).memstore(
                 current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
-
-            cur_pot[3] += m_partner[0] * D_lower[4];
-            cur_pot[4] += m_partner[0] * D_lower[5];
-            cur_pot[5] += m_partner[0] * D_lower[6];
-            cur_pot[6] += m_partner[0] * D_lower[7];
-            cur_pot[7] += m_partner[0] * D_lower[8];
-            cur_pot[8] += m_partner[0] * D_lower[9];
-
-            cur_pot[3] -= m_partner[1] * D_lower[10];
-            cur_pot[3] -= m_partner[2] * D_lower[11];
-            cur_pot[3] -= m_partner[3] * D_lower[12];
-
-            cur_pot[4] -= m_partner[1] * D_lower[11];
-            cur_pot[4] -= m_partner[2] * D_lower[13];
-            cur_pot[4] -= m_partner[3] * D_lower[14];
-
-            cur_pot[5] -= m_partner[1] * D_lower[12];
-            cur_pot[5] -= m_partner[2] * D_lower[14];
-            cur_pot[5] -= m_partner[3] * D_lower[15];
-
-            cur_pot[6] -= m_partner[1] * D_lower[13];
-            cur_pot[6] -= m_partner[2] * D_lower[16];
-            cur_pot[6] -= m_partner[3] * D_lower[17];
-
-            cur_pot[7] -= m_partner[1] * D_lower[14];
-            cur_pot[7] -= m_partner[2] * D_lower[17];
-            cur_pot[7] -= m_partner[3] * D_lower[18];
-
-            cur_pot[8] -= m_partner[1] * D_lower[15];
-            cur_pot[8] -= m_partner[2] * D_lower[18];
-            cur_pot[8] -= m_partner[3] * D_lower[19];
-
             tmp = current_potential_result.value() + cur_pot[3];
             Vc::where(mask, tmp).memstore(
                 current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
+
+            cur_pot[4] += m_partner[0] * D_lower[4];
+            cur_pot[5] += m_partner[0] * D_lower[5];
+            cur_pot[6] += m_partner[0] * D_lower[6];
+            cur_pot[7] += m_partner[0] * D_lower[7];
+            cur_pot[8] += m_partner[0] * D_lower[8];
+            cur_pot[9] += m_partner[0] * D_lower[9];
+
+            cur_pot[4] -= m_partner[1] * D_lower[10];
+            cur_pot[4] -= m_partner[2] * D_lower[11];
+            cur_pot[4] -= m_partner[3] * D_lower[12];
+
+            cur_pot[5] -= m_partner[1] * D_lower[11];
+            cur_pot[5] -= m_partner[2] * D_lower[13];
+            cur_pot[5] -= m_partner[3] * D_lower[14];
+
+            cur_pot[6] -= m_partner[1] * D_lower[12];
+            cur_pot[6] -= m_partner[2] * D_lower[14];
+            cur_pot[6] -= m_partner[3] * D_lower[15];
+
+            cur_pot[7] -= m_partner[1] * D_lower[13];
+            cur_pot[7] -= m_partner[2] * D_lower[16];
+            cur_pot[7] -= m_partner[3] * D_lower[17];
+
+            cur_pot[8] -= m_partner[1] * D_lower[14];
+            cur_pot[8] -= m_partner[2] * D_lower[17];
+            cur_pot[8] -= m_partner[3] * D_lower[18];
+
+            cur_pot[9] -= m_partner[1] * D_lower[15];
+            cur_pot[9] -= m_partner[2] * D_lower[18];
+            cur_pot[9] -= m_partner[3] * D_lower[19];
+
             tmp = current_potential_result.value() + cur_pot[4];
             Vc::where(mask, tmp).memstore(
                 current_potential_result.pointer(), Vc::flags::element_aligned);
@@ -345,6 +342,10 @@ namespace fmm {
                 current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;
             tmp = current_potential_result.value() + cur_pot[8];
+            Vc::where(mask, tmp).memstore(
+                current_potential_result.pointer(), Vc::flags::element_aligned);
+            current_potential_result++;
+            tmp = current_potential_result.value() + cur_pot[9];
             Vc::where(mask, tmp).memstore(
                 current_potential_result.pointer(), Vc::flags::element_aligned);
             current_potential_result++;    // don't remove this
