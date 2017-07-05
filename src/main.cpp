@@ -33,6 +33,9 @@ extern size_t missing_neighbors;
 
 options opts;
 
+double total_duration = 0.0;
+double total_no_of_calls = 0.0;
+
 bool gravity_on = true;
 bool hydro_on = true;
 HPX_PLAIN_ACTION(grid::set_pivot, set_pivot_action);
@@ -216,6 +219,10 @@ int hpx_main(int argc, char* argv[]) {
     std::cout << "missing_neighbors: " << missing_neighbors << std::endl;
 
     printf("Exiting...\n");
+    std::cout << "total_duration: " << total_duration << "ms" << std::endl;
+    std::cout << "total no of calls: " << total_no_of_calls << "ms" << std::endl;
+    std::cout << "avr. duration per call: " << (total_duration / total_no_of_calls) << "ms"
+              << std::endl;
     return hpx::finalize();
 }
 

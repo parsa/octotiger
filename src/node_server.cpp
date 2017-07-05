@@ -26,6 +26,9 @@
 #endif
 extern options opts;
 
+extern double total_duration;
+extern double total_no_of_calls;
+
 #include <hpx/include/lcos.hpp>
 #include <hpx/include/util.hpp>
 
@@ -509,56 +512,10 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr = grid_ptr->get_com_ptr();
         // octotiger::fmm::m2m_interactions interactor(*grid_ptr, all_neighbor_interaction_data,
         // type);
-        auto start_with_construct = std::chrono::high_resolution_clock::now();
+        auto start_total = std::chrono::high_resolution_clock::now();
 
         octotiger::fmm::m2m_interactions interactor(
             M_ptr, com_ptr, all_neighbor_interaction_data, type);
-
-        ////////////////////////////////////////// start input comparisons /////////////////////////////////////////
-
-        // {
-        //     std::cout << "comparing M, local_expansions:" << std::endl;
-        //     std::vector<expansion>& local_expansions = interactor.get_local_expansions();
-
-        //     octotiger::fmm::compare_inner_padded_with_non_padded(
-        //         M_ptr, local_expansions, expansion_comparator);
-
-        //     for (geo::direction const& dir : geo::direction::full_set()) {
-        //         if (dir != 0) {
-        //             continue;
-        //         }
-        //         if (all_neighbors_M_ptr[dir]) {
-        //             std::cout << "printing dir: " << dir << std::endl;
-        //             std::vector<expansion>& neighbor_M_ptr = *(all_neighbors_M_ptr[dir]);
-        //             octotiger::fmm::print_layered_not_padded(
-        //                 true, [&neighbor_M_ptr](const octotiger::fmm::multiindex& i,
-        //                           size_t flat_index) { std::cout << neighbor_M_ptr[flat_index];
-        //                           });
-        //         } else {
-        //             std::cout << "empty dir" << std::endl;
-        //         }
-        //     }
-
-        //     std::cout << "comparing M, local_expansions neighborhood:" << std::endl;
-        //     octotiger::fmm::compare_padded_with_non_padded(
-        //         all_neighbors_M_ptr, is_direction_empty, local_expansions, expansion_comparator);
-
-        //     std::cout << "comparing com0, center_of_masses:" << std::endl;
-        //     std::vector<space_vector>& center_of_masses = interactor.get_center_of_masses();
-        //     std::vector<space_vector>& com0 = *(com_ptr[0]);
-
-        //     octotiger::fmm::compare_inner_padded_with_non_padded(
-        //         com0, center_of_masses, space_vector_comparator);
-
-        //     std::cout << "comparing com0, center_of_masses neighborhood:" << std::endl;
-        //     octotiger::fmm::compare_padded_with_non_padded(
-        //         all_neighbors_com0, is_direction_empty, center_of_masses,
-        //         space_vector_comparator);
-        // }
-
-        ////////////////////////////////////////// end input comparisons /////////////////////////////////////////
-
-        auto start_with_SoA_conv = std::chrono::high_resolution_clock::now();
 
         interactor.compute_interactions();    // includes boundary
 
@@ -572,21 +529,6 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             if (opts.ang_con) {
                 std::fill(std::begin(L_c), std::end(L_c), ZERO);
             }
-
-            // std::cout << "type: " << type << std::endl;
-            // std::array<real, NDIM> grid_xmin = grid_ptr->get_xmin();
-            // std::cout << "grid xmin: " << grid_xmin[0] << ", " << grid_xmin[1] << ", "
-            //           << grid_xmin[2] << std::endl;
-            // real grid_dx = grid_ptr->get_dx();
-            // std::cout << "dx: " << grid_dx << std::endl;
-            // for (const geo::direction& dir : geo::direction::full_set()) {
-            //     std::cout << "dir: " << dir << " dir[0]: " << dir[0] << " dir[1]: " << dir[1]
-            //               << " dir[2]: " << dir[2] << " empty(): " << std::boolalpha
-            //               << neighbors[dir].empty()
-            //               << " is_local: " << all_neighbor_interaction_data[dir].data.is_local
-            //               << " is_monopole: " << all_neighbor_interaction_data[dir].is_monopole
-            //               << std::endl;
-            // }
 
             // TODO: at this time, do have to trigger old-style multipole-monopole interactions
             // for directions that are monopoles
@@ -620,30 +562,30 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
             }
         }
 
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> duration = end - start_with_construct;
-        std::cout << "new interaction kernel  (with construct, ms): " << duration.count()
-                  << std::endl;
-        duration = end - start_with_SoA_conv;
-        std::cout << "new interaction kernel (with SoA conv, ms): " << duration.count()
-                  << std::endl;
+        auto end_total = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end_total - start_total;
+        std::cout << "new interaction kernel  (total, ms): " << duration.count() << std::endl;
+
+        total_duration += duration.count();
+        total_no_of_calls += 1.0;
 
         // // kernel call generated debugging ilist, compare it now
         // compare_interaction_lists();
 
-        auto start_old = std::chrono::high_resolution_clock::now();
-        grid_ptr->compute_interactions(type);
-        for (const geo::direction& dir : geo::direction::full_set()) {
-            if (!neighbors[dir].empty()) {
-                neighbor_gravity_type& neighbor_data = all_neighbor_interaction_data[dir];
-                grid_ptr->compute_boundary_interactions(
-                    type, neighbor_data.direction, neighbor_data.is_monopole, neighbor_data.data);
-            }
-        }
+        // auto start_old = std::chrono::high_resolution_clock::now();
+        // grid_ptr->compute_interactions(type);
+        // for (const geo::direction& dir : geo::direction::full_set()) {
+        //     if (!neighbors[dir].empty()) {
+        //         neighbor_gravity_type& neighbor_data = all_neighbor_interaction_data[dir];
+        //         grid_ptr->compute_boundary_interactions(
+        //             type, neighbor_data.direction, neighbor_data.is_monopole,
+        //             neighbor_data.data);
+        //     }
+        // }
 
-        auto end_old = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> duration_old = end_old - start_old;
-        std::cout << "old interaction kernel (ms): " << duration_old.count() << std::endl;
+        // auto end_old = std::chrono::high_resolution_clock::now();
+        // std::chrono::duration<double, std::milli> duration_old = end_old - start_old;
+        // std::cout << "old interaction kernel (ms): " << duration_old.count() << std::endl;
 
         std::vector<expansion>& L = grid_ptr->get_L();
         std::vector<expansion>& potential_expansions = interactor.get_potential_expansions();

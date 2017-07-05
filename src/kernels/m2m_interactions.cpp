@@ -94,8 +94,9 @@ namespace fmm {
 
         neighbor_empty[13] = false;
 
-        std::cout << current_monopole << " monopoles, " << current_monopole << " missing neighbors"
-                  << std::endl;
+        // std::cout << current_monopole << " monopoles, " << current_monopole << " missing
+        // neighbors"
+        //           << std::endl;
 
         // std::cout << std::boolalpha;
         // for (size_t i = 0; i < 27; i++) {
@@ -138,7 +139,7 @@ namespace fmm {
         auto end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> duration = end - start;
-        std::cout << "new interaction kernel apply only (ms): " << duration.count() << std::endl;
+        std::cout << "new interaction kernel (apply only, ms): " << duration.count() << std::endl;
 
         // TODO: remove this after finalizing conversion
         // copy back SoA data into non-SoA result
