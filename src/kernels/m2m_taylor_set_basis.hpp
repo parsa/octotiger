@@ -144,8 +144,8 @@ namespace fmm {
 
     class D_split
     {
-    private:
-        const std::array<m2m_vector, NDIM>& X;
+    public:
+        const m2m_vector (&X)[NDIM];
 
         m2m_vector X_00;
         m2m_vector X_11;
@@ -160,7 +160,7 @@ namespace fmm {
         m2m_vector d3;
 
     public:
-        D_split(const std::array<m2m_vector, NDIM>& X)
+        D_split(const m2m_vector (&X)[NDIM])
           : X(X) {
             X_00 = X[0] * X[0];
             X_11 = X[1] * X[1];
@@ -187,7 +187,7 @@ namespace fmm {
         }
 
         // overload for kernel-specific simd type
-        inline void calculate_D_lower(std::array<m2m_vector, 20>& A) {
+        inline void calculate_D_lower(m2m_vector (&A)[20]) {
             // formula (6)
             A[0] = d0;
 
@@ -241,44 +241,44 @@ namespace fmm {
             A[19] += 3.0 * d2_X2;
         }
 
-        // overload for kernel-specific simd type
-        inline void calculate_D_upper(std::array<m2m_vector, 15>& A) {
-            A[0] = X[0] * X[0] * d3 + 2.0 * d2;
-            m2m_vector d3_X00 = d3 * X_00;
-            A[0] += d2;
-            A[0] += 5.0 * d3_X00;
-            m2m_vector d3_X01 = d3 * X[0] * X[1];
-            A[1] = 3.0 * d3_X01;
-            m2m_vector X_02 = X[0] * X[2];
-            m2m_vector d3_X02 = d3 * X_02;
-            A[2] = 3.0 * d3_X02;
-            A[3] = d2;
-            m2m_vector d3_X11 = d3 * X_11;
-            A[3] += d3_X11;
-            A[3] += d3 * X_00;
-            m2m_vector d3_X12 = d3 * X[1] * X[2];
-            A[4] = d3_X12;
-            A[5] = d2;
-            m2m_vector d3_X22 = d3 * X_22;
-            A[5] += d3_X22;
-            A[5] += d3_X00;
-            A[6] = 3.0 * d3_X01;
-            A[7] = d3 * X_02;
-            A[8] = d3 * X[0] * X[1];
-            A[9] = 3.0 * d3_X02;
-            A[10] = X[1] * X[1] * d3 + 2.0 * d2;
-            A[10] += d2;
-            A[10] += 5.0 * d3_X11;
+        // // overload for kernel-specific simd type
+        // inline void calculate_D_upper(std::array<m2m_vector, 15>& A) {
+        //     A[0] = X[0] * X[0] * d3 + 2.0 * d2;
+        //     m2m_vector d3_X00 = d3 * X_00;
+        //     A[0] += d2;
+        //     A[0] += 5.0 * d3_X00;
+        //     m2m_vector d3_X01 = d3 * X[0] * X[1];
+        //     A[1] = 3.0 * d3_X01;
+        //     m2m_vector X_02 = X[0] * X[2];
+        //     m2m_vector d3_X02 = d3 * X_02;
+        //     A[2] = 3.0 * d3_X02;
+        //     A[3] = d2;
+        //     m2m_vector d3_X11 = d3 * X_11;
+        //     A[3] += d3_X11;
+        //     A[3] += d3 * X_00;
+        //     m2m_vector d3_X12 = d3 * X[1] * X[2];
+        //     A[4] = d3_X12;
+        //     A[5] = d2;
+        //     m2m_vector d3_X22 = d3 * X_22;
+        //     A[5] += d3_X22;
+        //     A[5] += d3_X00;
+        //     A[6] = 3.0 * d3_X01;
+        //     A[7] = d3 * X_02;
+        //     A[8] = d3 * X[0] * X[1];
+        //     A[9] = 3.0 * d3_X02;
+        //     A[10] = X[1] * X[1] * d3 + 2.0 * d2;
+        //     A[10] += d2;
+        //     A[10] += 5.0 * d3_X11;
 
-            A[11] = 3.0 * d3_X12;
-            A[12] = d2;
-            A[12] += d3_X22;
-            A[12] += d3_X11;
-            A[13] = 3.0 * d3_X12;
-            A[14] = X[2] * X[2] * d3 + 2.0 * d2;
-            A[14] += d2;
-            A[14] += 5.0 * d3_X22;
-        }
+        //     A[11] = 3.0 * d3_X12;
+        //     A[12] = d2;
+        //     A[12] += d3_X22;
+        //     A[12] += d3_X11;
+        //     A[13] = 3.0 * d3_X12;
+        //     A[14] = X[2] * X[2] * d3 + 2.0 * d2;
+        //     A[14] += d2;
+        //     A[14] += 5.0 * d3_X22;
+        // }
     };
 
 }    // namespace fmm
