@@ -520,6 +520,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         interactor.compute_interactions();    // includes boundary
 
         // add monopole boundaries to the results
+        std::chrono::duration<double, std::milli> duration_monopoles;
         {
             std::vector<expansion>& L = grid_ptr->get_L();
             std::vector<space_vector>& L_c = grid_ptr->get_L_c();
@@ -547,8 +548,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
                 }
             }
             auto end_monopoles = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> duration_monopoles =
-                end_monopoles - start_monopoles;
+            duration_monopoles = end_monopoles - start_monopoles;
             std::cout << "old monopole boundary interactions (ms): " << duration_monopoles.count()
                       << std::endl;
 
@@ -564,9 +564,9 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
 
         auto end_total = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> duration = end_total - start_total;
-        std::cout << "new interaction kernel  (total, ms): " << duration.count() << std::endl;
+        std::cout << "new interaction kernel  (total ex. old boundary, ms): " << (duration.count() - duration_monopoles.count()) << std::endl;
 
-        total_duration += duration.count();
+        total_duration += duration.count() - duration_monopoles.count();
         total_no_of_calls += 1.0;
 
         // // kernel call generated debugging ilist, compare it now

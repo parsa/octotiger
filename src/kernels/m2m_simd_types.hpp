@@ -1,4 +1,4 @@
-#include "taylor.hpp"
+// #include "taylor.hpp"
 
 #include <Vc/Vc>
 
@@ -17,5 +17,5 @@ using m2m_vector = typename Vc::datapar<double, Vc::datapar_abi::fixed_size<8>>;
 using m2m_int_vector = typename Vc::datapar<int64_t, Vc::datapar_abi::fixed_size<8>>;
 #endif
 
-using multipole_v = taylor<4, m2m_vector>;
-using expansion_v = taylor<4, m2m_vector>;
+// using multipole_v = taylor<4, m2m_vector>;
+// using expansion_v = taylor<4, m2m_vector>;

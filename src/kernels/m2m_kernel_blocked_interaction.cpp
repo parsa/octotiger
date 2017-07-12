@@ -20,15 +20,20 @@ namespace fmm {
     // - remove all sqr()
     // - increase INX
 
-    void m2m_kernel::blocked_interaction_rho(const multiindex<>& cell_index,
-        const int64_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
-        const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
+    void m2m_kernel::blocked_interaction_rho(
+        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& potential_expansions_SoA,
+        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& angular_corrections_SoA,
+        const multiindex<>& cell_index, const size_t cell_flat_index,
+        const multiindex<m2m_int_vector>& cell_index_coarse,
+        const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
         const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index) {
         // TODO: should change name to something better (not taylor, but space_vector)
         // struct_of_array_taylor<space_vector, real, 3> X =
         //     center_of_masses_SoA.get_view(cell_flat_index);
 
-        struct_of_array_iterator<space_vector, real, 3> X(center_of_masses_SoA, cell_flat_index);
+        // struct_of_array_iterator<space_vector, real, 3> X(center_of_masses_SoA, cell_flat_index);
         for (size_t inner_stencil_index = 0; inner_stencil_index < STENCIL_BLOCKING &&
              outer_stencil_index + inner_stencil_index < stencil.size();
              inner_stencil_index += 1) {
@@ -37,7 +42,7 @@ namespace fmm {
             const multiindex<> interaction_partner_index(cell_index.x + stencil_element.x,
                 cell_index.y + stencil_element.y, cell_index.z + stencil_element.z);
 
-            const int64_t interaction_partner_flat_index =
+            const size_t interaction_partner_flat_index =
                 to_flat_index_padded(interaction_partner_index);
 
             // check whether all vector elements are in empty border
@@ -65,69 +70,60 @@ namespace fmm {
                 continue;
             }
 
-            struct_of_array_iterator<space_vector, real, 3> Y(
-                center_of_masses_SoA, interaction_partner_flat_index);
+            // struct_of_array_iterator<space_vector, real, 3> Y(
+            //     center_of_masses_SoA, interaction_partner_flat_index);
 
             // distance between cells in all dimensions
             // TODO: replace by m2m_vector for vectorization or get rid of temporary
-            m2m_vector dX[NDIM];
-            dX[0] = X.value() - Y.value();
-            X++;
-            Y++;
-            dX[1] = X.value() - Y.value();
-            X++;
-            Y++;
-            dX[2] = X.value() - Y.value();
+
+            std::array<m2m_vector, NDIM> X;
+            X[0] = center_of_masses_SoA.value<0>(cell_flat_index);
+            X[1] = center_of_masses_SoA.value<1>(cell_flat_index);
+            X[2] = center_of_masses_SoA.value<2>(cell_flat_index);
+
+            std::array<m2m_vector, NDIM> Y;
+            Y[0] = center_of_masses_SoA.value<0>(interaction_partner_flat_index);
+            Y[1] = center_of_masses_SoA.value<1>(interaction_partner_flat_index);
+            Y[2] = center_of_masses_SoA.value<2>(interaction_partner_flat_index);
+
+            std::array<m2m_vector, NDIM> dX;
+            dX[0] = X[0] - Y[0];
+            dX[1] = X[1] - Y[1];
+            dX[2] = X[2] - Y[2];
+            // dX[0] = center_of_masses_SoA.value<0>(cell_flat_index) -
+            //     center_of_masses_SoA.value<0>(interaction_partner_flat_index);
+            // dX[1] = center_of_masses_SoA.value<1>(cell_flat_index) -
+            //     center_of_masses_SoA.value<1>(interaction_partner_flat_index);
+            // dX[2] = center_of_masses_SoA.value<2>(cell_flat_index) -
+            //     center_of_masses_SoA.value<2>(interaction_partner_flat_index);
 
             // reset X for next iteration
-            X.decrement(2);
+            // X.decrement(2);
 
-            expansion_v m_partner;
+            // TODO: does this get initialized
+            // expansion_v m_partner;
+            std::array<m2m_vector, 20> m_partner;
 
-            {
-                struct_of_array_iterator<expansion, real, 20> m_partner_iterator(
-                    local_expansions_SoA, interaction_partner_flat_index);
-                m_partner[0] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[1] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[2] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[3] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[4] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[5] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[6] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[7] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[8] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[9] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[10] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[11] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[12] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[13] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[14] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[15] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[16] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[17] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[18] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[19] = m_partner_iterator.value();
-                m_partner_iterator++;
-            }
+            m_partner[0] = local_expansions_SoA.value<0>(interaction_partner_flat_index);
+            m_partner[1] = local_expansions_SoA.value<1>(interaction_partner_flat_index);
+            m_partner[2] = local_expansions_SoA.value<2>(interaction_partner_flat_index);
+            m_partner[3] = local_expansions_SoA.value<3>(interaction_partner_flat_index);
+            m_partner[4] = local_expansions_SoA.value<4>(interaction_partner_flat_index);
+            m_partner[5] = local_expansions_SoA.value<5>(interaction_partner_flat_index);
+            m_partner[6] = local_expansions_SoA.value<6>(interaction_partner_flat_index);
+            m_partner[7] = local_expansions_SoA.value<7>(interaction_partner_flat_index);
+            m_partner[8] = local_expansions_SoA.value<8>(interaction_partner_flat_index);
+            m_partner[9] = local_expansions_SoA.value<9>(interaction_partner_flat_index);
+            m_partner[10] = local_expansions_SoA.value<10>(interaction_partner_flat_index);
+            m_partner[11] = local_expansions_SoA.value<11>(interaction_partner_flat_index);
+            m_partner[12] = local_expansions_SoA.value<12>(interaction_partner_flat_index);
+            m_partner[13] = local_expansions_SoA.value<13>(interaction_partner_flat_index);
+            m_partner[14] = local_expansions_SoA.value<14>(interaction_partner_flat_index);
+            m_partner[15] = local_expansions_SoA.value<15>(interaction_partner_flat_index);
+            m_partner[16] = local_expansions_SoA.value<16>(interaction_partner_flat_index);
+            m_partner[17] = local_expansions_SoA.value<17>(interaction_partner_flat_index);
+            m_partner[18] = local_expansions_SoA.value<18>(interaction_partner_flat_index);
+            m_partner[19] = local_expansions_SoA.value<19>(interaction_partner_flat_index);
 
             // R_i in paper is the dX in the code
             // D is taylor expansion value for a given X expansion of the gravitational
@@ -139,12 +135,12 @@ namespace fmm {
             // formula (6)-(9) and (19)
             D_split D_calculator(dX);
             // TODO: this translates to an initialization loop, bug!
-            m2m_vector D_lower[20];
+            std::array<m2m_vector, 20> D_lower;
             D_calculator.calculate_D_lower(D_lower);
 
             // expansion_v current_potential;
             // TODO: this translates to an initialization loop, bug!
-            m2m_vector cur_pot[10];
+            std::array<m2m_vector, 10> cur_pot;
 
             // 10-19 are not cached!
 
@@ -224,110 +220,139 @@ namespace fmm {
             cur_pot[8] -= m_partner[3] * D_lower[18];
             cur_pot[9] -= m_partner[3] * D_lower[19];
 
-            struct_of_array_iterator<expansion, real, 20> current_potential_result(
-                potential_expansions_SoA, cell_flat_index_unpadded);
+            // struct_of_array_iterator<expansion, real, 20> current_potential_result(
+            //     potential_expansions_SoA, cell_flat_index_unpadded);
 
-            m2m_vector tmp = current_potential_result.value() + cur_pot[0];
+            m2m_vector tmp =
+                potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
+                potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
 
-            tmp = current_potential_result.value() + cur_pot[1];
+            tmp = potential_expansions_SoA.value<1>(cell_flat_index_unpadded) + cur_pot[1];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[2];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[3];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
+                potential_expansions_SoA.pointer<1>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
 
-            tmp = current_potential_result.value() + cur_pot[4];
+            tmp = potential_expansions_SoA.value<2>(cell_flat_index_unpadded) + cur_pot[2];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[5];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[6];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[7];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[8];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[9];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;    // don't remove this
+                potential_expansions_SoA.pointer<2>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
 
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[10];
+            tmp = potential_expansions_SoA.value<3>(cell_flat_index_unpadded) + cur_pot[3];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[11];
+                potential_expansions_SoA.pointer<3>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<4>(cell_flat_index_unpadded) + cur_pot[4];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[12];
+                potential_expansions_SoA.pointer<4>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<5>(cell_flat_index_unpadded) + cur_pot[5];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[13];
+                potential_expansions_SoA.pointer<5>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<6>(cell_flat_index_unpadded) + cur_pot[6];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[14];
+                potential_expansions_SoA.pointer<6>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<7>(cell_flat_index_unpadded) + cur_pot[7];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[15];
+                potential_expansions_SoA.pointer<7>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<8>(cell_flat_index_unpadded) + cur_pot[8];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[16];
+                potential_expansions_SoA.pointer<8>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<9>(cell_flat_index_unpadded) + cur_pot[9];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[17];
+                potential_expansions_SoA.pointer<9>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<10>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[10];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[18];
+                potential_expansions_SoA.pointer<10>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<11>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[11];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[19];
+                potential_expansions_SoA.pointer<11>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<12>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[12];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
+                potential_expansions_SoA.pointer<12>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<13>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[13];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<13>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<14>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[14];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<14>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<15>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[15];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<15>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<16>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[16];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<16>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<17>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[17];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<17>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<18>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[18];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<18>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<19>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[19];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
 
             ////////////// angular momentum correction, if enabled /////////////////////////
 
             // Initalize moments and momentum
             // this branch computes the angular momentum correction, (20) in the
             // paper divide by mass of other cell
-            struct_of_array_iterator<expansion, real, 20> m_cell_iterator(
-                local_expansions_SoA, cell_flat_index);
+            // struct_of_array_iterator<expansion, real, 20> m_cell_iterator(
+            //     local_expansions_SoA, cell_flat_index);
 
-            m2m_vector const n0_constant = m_partner[0] / m_cell_iterator.value();
+            m2m_vector const n0_constant =
+                m_partner[0] / local_expansions_SoA.value<0>(cell_flat_index);
 
-            m_cell_iterator.increment(10);
+            // m_cell_iterator.increment(10);
 
             // calculating the coefficients for formula (M are the octopole moments)
             // the coefficients are calculated in (17) and (18)
-            struct_of_array_iterator<space_vector, real, 3> current_angular_correction_result(
-                angular_corrections_SoA, cell_flat_index_unpadded);
+            // struct_of_array_iterator<space_vector, real, 3> current_angular_correction_result(
+            //     angular_corrections_SoA, cell_flat_index_unpadded);
 
-            m2m_vector D_upper[15];
+            std::array<m2m_vector, 15> D_upper;
             // D_calculator.calculate_D_upper(D_upper);
 
             m2m_vector current_angular_correction[NDIM];
@@ -345,8 +370,9 @@ namespace fmm {
             m2m_vector X_02 = D_calculator.X[0] * D_calculator.X[2];
             m2m_vector d3_X02 = D_calculator.d3 * X_02;
             D_upper[2] = 3.0 * d3_X02;
-            m2m_vector n0_tmp = m_partner[10] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            m2m_vector n0_tmp =
+                m_partner[10] - local_expansions_SoA.value<10>(cell_flat_index) * n0_constant;
+            // m_cell_iterator++; // 11
 
             current_angular_correction[0] -= n0_tmp * (D_upper[0] * factor_sixth_v[10]);
             current_angular_correction[1] -= n0_tmp * (D_upper[1] * factor_sixth_v[10]);
@@ -359,8 +385,7 @@ namespace fmm {
             m2m_vector d3_X12 = D_calculator.d3 * D_calculator.X[1] * D_calculator.X[2];
             D_upper[4] = d3_X12;
 
-            n0_tmp = m_partner[11] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            n0_tmp = m_partner[11] - local_expansions_SoA.value<11>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[1] * factor_sixth_v[11]);
             current_angular_correction[1] -= n0_tmp * (D_upper[3] * factor_sixth_v[11]);
@@ -371,8 +396,7 @@ namespace fmm {
             D_upper[5] += d3_X22;
             D_upper[5] += d3_X00;
 
-            n0_tmp = m_partner[12] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            n0_tmp = m_partner[12] - local_expansions_SoA.value<12>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[2] * factor_sixth_v[12]);
             current_angular_correction[1] -= n0_tmp * (D_upper[4] * factor_sixth_v[12]);
@@ -381,8 +405,7 @@ namespace fmm {
             D_upper[6] = 3.0 * d3_X01;
             D_upper[7] = D_calculator.d3 * X_02;
 
-            n0_tmp = m_partner[13] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            n0_tmp = m_partner[13] - local_expansions_SoA.value<13>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[3] * factor_sixth_v[13]);
             current_angular_correction[1] -= n0_tmp * (D_upper[6] * factor_sixth_v[13]);
@@ -390,8 +413,7 @@ namespace fmm {
 
             D_upper[8] = D_calculator.d3 * D_calculator.X[0] * D_calculator.X[1];
 
-            n0_tmp = m_partner[14] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            n0_tmp = m_partner[14] - local_expansions_SoA.value<14>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[4] * factor_sixth_v[14]);
             current_angular_correction[1] -= n0_tmp * (D_upper[7] * factor_sixth_v[14]);
@@ -399,8 +421,7 @@ namespace fmm {
 
             D_upper[9] = 3.0 * d3_X02;
 
-            n0_tmp = m_partner[15] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            n0_tmp = m_partner[15] - local_expansions_SoA.value<15>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[5] * factor_sixth_v[15]);
             current_angular_correction[1] -= n0_tmp * (D_upper[8] * factor_sixth_v[15]);
@@ -413,8 +434,7 @@ namespace fmm {
 
             D_upper[11] = 3.0 * d3_X12;
 
-            n0_tmp = m_partner[16] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            n0_tmp = m_partner[16] - local_expansions_SoA.value<16>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[6] * factor_sixth_v[16]);
             current_angular_correction[1] -= n0_tmp * (D_upper[10] * factor_sixth_v[16]);
@@ -424,8 +444,7 @@ namespace fmm {
             D_upper[12] += d3_X22;
             D_upper[12] += d3_X11;
 
-            n0_tmp = m_partner[17] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            n0_tmp = m_partner[17] - local_expansions_SoA.value<17>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[7] * factor_sixth_v[17]);
             current_angular_correction[1] -= n0_tmp * (D_upper[11] * factor_sixth_v[17]);
@@ -433,8 +452,7 @@ namespace fmm {
 
             D_upper[13] = 3.0 * d3_X12;
 
-            n0_tmp = m_partner[18] - m_cell_iterator.value() * n0_constant;
-            m_cell_iterator++;
+            n0_tmp = m_partner[18] - local_expansions_SoA.value<18>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[8] * factor_sixth_v[18]);
             current_angular_correction[1] -= n0_tmp * (D_upper[12] * factor_sixth_v[18]);
@@ -445,36 +463,46 @@ namespace fmm {
             D_upper[14] += D_calculator.d2;
             D_upper[14] += 5.0 * d3_X22;
 
-            n0_tmp = m_partner[19] - m_cell_iterator.value() * n0_constant;
-            // m_cell_iterator++;
+            n0_tmp = m_partner[19] - local_expansions_SoA.value<19>(cell_flat_index) * n0_constant;
 
             current_angular_correction[0] -= n0_tmp * (D_upper[9] * factor_sixth_v[19]);
             current_angular_correction[1] -= n0_tmp * (D_upper[13] * factor_sixth_v[19]);
             current_angular_correction[2] -= n0_tmp * (D_upper[14] * factor_sixth_v[19]);
 
-            tmp = current_angular_correction_result.value() + current_angular_correction[0];
+            tmp = angular_corrections_SoA.value<0>(cell_flat_index_unpadded) +
+                current_angular_correction[0];
             Vc::where(mask, tmp).memstore(
-                current_angular_correction_result.pointer(), Vc::flags::element_aligned);
-            current_angular_correction_result++;
-            tmp = current_angular_correction_result.value() + current_angular_correction[1];
+                angular_corrections_SoA.pointer<0>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = angular_corrections_SoA.value<1>(cell_flat_index_unpadded) +
+                current_angular_correction[1];
             Vc::where(mask, tmp).memstore(
-                current_angular_correction_result.pointer(), Vc::flags::element_aligned);
-            current_angular_correction_result++;
-            tmp = current_angular_correction_result.value() + current_angular_correction[2];
+                angular_corrections_SoA.pointer<1>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = angular_corrections_SoA.value<2>(cell_flat_index_unpadded) +
+                current_angular_correction[2];
             Vc::where(mask, tmp).memstore(
-                current_angular_correction_result.pointer(), Vc::flags::element_aligned);
+                angular_corrections_SoA.pointer<2>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
         }
     }
 
-    void m2m_kernel::blocked_interaction_non_rho(const multiindex<>& cell_index,
-        const int64_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
-        const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
+    void m2m_kernel::blocked_interaction_non_rho(
+        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& potential_expansions_SoA,
+        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& angular_corrections_SoA,
+        const multiindex<>& cell_index, const size_t cell_flat_index,
+        const multiindex<m2m_int_vector>& cell_index_coarse,
+        const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
         const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index) {
         // TODO: should change name to something better (not taylor, but space_vector)
         // struct_of_array_taylor<space_vector, real, 3> X =
         //     center_of_masses_SoA.get_view(cell_flat_index);
 
-        struct_of_array_iterator<space_vector, real, 3> X(center_of_masses_SoA, cell_flat_index);
+        // struct_of_array_iterator<space_vector, real, 3> X(center_of_masses_SoA, cell_flat_index);
         for (size_t inner_stencil_index = 0; inner_stencil_index < STENCIL_BLOCKING &&
              outer_stencil_index + inner_stencil_index < stencil.size();
              inner_stencil_index += 1) {
@@ -511,68 +539,42 @@ namespace fmm {
                 continue;
             }
 
-            struct_of_array_iterator<space_vector, real, 3> Y(
-                center_of_masses_SoA, interaction_partner_flat_index);
+            // struct_of_array_iterator<space_vector, real, 3> Y(
+            //     center_of_masses_SoA, interaction_partner_flat_index);
 
             // distance between cells in all dimensions
             // TODO: replace by m2m_vector for vectorization or get rid of temporary
-            m2m_vector dX[NDIM];
-            dX[0] = X.value() - Y.value();
-            X++;
-            Y++;
-            dX[1] = X.value() - Y.value();
-            X++;
-            Y++;
-            dX[2] = X.value() - Y.value();
+            std::array<m2m_vector, NDIM> dX;
+            dX[0] = center_of_masses_SoA.value<0>(cell_flat_index) -
+                center_of_masses_SoA.value<0>(interaction_partner_flat_index);
+            dX[1] = center_of_masses_SoA.value<1>(cell_flat_index) -
+                center_of_masses_SoA.value<1>(interaction_partner_flat_index);
+            dX[2] = center_of_masses_SoA.value<2>(cell_flat_index) -
+                center_of_masses_SoA.value<2>(interaction_partner_flat_index);
 
-            // reset X for next iteration
-            X.decrement(2);
+            // expansion_v m_partner;
+            std::array<m2m_vector, 20> m_partner;
 
-            expansion_v m_partner;
-            {
-                struct_of_array_iterator<expansion, real, 20> m_partner_iterator(
-                    local_expansions_SoA, interaction_partner_flat_index);
-                m_partner[0] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[1] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[2] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[3] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[4] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[5] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[6] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[7] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[8] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[9] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[10] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[11] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[12] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[13] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[14] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[15] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[16] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[17] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[18] = m_partner_iterator.value();
-                m_partner_iterator++;
-                m_partner[19] = m_partner_iterator.value();
-                m_partner_iterator++;
-            }
+            m_partner[0] = local_expansions_SoA.value<0>(interaction_partner_flat_index);
+            m_partner[1] = local_expansions_SoA.value<1>(interaction_partner_flat_index);
+            m_partner[2] = local_expansions_SoA.value<2>(interaction_partner_flat_index);
+            m_partner[3] = local_expansions_SoA.value<3>(interaction_partner_flat_index);
+            m_partner[4] = local_expansions_SoA.value<4>(interaction_partner_flat_index);
+            m_partner[5] = local_expansions_SoA.value<5>(interaction_partner_flat_index);
+            m_partner[6] = local_expansions_SoA.value<6>(interaction_partner_flat_index);
+            m_partner[7] = local_expansions_SoA.value<7>(interaction_partner_flat_index);
+            m_partner[8] = local_expansions_SoA.value<8>(interaction_partner_flat_index);
+            m_partner[9] = local_expansions_SoA.value<9>(interaction_partner_flat_index);
+            m_partner[10] = local_expansions_SoA.value<10>(interaction_partner_flat_index);
+            m_partner[11] = local_expansions_SoA.value<11>(interaction_partner_flat_index);
+            m_partner[12] = local_expansions_SoA.value<12>(interaction_partner_flat_index);
+            m_partner[13] = local_expansions_SoA.value<13>(interaction_partner_flat_index);
+            m_partner[14] = local_expansions_SoA.value<14>(interaction_partner_flat_index);
+            m_partner[15] = local_expansions_SoA.value<15>(interaction_partner_flat_index);
+            m_partner[16] = local_expansions_SoA.value<16>(interaction_partner_flat_index);
+            m_partner[17] = local_expansions_SoA.value<17>(interaction_partner_flat_index);
+            m_partner[18] = local_expansions_SoA.value<18>(interaction_partner_flat_index);
+            m_partner[19] = local_expansions_SoA.value<19>(interaction_partner_flat_index);
 
             // R_i in paper is the dX in the code
             // D is taylor expansion value for a given X expansion of the gravitational
@@ -583,11 +585,11 @@ namespace fmm {
             // potential),
             // formula (6)-(9) and (19)
             D_split D_calculator(dX);
-            m2m_vector D_lower[20];
+            std::array<m2m_vector, 20> D_lower;
             D_calculator.calculate_D_lower(D_lower);
 
             // expansion_v current_potential;
-            m2m_vector cur_pot[10];
+            std::array<m2m_vector, 10> cur_pot;
 
             // 10-19 are not cached!
 
@@ -681,91 +683,116 @@ namespace fmm {
             cur_pot[8] -= m_partner[3] * D_lower[18];
             cur_pot[9] -= m_partner[3] * D_lower[19];
 
-            struct_of_array_iterator<expansion, real, 20> current_potential_result(
-                potential_expansions_SoA, cell_flat_index_unpadded);
+            m2m_vector tmp =
+                potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
 
-            m2m_vector tmp = current_potential_result.value() + cur_pot[0];
+            tmp = potential_expansions_SoA.value<1>(cell_flat_index_unpadded) + cur_pot[1];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
+                potential_expansions_SoA.pointer<1>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
 
-            tmp = current_potential_result.value() + cur_pot[1];
+            tmp = potential_expansions_SoA.value<2>(cell_flat_index_unpadded) + cur_pot[2];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[2];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[3];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
+                potential_expansions_SoA.pointer<2>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
 
-            tmp = current_potential_result.value() + cur_pot[4];
+            tmp = potential_expansions_SoA.value<3>(cell_flat_index_unpadded) + cur_pot[3];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[5];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[6];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[7];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[8];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + cur_pot[9];
-            Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;    // don't remove this
+                potential_expansions_SoA.pointer<3>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
 
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[10];
+            tmp = potential_expansions_SoA.value<4>(cell_flat_index_unpadded) + cur_pot[4];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[11];
+                potential_expansions_SoA.pointer<4>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<5>(cell_flat_index_unpadded) + cur_pot[5];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[12];
+                potential_expansions_SoA.pointer<5>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<6>(cell_flat_index_unpadded) + cur_pot[6];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[13];
+                potential_expansions_SoA.pointer<6>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<7>(cell_flat_index_unpadded) + cur_pot[7];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[14];
+                potential_expansions_SoA.pointer<7>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<8>(cell_flat_index_unpadded) + cur_pot[8];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[15];
+                potential_expansions_SoA.pointer<8>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<9>(cell_flat_index_unpadded) + cur_pot[9];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[16];
+                potential_expansions_SoA.pointer<9>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<10>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[10];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[17];
+                potential_expansions_SoA.pointer<10>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<11>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[11];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[18];
+                potential_expansions_SoA.pointer<11>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<12>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[12];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
-            current_potential_result++;
-            tmp = current_potential_result.value() + m_partner[0] * D_lower[19];
+                potential_expansions_SoA.pointer<12>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<13>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[13];
             Vc::where(mask, tmp).memstore(
-                current_potential_result.pointer(), Vc::flags::element_aligned);
+                potential_expansions_SoA.pointer<13>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<14>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[14];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<14>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<15>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[15];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<15>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<16>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[16];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<16>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<17>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[17];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<17>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<18>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[18];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<18>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
+
+            tmp = potential_expansions_SoA.value<19>(cell_flat_index_unpadded) +
+                m_partner[0] * D_lower[19];
+            Vc::where(mask, tmp).memstore(
+                potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded),
+                Vc::flags::element_aligned);
         }
     }
 }    // namespace fmm

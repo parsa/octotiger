@@ -125,17 +125,25 @@ namespace fmm {
     }
 
     void m2m_interactions::compute_interactions() {
-        struct_of_array_data<expansion, real, 20> local_expansions_SoA(local_expansions);
-        struct_of_array_data<space_vector, real, 3> center_of_masses_SoA(center_of_masses);
-        struct_of_array_data<expansion, real, 20> potential_expansions_SoA(potential_expansions);
-        struct_of_array_data<space_vector, real, 3> angular_corrections_SoA(angular_corrections);
+        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING> local_expansions_SoA(
+            local_expansions);
+        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING> center_of_masses_SoA(
+            center_of_masses);
+        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING> potential_expansions_SoA(
+            potential_expansions);
+        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING> angular_corrections_SoA(
+            angular_corrections);
 
-        m2m_kernel kernel(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
-            angular_corrections_SoA, neighbor_empty, type);
+        m2m_kernel kernel(
+            // local_expansions_SoA,
+            //               center_of_masses_SoA, potential_expansions_SoA,
+            // angular_corrections_SoA,
+            neighbor_empty, type);
 
         auto start = std::chrono::high_resolution_clock::now();
 
-        kernel.apply_stencil(stencil);
+        kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
+            angular_corrections_SoA, stencil);
         auto end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> duration = end - start;

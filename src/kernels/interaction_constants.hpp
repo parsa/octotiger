@@ -33,6 +33,8 @@ namespace fmm {
 
     constexpr uint64_t PADDED_STRIDE = INNER_CELLS_PER_DIRECTION + 2 * INNER_CELLS_PADDING_DEPTH;
 
+    constexpr uint64_t ENTRIES = PADDED_STRIDE * PADDED_STRIDE * PADDED_STRIDE;
+
     constexpr uint64_t EXPANSION_COUNT_PADDED = detail::const_pow(PADDED_STRIDE, DIMENSION);
     constexpr uint64_t EXPANSION_COUNT_NOT_PADDED = INNER_CELLS;
 

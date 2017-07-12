@@ -40,8 +40,8 @@ taylor<4, real> factor;
 extern options opts;
 
 template <class T>
-void load_multipole(taylor<4, T>& m, space_vector& c, const gravity_boundary_type& data,
-    integer iter, bool monopole) {
+OCTOTIGER_FORCEINLINE void load_multipole(taylor<4, T>& m, space_vector& c,
+    const gravity_boundary_type& data, integer iter, bool monopole) {
     if (monopole) {
         m = T(0.0);
         m = T((*(data.m))[iter]);
@@ -192,136 +192,137 @@ void grid::compute_boundary_interactions_multipole_monopole(gsolve_type type,
     auto& mon = *mon_ptr;
 
     std::vector<space_vector> const& com0 = *(com_ptr[0]);
-    hpx::parallel::for_loop(for_loop_policy, 0, ilist_n_bnd.size(),
-        [&mpoles, &com0, &ilist_n_bnd, type, this](std::size_t si) {
+    // hpx::parallel::for_loop(for_loop_policy, 0, ilist_n_bnd.size(),
+    //     [&mpoles, &com0, &ilist_n_bnd, type, this](std::size_t si) {
+    size_t list_size = ilist_n_bnd.size();
+    for (size_t si = 0; si < list_size; si++) {
+        taylor<4, simd_vector> m0;
+        taylor<4, simd_vector> n0;
+        std::array<simd_vector, NDIM> dX;
+        std::array<simd_vector, NDIM> X;
+        space_vector Y;
 
-            taylor<4, simd_vector> m0;
-            taylor<4, simd_vector> n0;
-            std::array<simd_vector, NDIM> dX;
-            std::array<simd_vector, NDIM> X;
-            space_vector Y;
+        boundary_interaction_type const& bnd = ilist_n_bnd[si];
+        const integer list_size = bnd.first.size();
+        integer index = mpoles.is_local ? bnd.second[0] : si;
+        load_multipole(m0, Y, mpoles, index, false);
 
-            boundary_interaction_type const& bnd = ilist_n_bnd[si];
-            const integer list_size = bnd.first.size();
-            integer index = mpoles.is_local ? bnd.second[0] : si;
-            load_multipole(m0, Y, mpoles, index, false);
+        std::array<simd_vector, NDIM> simdY = {
+            simd_vector(real(Y[0])), simd_vector(real(Y[1])), simd_vector(real(Y[2])),
+        };
 
-            std::array<simd_vector, NDIM> simdY = {
-                simd_vector(real(Y[0])), simd_vector(real(Y[1])), simd_vector(real(Y[2])),
-            };
+        if (type == RHO) {
+#pragma GCC ivdep
+            for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
+                n0[j] = m0[j];
+            }
+        } else {
+#pragma GCC ivdep
+            for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
+                n0[j] = ZERO;
+            }
+        }
+#pragma GCC ivdep
+        for (integer li = 0; li < list_size; li += simd_len) {
+            for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
+                const integer iii0 = bnd.first[li + i];
+                space_vector const& com0iii0 = com0[iii0];
+                for (integer d = 0; d < NDIM; ++d) {
+                    X[d][i] = com0iii0[d];
+                }
+            }
+#pragma GCC ivdep
+            for (integer d = 0; d < NDIM; ++d) {
+                dX[d] = X[d] - simdY[d];
+            }
+
+            taylor<5, simd_vector> D;
+            taylor<2, simd_vector> A0;
+            std::array<simd_vector, NDIM> B0 = {
+                simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
+
+            D.set_basis(dX);
+            A0[0] = m0[0] * D[0];
+            if (type != RHO) {
+                for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
+                    A0[0] -= m0[i] * D[i];
+                }
+            }
+            for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
+                A0[0] += m0[i] * D[i] * (factor[i] * HALF);
+            }
+            for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+                A0[0] -= m0[i] * D[i] * (factor[i] * SIXTH);
+            }
+
+            //                 for (integer a = 0; a < NDIM; ++a) {
+            //                     A0(a) = m0() * D(a);
+            //                     for (integer b = 0; b < NDIM; ++b) {
+            //                         if (type != RHO) {
+            //                             A0(a) -= m0(a) * D(a, b);
+            //                         }
+            //                         for (integer c = b; c < NDIM; ++c) {
+            //                             A0(a) += m0(c, b) * D(a, b, c) * (factor(b, c) *
+            //                             HALF);
+            //                         }
+            //                     }
+            //                 }
+            for (integer a = 0; a < NDIM; ++a) {
+                int const* ab_idx_map = to_ab_idx_map3[a];
+                int const* abc_idx_map = to_abc_idx_map3[a];
+
+                A0(a) = m0() * D(a);
+                for (integer i = 0; i != 6; ++i) {
+                    if (type != RHO && i < 3) {
+                        A0(a) -= m0(a) * D[ab_idx_map[i]];
+                    }
+                    const integer cb_idx = cb_idx_map[i];
+                    A0(a) += m0[cb_idx] * D[abc_idx_map[i]] * (factor[cb_idx] * HALF);
+                }
+            }
 
             if (type == RHO) {
-#pragma GCC ivdep
-                for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                    n0[j] = m0[j];
-                }
-            } else {
-#pragma GCC ivdep
-                for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                    n0[j] = ZERO;
-                }
-            }
-#pragma GCC ivdep
-            for (integer li = 0; li < list_size; li += simd_len) {
-                for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
-                    const integer iii0 = bnd.first[li + i];
-                    space_vector const& com0iii0 = com0[iii0];
-                    for (integer d = 0; d < NDIM; ++d) {
-                        X[d][i] = com0iii0[d];
-                    }
-                }
-#pragma GCC ivdep
-                for (integer d = 0; d < NDIM; ++d) {
-                    dX[d] = X[d] - simdY[d];
-                }
-
-                taylor<5, simd_vector> D;
-                taylor<2, simd_vector> A0;
-                std::array<simd_vector, NDIM> B0 = {
-                    simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
-
-                D.set_basis(dX);
-                A0[0] = m0[0] * D[0];
-                if (type != RHO) {
-                    for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
-                        A0[0] -= m0[i] * D[i];
-                    }
-                }
-                for (integer i = taylor_sizes[1]; i != taylor_sizes[2]; ++i) {
-                    A0[0] += m0[i] * D[i] * (factor[i] * HALF);
-                }
-                for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
-                    A0[0] -= m0[i] * D[i] * (factor[i] * SIXTH);
-                }
-
-                //                 for (integer a = 0; a < NDIM; ++a) {
-                //                     A0(a) = m0() * D(a);
-                //                     for (integer b = 0; b < NDIM; ++b) {
-                //                         if (type != RHO) {
-                //                             A0(a) -= m0(a) * D(a, b);
-                //                         }
-                //                         for (integer c = b; c < NDIM; ++c) {
-                //                             A0(a) += m0(c, b) * D(a, b, c) * (factor(b, c) *
-                //                             HALF);
+                //                     for (integer a = 0; a < NDIM; ++a) {
+                //                         for (integer b = 0; b < NDIM; ++b) {
+                //                             for (integer c = b; c < NDIM; ++c) {
+                //                                 for (integer d = c; d < NDIM; ++d) {
+                //                                     const auto tmp = D(a, b, c, d) *
+                //                                     (factor(b, c, d) * SIXTH);
+                //                                     B0[a] -= n0(b, c, d) * tmp;
+                //                                 }
+                //                             }
                 //                         }
                 //                     }
-                //                 }
                 for (integer a = 0; a < NDIM; ++a) {
-                    int const* ab_idx_map = to_ab_idx_map3[a];
-                    int const* abc_idx_map = to_abc_idx_map3[a];
-
-                    A0(a) = m0() * D(a);
-                    for (integer i = 0; i != 6; ++i) {
-                        if (type != RHO && i < 3) {
-                            A0(a) -= m0(a) * D[ab_idx_map[i]];
-                        }
-                        const integer cb_idx = cb_idx_map[i];
-                        A0(a) += m0[cb_idx] * D[abc_idx_map[i]] * (factor[cb_idx] * HALF);
-                    }
-                }
-
-                if (type == RHO) {
-                    //                     for (integer a = 0; a < NDIM; ++a) {
-                    //                         for (integer b = 0; b < NDIM; ++b) {
-                    //                             for (integer c = b; c < NDIM; ++c) {
-                    //                                 for (integer d = c; d < NDIM; ++d) {
-                    //                                     const auto tmp = D(a, b, c, d) *
-                    //                                     (factor(b, c, d) * SIXTH);
-                    //                                     B0[a] -= n0(b, c, d) * tmp;
-                    //                                 }
-                    //                             }
-                    //                         }
-                    //                     }
-                    for (integer a = 0; a < NDIM; ++a) {
-                        int const* abcd_idx_map = to_abcd_idx_map3[a];
-                        for (integer i = 0; i != 10; ++i) {
-                            const integer bcd_idx = bcd_idx_map[i];
-                            const auto tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
-                            B0[a] -= n0[bcd_idx] * tmp;
-                        }
-                    }
-                }
-
-#ifdef USE_GRAV_PAR
-                std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
-#endif
-                for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
-                    const integer iii0 = bnd.first[li + i];
-                    expansion& Liii0 = L[iii0];
-#pragma GCC ivdep
-                    for (integer j = 0; j != 4; ++j) {
-                        Liii0[j] += A0[j][i];
-                    }
-                    if (type == RHO && opts.ang_con) {
-                        space_vector& L_ciii0 = L_c[iii0];
-#pragma GCC ivdep
-                        for (integer j = 0; j != NDIM; ++j) {
-                            L_ciii0[j] += B0[j][i];
-                        }
+                    int const* abcd_idx_map = to_abcd_idx_map3[a];
+                    for (integer i = 0; i != 10; ++i) {
+                        const integer bcd_idx = bcd_idx_map[i];
+                        const auto tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
+                        B0[a] -= n0[bcd_idx] * tmp;
                     }
                 }
             }
-        });
+
+#ifdef USE_GRAV_PAR
+            std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
+#endif
+            for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
+                const integer iii0 = bnd.first[li + i];
+                expansion& Liii0 = L[iii0];
+#pragma GCC ivdep
+                for (integer j = 0; j != 4; ++j) {
+                    Liii0[j] += A0[j][i];
+                }
+                if (type == RHO && opts.ang_con) {
+                    space_vector& L_ciii0 = L_c[iii0];
+#pragma GCC ivdep
+                    for (integer j = 0; j != NDIM; ++j) {
+                        L_ciii0[j] += B0[j][i];
+                    }
+                }
+            }
+        }
+    };
     PROF_END;
 }
 
@@ -336,116 +337,116 @@ void grid::compute_boundary_interactions_monopole_multipole(gsolve_type type,
         X[2][hindex(H_BW, H_BW, H_BW)]};
 
     std::vector<space_vector> const& com0 = *(com_ptr[0]);
-    hpx::parallel::for_loop(for_loop_policy, 0, ilist_n_bnd.size(),
-        [&mpoles, &Xbase, &com0, &ilist_n_bnd, type, this, &M](std::size_t si) {
+    // hpx::parallel::for_loop(for_loop_policy, 0, ilist_n_bnd.size(),
+    //     [&mpoles, &Xbase, &com0, &ilist_n_bnd, type, this, &M](std::size_t si) {
+    for (size_t si; si < ilist_n_bnd.size(); si++) {
+        simd_vector m0;
+        taylor<4, simd_vector> n0;
+        std::array<simd_vector, NDIM> dX;
+        std::array<simd_vector, NDIM> X;
+        std::array<simd_vector, NDIM> Y;
 
-            simd_vector m0;
-            taylor<4, simd_vector> n0;
-            std::array<simd_vector, NDIM> dX;
-            std::array<simd_vector, NDIM> X;
-            std::array<simd_vector, NDIM> Y;
-
-            boundary_interaction_type const& bnd = ilist_n_bnd[si];
-            integer index = mpoles.is_local ? bnd.second[0] : si;
-            const integer list_size = bnd.first.size();
+        boundary_interaction_type const& bnd = ilist_n_bnd[si];
+        integer index = mpoles.is_local ? bnd.second[0] : si;
+        const integer list_size = bnd.first.size();
 
 #pragma GCC ivdep
-            for (integer d = 0; d != NDIM; ++d) {
-                Y[d] = bnd.x[d] * dx + Xbase[d];
-            }
+        for (integer d = 0; d != NDIM; ++d) {
+            Y[d] = bnd.x[d] * dx + Xbase[d];
+        }
 
-            m0 = (*(mpoles.m))[index];
-            for (integer li = 0; li < list_size; li += simd_len) {
-                for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
-                    const integer iii0 = bnd.first[li + i];
-                    space_vector const& com0iii0 = com0[iii0];
-#pragma GCC ivdep
-                    for (integer d = 0; d < NDIM; ++d) {
-                        X[d][i] = com0iii0[d];
-                    }
-                    if (type == RHO) {
-                        multipole const& Miii0 = M[iii0];
-                        real const tmp = m0[i] / Miii0();
-#pragma GCC ivdep
-                        for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                            n0[j][i] = -Miii0[j] * tmp;
-                        }
-                    }
-                }
-
-                if (type != RHO) {
-#pragma GCC ivdep
-                    for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
-                        n0[j] = ZERO;
-                    }
-                }
+        m0 = (*(mpoles.m))[index];
+        for (integer li = 0; li < list_size; li += simd_len) {
+            for (integer i = 0; i != simd_len && li + i < list_size; ++i) {
+                const integer iii0 = bnd.first[li + i];
+                space_vector const& com0iii0 = com0[iii0];
 #pragma GCC ivdep
                 for (integer d = 0; d < NDIM; ++d) {
-                    dX[d] = X[d] - Y[d];
-                }
-
-                taylor<5, simd_vector> D;
-                taylor<4, simd_vector> A0;
-                std::array<simd_vector, NDIM> B0 = {
-                    simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
-
-                D.set_basis(dX);
-
-                A0[0] = m0 * D[0];
-                for (integer i = taylor_sizes[0]; i != taylor_sizes[2]; ++i) {
-                    A0[i] = m0 * D[i];
+                    X[d][i] = com0iii0[d];
                 }
                 if (type == RHO) {
-                    for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
-                        A0[i] = m0 * D[i];
-                    }
-                }
-
-                if (type == RHO) {
-                    //                     for (integer a = 0; a != NDIM; ++a) {
-                    //                         for (integer b = 0; b != NDIM; ++b) {
-                    //                             for (integer c = b; c != NDIM; ++c) {
-                    //                                 for (integer d = c; d != NDIM; ++d) {
-                    //                                     const auto tmp = D(a, b, c, d) *
-                    //                                     (factor(b, c, d) * SIXTH);
-                    //                                     B0[a] -= n0(b, c, d) * tmp;
-                    //                                 }
-                    //                             }
-                    //                         }
-                    //                     }
-                    for (integer a = 0; a != NDIM; ++a) {
-                        int const* abcd_idx_map = to_abcd_idx_map3[a];
-                        for (integer i = 0; i != 10; ++i) {
-                            const integer bcd_idx = bcd_idx_map[i];
-                            const auto tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
-                            B0[a] -= n0[bcd_idx] * tmp;
-                        }
-                    }
-                }
-
-#ifdef USE_GRAV_PAR
-                std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
-#endif
-                for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
-                    const integer iii0 = bnd.first[li + i];
-
-                    expansion tmp;
+                    multipole const& Miii0 = M[iii0];
+                    real const tmp = m0[i] / Miii0();
 #pragma GCC ivdep
-                    for (integer j = 0; j != taylor_sizes[3]; ++j) {
-                        tmp[j] = A0[j][i];
-                    }
-                    L[iii0] += tmp;
-
-                    if (type == RHO && opts.ang_con) {
-                        space_vector& L_ciii0 = L_c[iii0];
-#pragma GCC ivdep
-                        for (integer j = 0; j != NDIM; ++j) {
-                            L_ciii0[j] += B0[j][i];
-                        }
+                    for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
+                        n0[j][i] = -Miii0[j] * tmp;
                     }
                 }
             }
-        });
+
+            if (type != RHO) {
+#pragma GCC ivdep
+                for (integer j = taylor_sizes[2]; j != taylor_sizes[3]; ++j) {
+                    n0[j] = ZERO;
+                }
+            }
+#pragma GCC ivdep
+            for (integer d = 0; d < NDIM; ++d) {
+                dX[d] = X[d] - Y[d];
+            }
+
+            taylor<5, simd_vector> D;
+            taylor<4, simd_vector> A0;
+            std::array<simd_vector, NDIM> B0 = {
+                simd_vector(0.0), simd_vector(0.0), simd_vector(0.0)};
+
+            D.set_basis(dX);
+
+            A0[0] = m0 * D[0];
+            for (integer i = taylor_sizes[0]; i != taylor_sizes[2]; ++i) {
+                A0[i] = m0 * D[i];
+            }
+            if (type == RHO) {
+                for (integer i = taylor_sizes[2]; i != taylor_sizes[3]; ++i) {
+                    A0[i] = m0 * D[i];
+                }
+            }
+
+            if (type == RHO) {
+                //                     for (integer a = 0; a != NDIM; ++a) {
+                //                         for (integer b = 0; b != NDIM; ++b) {
+                //                             for (integer c = b; c != NDIM; ++c) {
+                //                                 for (integer d = c; d != NDIM; ++d) {
+                //                                     const auto tmp = D(a, b, c, d) *
+                //                                     (factor(b, c, d) * SIXTH);
+                //                                     B0[a] -= n0(b, c, d) * tmp;
+                //                                 }
+                //                             }
+                //                         }
+                //                     }
+                for (integer a = 0; a != NDIM; ++a) {
+                    int const* abcd_idx_map = to_abcd_idx_map3[a];
+                    for (integer i = 0; i != 10; ++i) {
+                        const integer bcd_idx = bcd_idx_map[i];
+                        const auto tmp = D[abcd_idx_map[i]] * (factor[bcd_idx] * SIXTH);
+                        B0[a] -= n0[bcd_idx] * tmp;
+                    }
+                }
+            }
+
+#ifdef USE_GRAV_PAR
+            std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
+#endif
+            for (integer i = 0; i != simd_len && i + li < list_size; ++i) {
+                const integer iii0 = bnd.first[li + i];
+
+                expansion tmp;
+#pragma GCC ivdep
+                for (integer j = 0; j != taylor_sizes[3]; ++j) {
+                    tmp[j] = A0[j][i];
+                }
+                L[iii0] += tmp;
+
+                if (type == RHO && opts.ang_con) {
+                    space_vector& L_ciii0 = L_c[iii0];
+#pragma GCC ivdep
+                    for (integer j = 0; j != NDIM; ++j) {
+                        L_ciii0[j] += B0[j][i];
+                    }
+                }
+            }
+        }
+    }
     PROF_END;
 }
 
@@ -466,36 +467,38 @@ void grid::compute_boundary_interactions_monopole_monopole(gsolve_type type,
     const v4sd d0(di0.data(), Vc::flags::vector_aligned);
 #endif
 #endif
-    hpx::parallel::for_loop(
-        for_loop_policy, 0, ilist_n_bnd.size(), [&mpoles, &ilist_n_bnd, &d0, this](std::size_t si) {
-
-            boundary_interaction_type const& bnd = ilist_n_bnd[si];
-            const integer dsize = bnd.first.size();
-            integer index = mpoles.is_local ? bnd.second[0] : si;
+    // hpx::parallel::for_loop(
+    //     for_loop_policy, 0, ilist_n_bnd.size(), [&mpoles, &ilist_n_bnd, &d0, this](std::size_t
+    //     si) {
+    const size_t list_size = ilist_n_bnd.size();
+    for (size_t si; si < list_size; si++) {
+        boundary_interaction_type const& bnd = ilist_n_bnd[si];
+        const integer dsize = bnd.first.size();
+        integer index = mpoles.is_local ? bnd.second[0] : si;
 #if !defined(HPX_HAVE_DATAPAR)
-            const auto tmp = (*(mpoles).m)[index];
-            v4sd m0;
+        const auto tmp = (*(mpoles).m)[index];
+        v4sd m0;
+#pragma GCC ivdep
+        for (integer i = 0; i != 4; ++i) {
+            m0[i] = tmp;
+        }
+#else
+        v4sd m0 = (*(mpoles).m)[index];
+#endif
+        m0 *= d0;
+#ifdef USE_GRAV_PAR
+        std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
+#endif
+        for (integer li = 0; li < dsize; ++li) {
+            const integer iii0 = bnd.first[li];
+            auto tmp1 = m0 * bnd.four[li];
+            expansion& Liii0 = L[iii0];
 #pragma GCC ivdep
             for (integer i = 0; i != 4; ++i) {
-                m0[i] = tmp;
+                Liii0[i] += tmp1[i];
             }
-#else
-                v4sd m0 = (*(mpoles).m)[index];
-#endif
-            m0 *= d0;
-#ifdef USE_GRAV_PAR
-            std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
-#endif
-            for (integer li = 0; li < dsize; ++li) {
-                const integer iii0 = bnd.first[li];
-                auto tmp1 = m0 * bnd.four[li];
-                expansion& Liii0 = L[iii0];
-#pragma GCC ivdep
-                for (integer i = 0; i != 4; ++i) {
-                    Liii0[i] += tmp1[i];
-                }
-            }
-        });
+        }
+    }
     PROF_END;
 }
 

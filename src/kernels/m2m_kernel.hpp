@@ -16,19 +16,21 @@ namespace fmm {
     {
     private:
         // std::vector<expansion>& local_expansions;
-        struct_of_array_data<expansion, real, 20>& local_expansions_SoA;
+        // struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA;
 
         // com0 = *(com_ptr[0])
         // std::vector<space_vector>& center_of_masses;
         // down from 4 components
-        struct_of_array_data<space_vector, real, 3>& center_of_masses_SoA;
+        // struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA;
 
-        // multipole expansion on this cell (L)
-        // std::vector<expansion>& potential_expansions;
-        struct_of_array_data<expansion, real, 20>& potential_expansions_SoA;
-        // angular momentum correction on this cell (L_c)
-        // std::vector<space_vector>& angular_corrections;
-        struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA;
+        // // multipole expansion on this cell (L)
+        // // std::vector<expansion>& potential_expansions;
+        // struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+        // potential_expansions_SoA;
+        // // angular momentum correction on this cell (L_c)
+        // // std::vector<space_vector>& angular_corrections;
+        // struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+        // angular_corrections_SoA;
 
         std::vector<bool>& neighbor_empty;
 
@@ -109,14 +111,28 @@ namespace fmm {
         //     }
         // }
 
-        void blocked_interaction_rho(const multiindex<>& cell_index, const int64_t cell_flat_index,
+        void blocked_interaction_rho(
+            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                potential_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+                angular_corrections_SoA,
+            const multiindex<>& cell_index, const size_t cell_flat_index,
             const multiindex<m2m_int_vector>& cell_index_coarse,
-            const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
+            const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
             const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index);
 
-        void blocked_interaction_non_rho(const multiindex<>& cell_index,
-            const int64_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
-            const multiindex<>& cell_index_unpadded, const int64_t cell_flat_index_unpadded,
+        void blocked_interaction_non_rho(
+            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                potential_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+                angular_corrections_SoA,
+            const multiindex<>& cell_index, const size_t cell_flat_index,
+            const multiindex<m2m_int_vector>& cell_index_coarse,
+            const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
             const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index);
 
         void vectors_check_empty();
@@ -124,10 +140,15 @@ namespace fmm {
         // void calculate_coarse_indices();
 
     public:
-        m2m_kernel(struct_of_array_data<expansion, real, 20>& local_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3>& center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20>& potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA,
+        m2m_kernel(
+            //            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+            //            local_expansions_SoA,
+            // struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+            // center_of_masses_SoA,
+            // struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+            //     potential_expansions_SoA,
+            // struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+            //     angular_corrections_SoA,
             std::vector<bool>& neighbor_empty, gsolve_type type);
 
         m2m_kernel(m2m_kernel& other) = delete;
@@ -136,7 +157,14 @@ namespace fmm {
 
         m2m_kernel operator=(const m2m_kernel& other) = delete;
 
-        void apply_stencil(std::vector<multiindex<>>& stencil);
+        void apply_stencil(
+            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                potential_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+                angular_corrections_SoA,
+            std::vector<multiindex<>>& stencil);
     };
 
 }    // namespace fmm

@@ -5,6 +5,8 @@
  *      Author: dmarce1
  */
 
+#pragma once
+
 #include <hpx/config.hpp>
 
 //#define OCTOTIGER_RESTART_LOAD_SEQ

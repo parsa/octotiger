@@ -15,21 +15,24 @@ extern options opts;
 namespace octotiger {
 namespace fmm {
 
-    m2m_kernel::m2m_kernel(struct_of_array_data<expansion, real, 20>& local_expansions_SoA,
-        struct_of_array_data<space_vector, real, 3>& center_of_masses_SoA,
-        struct_of_array_data<expansion, real, 20>& potential_expansions_SoA,
-        struct_of_array_data<space_vector, real, 3>& angular_corrections_SoA,
+    m2m_kernel::m2m_kernel(
+        // struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+        // struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+        // struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+        // potential_expansions_SoA,
+        // struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+        // angular_corrections_SoA,
         std::vector<bool>& neighbor_empty,
         gsolve_type type)
       :    // local_expansions(local_expansions),
-      local_expansions_SoA(local_expansions_SoA)
-      // , center_of_masses(center_of_masses)
-      , center_of_masses_SoA(center_of_masses_SoA)
+      // local_expansions_SoA(local_expansions_SoA)
+      // , center_of_masses(center_of_masses),
+      // center_of_masses_SoA(center_of_masses_SoA)
       // , potential_expansions(potential_expansions)
-      , potential_expansions_SoA(potential_expansions_SoA)
+      // , potential_expansions_SoA(potential_expansions_SoA)
       // , angular_corrections(angular_corrections)
-      , angular_corrections_SoA(angular_corrections_SoA)
-      , neighbor_empty(neighbor_empty)
+      // , angular_corrections_SoA(angular_corrections_SoA),
+      neighbor_empty(neighbor_empty)
       , type(type)
       , theta_rec_squared(sqr(1.0 / opts.theta))
     // , theta_rec_squared_scalar(sqr(1.0 / opts.theta))
@@ -41,7 +44,12 @@ namespace fmm {
         // calculate_coarse_indices();
     }
 
-    void m2m_kernel::apply_stencil(std::vector<multiindex<>>& stencil) {
+    void m2m_kernel::apply_stencil(
+        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& potential_expansions_SoA,
+        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& angular_corrections_SoA,
+        std::vector<multiindex<>>& stencil) {
         // for (multiindex<>& stencil_element : stencil) {
         for (size_t outer_stencil_index = 0; outer_stencil_index < stencil.size();
              outer_stencil_index += STENCIL_BLOCKING) {
@@ -73,11 +81,16 @@ namespace fmm {
                         cell_index_coarse.transform_coarse();
 
                         if (type == RHO) {
-                            this->blocked_interaction_rho(cell_index, cell_flat_index,
-                                cell_index_coarse, cell_index_unpadded, cell_flat_index_unpadded,
-                                stencil, outer_stencil_index);
+                            this->blocked_interaction_rho(local_expansions_SoA,
+                                center_of_masses_SoA, potential_expansions_SoA,
+                                angular_corrections_SoA,
+
+                                cell_index, cell_flat_index, cell_index_coarse, cell_index_unpadded,
+                                cell_flat_index_unpadded, stencil, outer_stencil_index);
                         } else {
-                            this->blocked_interaction_non_rho(cell_index, cell_flat_index,
+                            this->blocked_interaction_non_rho(local_expansions_SoA,
+                                center_of_masses_SoA, potential_expansions_SoA,
+                                angular_corrections_SoA, cell_index, cell_flat_index,
                                 cell_index_coarse, cell_index_unpadded, cell_flat_index_unpadded,
                                 stencil, outer_stencil_index);
                         }

@@ -145,7 +145,7 @@ namespace fmm {
     class D_split
     {
     public:
-        const m2m_vector (&X)[NDIM];
+        const std::array<m2m_vector, NDIM>& X;
 
         m2m_vector X_00;
         m2m_vector X_11;
@@ -160,7 +160,7 @@ namespace fmm {
         m2m_vector d3;
 
     public:
-        D_split(const m2m_vector (&X)[NDIM])
+        D_split(const std::array<m2m_vector, NDIM>& X)
           : X(X) {
             X_00 = X[0] * X[0];
             X_11 = X[1] * X[1];
@@ -187,7 +187,7 @@ namespace fmm {
         }
 
         // overload for kernel-specific simd type
-        inline void calculate_D_lower(m2m_vector (&A)[20]) {
+        inline void calculate_D_lower(std::array<m2m_vector, 20>& A) {
             // formula (6)
             A[0] = d0;
 
