@@ -475,25 +475,19 @@ void grid::compute_boundary_interactions_monopole_monopole(gsolve_type type,
         boundary_interaction_type const& bnd = ilist_n_bnd[si];
         const integer dsize = bnd.first.size();
         integer index = mpoles.is_local ? bnd.second[0] : si;
-#if !defined(HPX_HAVE_DATAPAR)
+
         const auto tmp = (*(mpoles).m)[index];
         v4sd m0;
-#pragma GCC ivdep
         for (integer i = 0; i != 4; ++i) {
             m0[i] = tmp;
         }
-#else
-        v4sd m0 = (*(mpoles).m)[index];
-#endif
+
         m0 *= d0;
-#ifdef USE_GRAV_PAR
-        std::lock_guard<hpx::lcos::local::spinlock> lock(*L_mtx);
-#endif
         for (integer li = 0; li < dsize; ++li) {
             const integer iii0 = bnd.first[li];
             auto tmp1 = m0 * bnd.four[li];
             expansion& Liii0 = L[iii0];
-#pragma GCC ivdep
+
             for (integer i = 0; i != 4; ++i) {
                 Liii0[i] += tmp1[i];
             }

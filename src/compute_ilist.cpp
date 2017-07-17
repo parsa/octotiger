@@ -201,8 +201,8 @@ void compute_ilist() {
                                 np.x[YDIM] = j1;
                                 np.x[ZDIM] = j2;
 
-                                np.first_index = {{i0, i1, i2}};
-                                np.second_index = {{j0, j1, j2}};
+                                // np.first_index = {{i0, i1, i2}};
+                                // np.second_index = {{j0, j1, j2}};
                                 // TODO: i should always be in interior?
                                 if (is_interior(j0, j1, j2)) {
                                     // octotiger::fmm::multiindex first_index(i0, i1, i2);
@@ -363,7 +363,7 @@ void compute_ilist() {
                 boundary_interaction_type boundary_interaction;
                 boundary_interaction.second.push_back(interaction_0.second);
                 boundary_interaction.x = interaction_0.x;
-                boundary_interaction.second_index.push_back(interaction_0.second_index);
+                // boundary_interaction.second_index.push_back(interaction_0.second_index);
                 M2M.push_back(boundary_interaction);
             }
 
@@ -372,7 +372,7 @@ void compute_ilist() {
                 boundary_interaction_type boundary_interaction;
                 boundary_interaction.first.push_back(interaction_0.first);
                 boundary_interaction.x = interaction_0.x;
-                boundary_interaction.first_index.push_back(interaction_0.first_index);
+                // boundary_interaction.first_index.push_back(interaction_0.first_index);
                 M2M_new.push_back(boundary_interaction);
             }
         }
@@ -381,7 +381,7 @@ void compute_ilist() {
             for (boundary_interaction_type& boundary_interaction : M2M) {
                 if (boundary_interaction.second[0] == interaction_0.second) {
                     boundary_interaction.first.push_back(interaction_0.first);
-                    boundary_interaction.first_index.push_back(interaction_0.first_index);
+                    // boundary_interaction.first_index.push_back(interaction_0.first_index);
                     boundary_interaction.four.push_back(interaction_0.four);
                     break;
                 }
@@ -392,7 +392,7 @@ void compute_ilist() {
                 if (boundary_interaction.first[0] == interaction_0.first) {
                     boundary_interaction.second.push_back(interaction_0.second);
                     boundary_interaction.four.push_back(interaction_0.four);
-                    boundary_interaction.second_index.push_back(interaction_0.second_index);
+                    // boundary_interaction.second_index.push_back(interaction_0.second_index);
                     break;
                 }
             }
