@@ -37,9 +37,6 @@ static std::vector<std::vector<boundary_interaction_type>> ilist_n_bnd(geo::dire
 static taylor<4, real> factor;
 extern options opts;
 
-extern double total_duration;
-extern double total_no_of_called;
-
 template <class T>
 void load_multipole(taylor<4, T>& m, space_vector& c, const gravity_boundary_type& data,
     integer iter, bool monopole) {
@@ -457,8 +454,6 @@ void grid::compute_interactions(gsolve_type type) {
         auto end_timer = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> duration = end_timer - start_timer;
         std::cout << "old multipole inner interactions (ms): " << duration.count() << std::endl;
-        total_duration += duration.count();
-        total_no_of_called += 1.0;
 
     } else {
 #if !defined(HPX_HAVE_DATAPAR)
@@ -542,7 +537,6 @@ void grid::compute_boundary_interactions(gsolve_type type, const geo::direction&
             std::chrono::duration<double, std::milli> duration = end_timer - start_timer;
             std::cout << "old single multipole boundary interactions (ms): " << duration.count()
                       << std::endl;
-            total_duration += duration.count();
         } else {
             compute_boundary_interactions_monopole_multipole(type, ilist_d_bnd[dir], mpoles);
         }

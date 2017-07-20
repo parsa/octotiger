@@ -198,7 +198,7 @@ int hpx_main(int argc, char* argv[]) {
     }
     printf("Exiting...\n");
     std::cout << "total_duration: " << total_duration << "ms" << std::endl;
-    std::cout << "total no of calls: " << total_no_of_called << "ms" << std::endl;
+    std::cout << "total no of calls: " << total_no_of_called << std::endl;
     std::cout << "avr. duration per call: " << (total_duration / total_no_of_called) << "ms"
               << std::endl;
     return hpx::finalize();

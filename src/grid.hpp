@@ -225,6 +225,9 @@ public:
 	void set_root(bool flag = true) {
 	    is_root = flag;
     }
+    bool get_root() {
+        return is_root;
+    }    
 	void set_leaf(bool flag = true) {
 	    if (is_leaf != flag) {
 		    is_leaf = flag;
