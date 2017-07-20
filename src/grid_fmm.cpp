@@ -456,7 +456,7 @@ void grid::compute_interactions(gsolve_type type) {
         }
         auto end_timer = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> duration = end_timer - start_timer;
-        std::cout << "old monopole inner interactions (ms): " << duration.count() << std::endl;
+        std::cout << "old multipole inner interactions (ms): " << duration.count() << std::endl;
         total_duration += duration.count();
         total_no_of_called += 1.0;
 
@@ -536,7 +536,13 @@ void grid::compute_boundary_interactions(gsolve_type type, const geo::direction&
     bool is_monopole, const gravity_boundary_type& mpoles) {
     if (!is_leaf) {
         if (!is_monopole) {
+            auto start_timer = std::chrono::high_resolution_clock::now();
             compute_boundary_interactions_multipole_multipole(type, ilist_n_bnd[dir], mpoles);
+            auto end_timer = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> duration = end_timer - start_timer;
+            std::cout << "old single multipole boundary interactions (ms): " << duration.count()
+                      << std::endl;
+            total_duration += duration.count();
         } else {
             compute_boundary_interactions_monopole_multipole(type, ilist_d_bnd[dir], mpoles);
         }
