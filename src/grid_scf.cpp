@@ -26,7 +26,7 @@ namespace scf_options {
 static constexpr real async1 = -0.0e-2;
 static constexpr real async2 = -0.0e-2;
 static constexpr bool equal_struct_eos = false; // If true, EOS of accretor will be set to that of donor
-static constexpr real M1 = 1.55; // Mass of primary
+static constexpr real M1 = 1.54; // Mass of primary
 static constexpr real M2 = 0.17; // Mass of secondaries
 static constexpr real nc1 = 5.0; // Primary core polytropic index
 static constexpr real nc2 = 5.0; // Secondary core polytropic index
@@ -34,7 +34,7 @@ static constexpr real ne1 = 3.0; // Primary envelope polytropic index // Ignored
 static constexpr real ne2 = 1.5; // Secondary envelope polytropic index
 static constexpr real mu1 = 2.2; // Primary ratio of molecular weights // Ignored if equal_struct_eos=true
 static constexpr real mu2 = 2.2; // Primary ratio of molecular weights
-static constexpr real a = 1.00; // approx. orbital sep
+static constexpr real a = 6.36; // approx. orbital sep
 static constexpr real core_frac1 = 1.0 / 10.0; // Desired core fraction of primary // Ignored if equal_struct_eos=true
 static real core_frac2 = 2.0 / 3.0; // Desired core fraction of secondary - IGNORED FOR CONTACT binaries
 static constexpr real fill1 = 0.99; // 1d Roche fill factor for primary (ignored if contact fill is > 0.0) //  - IGNORED FOR CONTACT binaries  // Ignored if equal_struct_eos=true
@@ -620,10 +620,10 @@ std::vector<real> scf_binary(real x, real y, real z, real dx) {
 //	const real R0 = this_struct_eos->get_R0();
 	int M = std::max(std::min(int(10.0 * dx), 2), 1);
 	int nsamp = 0;
-	for (double x0 = x - dx / 2.0 + dx / 2.0 / M; x0 < x + dx; x0 += dx / M) {
-		for (double y0 = y - dx / 2.0 + dx / 2.0 / M; y0 < y + dx;
+	for (double x0 = x - dx / 2.0 + dx / 2.0 / M; x0 < x + dx / 2.0; x0 += dx / M) {
+		for (double y0 = y - dx / 2.0 + dx / 2.0 / M; y0 < y + dx / 2.0;
 				y0 += dx / M) {
-			for (double z0 = z - dx / 2.0 + dx / 2.0 / M; z0 < z + dx;
+			for (double z0 = z - dx / 2.0 + dx / 2.0 / M; z0 < z + dx / 2.0;
 					z0 += dx / M) {
 				++nsamp;
 				if (x < params.l1_x) {

@@ -1010,14 +1010,14 @@ void grid::rho_mult(real f0, real f1) {
 void grid::rho_move(real x) {
 	real w = x / dx;
 	const real rho_floor = 1.0e-15;
-
+	const auto U0 = U;
 	w = std::max(-0.5, std::min(0.5, w));
 	for (integer i = 1; i != H_NX - 1; ++i) {
 		for (integer j = 1; j != H_NX - 1; ++j) {
 			for (integer k = 1; k != H_NX - 1; ++k) {
 				for (integer si = spc_i; si != NSPECIES + spc_i; ++si) {
-					U[si][hindex(i, j, k)] += w * U[si][hindex(i + 1, j, k)];
-					U[si][hindex(i, j, k)] -= w * U[si][hindex(i - 1, j, k)];
+					U[si][hindex(i, j, k)] += w * U0[si][hindex(i + 1, j, k)];
+					U[si][hindex(i, j, k)] -= w * U0[si][hindex(i - 1, j, k)];
 					U[si][hindex(i, j, k)] = std::max(U[si][hindex(i, j, k)], 0.0);
 				}
 				U[rho_i][hindex(i, j, k)] = 0.0;
