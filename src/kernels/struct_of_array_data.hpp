@@ -49,7 +49,7 @@ namespace fmm {
         struct_of_array_data(const size_t entries_per_component)
           : data(new component_type[num_components * padded_entries_per_component]) {}
 
-        struct_of_array_data() {
+        ~struct_of_array_data() {
             delete[] data;
         }
 
