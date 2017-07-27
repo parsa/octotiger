@@ -384,6 +384,7 @@ std::ostream& operator<<(std::ostream& os, const taylor<N, T>& t) {
         std::cout << t[i];
     }
     std::cout << ")";
+    return os;
 }
 
 #endif /* TAYLOR_HPP_ */

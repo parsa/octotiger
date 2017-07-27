@@ -28,6 +28,8 @@ endif()
 include_directories(${HPX_INCLUDE_DIRS})
 link_directories(${HPX_LIBRARY_DIR})
 
+find_package(Boost REQUIRED COMPONENTS serialization)
+
 ################################################################################
 # Silo support
 ################################################################################
@@ -79,7 +81,7 @@ endif()
 set(source_files)
 set(dependencies)
 
-set(dependencies ${Silo_LIBRARY})
+set(dependencies ${Silo_LIBRARY} ${Boost_LIBRARIES})
 
 # Octotiger executable
 set(source_files ${source_files}
@@ -164,7 +166,7 @@ add_hpx_executable(
   HEADERS
     ${header_files}
   FOLDER  "Octotiger"
-)
+  )
 
 
 

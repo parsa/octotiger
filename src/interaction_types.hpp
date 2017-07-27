@@ -42,6 +42,13 @@ struct neighbor_gravity_type
     gravity_boundary_type data;
     bool is_monopole;
     geo::direction direction;
+
+    template <class Archive>
+    void serialize(Archive& arc, unsigned) {
+        arc& data;
+        arc& is_monopole;
+        arc& direction;
+    }
 };
 
 struct interaction_type
