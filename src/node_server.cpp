@@ -522,10 +522,10 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
         // octotiger::fmm::m2m_interactions interactor(*grid_ptr, all_neighbor_interaction_data,
         // type);
 
-        std::ofstream ofs("input_m2m_" + std::to_string(timestep) + ".arc");
-        boost::archive::text_oarchive oa(ofs);
-        oa << all_neighbor_interaction_data;
-        ofs.close();
+        // std::ofstream ofs("input_m2m_" + std::to_string(timestep) + ".arc");
+        // boost::archive::text_oarchive oa(ofs);
+        // oa << all_neighbor_interaction_data;
+        // ofs.close();
         
         auto start_total = std::chrono::high_resolution_clock::now();
 
