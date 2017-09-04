@@ -65,7 +65,7 @@ void read_option_file() {
 		};
 		while (!feof(fp)) {
 			char buffer[1024];
-			if (fgets(buffer, 1023, fp) > 0) {
+			if (fgets(buffer, 1023, fp) != nullptr) {
 				char* ptr = buffer;
 				while (isspace(*ptr) && *ptr != '\0') {
 					++ptr;

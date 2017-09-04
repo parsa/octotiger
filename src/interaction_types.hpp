@@ -110,27 +110,6 @@ struct interaction_type
     alignas(32) v4sd four;
     // // helper variable for vectorization
     // std::uint32_t inner_loop_stop;
-
-    interaction_type() {
-        first = 0;
-        second = 0;
-        x = {};
-        four = {};
-    }
-
-    interaction_type(const interaction_type &other) {
-        first = other.first;
-        second = other.second;
-        x = other.x;
-        four = other.four;
-    }
-
-    interaction_type(const interaction_type &&other) {
-        first = other.first;
-        second = other.second;
-        x = other.x;
-        four = other.four;
-    }
 };
 Vc_DECLARE_ALLOCATOR(interaction_type)
 
