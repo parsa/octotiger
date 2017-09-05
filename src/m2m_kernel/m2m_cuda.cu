@@ -6,10 +6,10 @@ __global__ void trivial_kernel(float *f) {
   printf("hello from gpu");
 }
 
-void test() {
+void test(cudaStream_t stream) {
   float *d;
   cudaMalloc(&d, 128 * sizeof(float));
-  trivial_kernel<<<1, 1>>>(d);
+  trivial_kernel<<<1, 1, 0, stream>>>(d);
   cudaFree(d);
 }
 
@@ -25,9 +25,10 @@ void m2m_cuda::compute_interactions(
     octotiger::fmm::struct_of_array_data<expansion, real, 20, ENTRIES,
                                          SOA_PADDING> &potential_expansions_SoA,
     octotiger::fmm::struct_of_array_data<
-        space_vector, real, 3, ENTRIES, SOA_PADDING> &angular_corrections_SoA) {
-  test();
-}
+        space_vector, real, 3, ENTRIES, SOA_PADDING> &angular_corrections_SoA)
+    {
+      test(stream_);
+    }
 }
 }
 }
