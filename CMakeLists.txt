@@ -117,6 +117,7 @@ set(source_files ${source_files}
     src/m2m_kernel/m2m_kernel.cpp
     src/m2m_kernel/interactions_iterators.cpp
     src/m2m_kernel/m2m_kernel_blocked_interaction.cpp
+    src/m2m_kernel/m2m_cuda.cu
 )
 
 set(header_files
@@ -169,5 +170,6 @@ add_hpx_executable(
     ${header_files}
   FOLDER  "Octotiger"
 )
+
 
 

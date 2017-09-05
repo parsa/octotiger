@@ -115,11 +115,11 @@ enum boundary_type {
 	OUTFLOW, REFLECT
 };
 
-constexpr integer NDIM = 3;
+#define NDIM 3
+#define INX 8
 
 constexpr integer NSPECIES = 5;
 
-constexpr integer INX = 8;
 constexpr integer H_BW = 3;
 constexpr integer R_BW = 2;
 

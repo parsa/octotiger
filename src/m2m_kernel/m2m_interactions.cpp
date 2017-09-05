@@ -3,8 +3,10 @@
 #include "calculate_stencil.hpp"
 #include "interactions_iterators.hpp"
 #include "m2m_kernel.hpp"
+#include "m2m_cuda.hpp"
 
 #include <algorithm>
+
 
 // Big picture questions:
 // - use any kind of tiling?
@@ -146,6 +148,9 @@ namespace fmm {
             neighbor_empty, type);
 
         auto start = std::chrono::high_resolution_clock::now();
+
+	cuda::m2m_cuda cuda_kernel;
+	cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA, angular_corrections_SoA);
 
         kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
             angular_corrections_SoA, stencil);

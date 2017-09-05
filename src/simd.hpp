@@ -5,9 +5,8 @@
  *      Author: dmarce1
  */
 
-#ifndef SIMD_VECTOR_HPP_
-#define SIMD_VECTOR_HPP_
-#include "defs.hpp"
+#pragma once
+// #include "defs.hpp"
 #include <cstdlib>
 #include <cstdio>
 #include "immintrin.h"
@@ -399,14 +398,20 @@
 
 // #else
 
-#include <hpx/parallel/traits/vector_pack_type.hpp>
-#include <hpx/runtime/serialization/datapar.hpp>
+// #include <hpx/parallel/traits/vector_pack_type.hpp>
+// #include <hpx/runtime/serialization/datapar.hpp>
 
-#if defined(Vc_HAVE_AVX512F)
+#include <Vc/Vc>
+
+// #if defined(Vc_HAVE_AVX512F)
+#if defined(__AVX512F__)
 using simd_vector = Vc::datapar<double, Vc::datapar_abi::avx512>;
 using v4sd = Vc::datapar<double, Vc::datapar_abi::avx>;
 constexpr std::size_t simd_len = simd_vector::size();
-#elif defined(Vc_HAVE_AVX)
+#warning "using AVX512"
+// #elif defined(Vc_HAVE_AVX)
+#elif defined(__AVX__)
+#warning "using AVX1/2"
 using simd_vector = typename Vc::datapar<double, Vc::datapar_abi::fixed_size<8>>;
 using int_simd_vector = typename Vc::datapar<int32_t, Vc::datapar_abi::fixed_size<8>>;
 using v4sd = typename Vc::datapar<double, Vc::datapar_abi::fixed_size<4>>;
@@ -416,8 +421,10 @@ constexpr std::size_t simd_len = simd_vector::size();
 // #else
 // using simd_vector = typename hpx::parallel::traits::vector_pack_type<double, 8>::type;
 // using v4sd = typename hpx::parallel::traits::vector_pack_type<double, 4>::type;
+#else
+#warning "using scalar version"
+using simd_vector = typename Vc::datapar<double, Vc::datapar_abi::fixed_size<1>>;
+using int_simd_vector = typename Vc::datapar<int32_t, Vc::datapar_abi::fixed_size<1>>;
+using v4sd = typename Vc::datapar<double, Vc::datapar_abi::fixed_size<4>>;
+constexpr std::size_t simd_len = simd_vector::size();
 #endif
-
-// #endif
-
-#endif /* SIMD_VECTOR_HPP_ */

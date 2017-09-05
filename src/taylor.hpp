@@ -5,11 +5,10 @@
  *      Author: dmarce1
  */
 
-#ifndef TAYLOR_HPP_
-#define TAYLOR_HPP_
+#pragma once
 
 #include "defs.hpp"
-#include "profiler.hpp"
+// #include "profiler.hpp"
 #include "simd.hpp"
 
 #include <algorithm>
@@ -17,12 +16,20 @@
 #include <cmath>
 #include <type_traits>
 
-#if defined(HPX_HAVE_DATAPAR)
-#include <hpx/include/parallel_equal.hpp>
-#include <hpx/include/parallel_fill.hpp>
-#include <hpx/include/parallel_transform.hpp>
-#endif
-#include <hpx/traits/is_bitwise_serializable.hpp>
+// #if defined(HPX_HAVE_DATAPAR)
+// #include <hpx/include/parallel_equal.hpp>
+// #include <hpx/include/parallel_fill.hpp>
+// #include <hpx/include/parallel_transform.hpp>
+// #endif
+// #include <hpx/traits/is_bitwise_serializable.hpp>
+
+// namespace hpx { namespace traits
+// {
+//     template <int N, class T>
+//     struct is_bitwise_serializable<taylor<N, T> >
+//       : is_bitwise_serializable<typename std::remove_const<T>::type>
+//     {};
+// }}
 
 // class simd_vector;
 
@@ -334,14 +341,6 @@ public:
     }
 };
 
-namespace hpx { namespace traits
-{
-    template <int N, class T>
-    struct is_bitwise_serializable<taylor<N, T> >
-      : is_bitwise_serializable<typename std::remove_const<T>::type>
-    {};
-}}
-
 #include "space_vector.hpp"
 
 template <int N, class T>
@@ -551,4 +550,3 @@ std::ostream& operator<<(std::ostream& os, const taylor<N, T>& t) {
     return os;
 }
 
-#endif /* TAYLOR_HPP_ */

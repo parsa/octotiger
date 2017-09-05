@@ -613,7 +613,6 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account) {
      /***************************************************************************/
      // new-style interaction calculation (both cannot be active at the same time)
      if (new_style_enabled && !grid_ptr->get_leaf() && !grid_ptr->get_root()) {
-         std::cout << "in new kernel" << std::endl;
          
         std::vector<multipole>& M_ptr = grid_ptr->get_M();
         std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr = grid_ptr->get_com_ptr();

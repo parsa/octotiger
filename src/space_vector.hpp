@@ -10,7 +10,7 @@
 
 #include "defs.hpp"
 
-#include <hpx/traits/is_bitwise_serializable.hpp>
+// #include <hpx/traits/is_bitwise_serializable.hpp>
 
 #include <cmath>
 
