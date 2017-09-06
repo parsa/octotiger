@@ -5,7 +5,7 @@
 #include "m2m_kernel.hpp"
 #include "m2m_cuda.hpp"
 //
-#include "cuda/cuda_helper.h"
+// #include "cuda/cuda_helper.h"
 //
 #include <algorithm>
 
@@ -151,9 +151,7 @@ namespace fmm {
 
         auto start = std::chrono::high_resolution_clock::now();
 
-	octotiger::cuda::util::cuda_helper cuda_helper;
-
-        cuda::m2m_cuda cuda_kernel(cuda_helper.get_stream());
+        cuda::m2m_cuda cuda_kernel();
 	cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA, angular_corrections_SoA);
         auto interaction_future = cuda_helper.get_future();
         interaction_future.get();
