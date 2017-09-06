@@ -16,17 +16,24 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 option(OCTOTIGER_WITH_SILO "Enable support for Silo output" ON)
 option(OCTOTIGER_WITH_GRAV_PAR "Enable parallelism in gravitational solver" OFF)
 option(OCTOTIGER_WITH_RADIATION "Enable radiation transport solver" OFF)
+option(OCTOTIGER_WITH_CUDA "Enable CUDA based calculations on GPU" OFF)
 
 ################################################################################
 # Find required packages
 ################################################################################
 find_package(HPX REQUIRED NO_CMAKE_PACKAGE_REGISTRY)
+include_directories(${HPX_INCLUDE_DIRS})
+link_directories(${HPX_LIBRARY_DIR})
+
 if (OCTOTIGER_WITH_SILO)
   find_package(Silo REQUIRED)
 endif()
 
-include_directories(${HPX_INCLUDE_DIRS})
-link_directories(${HPX_LIBRARY_DIR})
+if(OCTOTIGER_WITH_CUDA)
+  find_package(CUDA REQUIRED)
+  include_directories(${CUDA_TOOLKIT_INCLUDE})
+endif()
+
 
 ################################################################################
 # Silo support

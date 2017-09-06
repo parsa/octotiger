@@ -13,12 +13,17 @@ __global__ void trivial_kernel(double *local_expansions_SoA_ptr,
   printf("hello from gpu");
 }
 
-// void test() {
-//   float *d;
-//   cudaMalloc(&d, 128 * sizeof(float));
-//   trivial_kernel<<<1, 1>>>(d);
-//   cudaFree(d);
-// }
+__global__ void trivial_kernel(float *d) {
+  //TODO: make sure you pick up the right expansion type
+  printf("hello from gpu");
+}
+
+void test(cudaStream_t stream) {
+  float *d;
+  cudaMalloc(&d, 128 * sizeof(float));
+  trivial_kernel<<<1, 1, 0, stream>>>(d);
+  cudaFree(d);
+}
 
 #include "grid_flattened_indices.hpp"
 #include "helper.hpp"
@@ -838,7 +843,11 @@ namespace octotiger {
 				 d_angular_corrections_SoA.get_device_ptr());
 	CUDA_CHECK_ERROR(cudaThreadSynchronize());
 
+	{
+	  test(stream_);
+	}
       }
+
     }
   }
 }
