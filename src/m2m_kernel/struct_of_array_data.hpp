@@ -48,6 +48,11 @@ namespace fmm {
             }
         }
 
+        // constructor that works on preallocated and initialized data
+        struct_of_array_data(component_type* preallocated_data)
+	  : data(preallocated_data) {
+        }
+
         struct_of_array_data(const size_t entries_per_component)
           : data(new component_type[num_components * padded_entries_per_component]) {}
 
@@ -70,6 +75,14 @@ namespace fmm {
                 }
             }
         }
+
+      double *get_underlying_pointer() {
+	return data;
+      }
+
+      size_t get_size_bytes() {
+	return num_components * padded_entries_per_component * sizeof(component_type);
+      }
     };
 
     // template <typename AoS_type, typename component_type, size_t num_components>

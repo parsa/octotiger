@@ -1,6 +1,7 @@
 #pragma once
 
 #include "m2m_simd_types.hpp"
+#include "multiindex.hpp"
 
 namespace octotiger {
 namespace fmm {
