@@ -2,13 +2,12 @@
 
 #include "calculate_stencil.hpp"
 #include "interactions_iterators.hpp"
-#include "m2m_kernel.hpp"
 #include "m2m_cuda.hpp"
+#include "m2m_kernel.hpp"
 //
 // #include "cuda/cuda_helper.h"
 //
 #include <algorithm>
-
 
 // Big picture questions:
 // - use any kind of tiling?
@@ -134,14 +133,14 @@ namespace fmm {
     }
 
     void m2m_interactions::compute_interactions() {
-        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING> local_expansions_SoA(
-            local_expansions);
-        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING> center_of_masses_SoA(
-            center_of_masses);
-        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING> potential_expansions_SoA(
-            potential_expansions);
-        struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING> angular_corrections_SoA(
-            angular_corrections);
+        struct_of_array_data<real, 20, ENTRIES, SOA_PADDING> local_expansions_SoA =
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>::from_vector(local_expansions);
+        struct_of_array_data<real, 3, ENTRIES, SOA_PADDING> center_of_masses_SoA =
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>::from_vector(center_of_masses);
+        struct_of_array_data<real, 20, ENTRIES, SOA_PADDING> potential_expansions_SoA =
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>::from_vector(potential_expansions);
+        struct_of_array_data<real, 3, ENTRIES, SOA_PADDING> angular_corrections_SoA =
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>::from_vector(angular_corrections);
 
         m2m_kernel kernel(
             // local_expansions_SoA,
@@ -151,11 +150,12 @@ namespace fmm {
 
         auto start = std::chrono::high_resolution_clock::now();
 
-        cuda::m2m_cuda cuda_kernel();
-	cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA, angular_corrections_SoA);
-        auto interaction_future = cuda_helper.get_future();
-        interaction_future.get();
-        std::cout << "The cuda future has completed successfully" << std::endl;
+        cuda::m2m_cuda cuda_kernel;
+        cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA,
+            potential_expansions_SoA, angular_corrections_SoA);
+        // auto interaction_future = cuda_helper.get_future();
+        // interaction_future.get();
+        // std::cout << "The cuda future has completed successfully" << std::endl;
 
         kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
             angular_corrections_SoA, stencil);

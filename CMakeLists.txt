@@ -83,6 +83,8 @@ if (OCTOTIGER_WITH_RADIATION)
   add_definitions(-DOCTOTIGER_HAVE_RADIATION)
 endif()
 
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11" )
+
 set(source_files)
 set(dependencies)
 
@@ -167,16 +169,18 @@ set(header_files
     src/m2m_kernel/m2m_taylor_set_basis.hpp
 )
 
-add_hpx_executable(
+  # DEPENDENCIES
+  #   ${dependencies}
+
+cuda_add_executable(
   octotiger
-  DEPENDENCIES
-    ${dependencies}
-  SOURCES
+  # SOURCES
     ${source_files}
-  HEADERS
-    ${header_files}
-  FOLDER  "Octotiger"
+  # HEADERS
+    # ${header_files}
+  # FOLDER  "Octotiger"
 )
 
+hpx_setup_target(octotiger)
 
 

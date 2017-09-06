@@ -112,24 +112,20 @@ namespace fmm {
         // }
 
         void blocked_interaction_rho(
-            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
-                potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
-                angular_corrections_SoA,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& potential_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& angular_corrections_SoA,
             const multiindex<>& cell_index, const size_t cell_flat_index,
             const multiindex<m2m_int_vector>& cell_index_coarse,
             const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
             const std::vector<multiindex<>>& stencil, const size_t outer_stencil_index);
 
         void blocked_interaction_non_rho(
-            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
-                potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
-                angular_corrections_SoA,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& potential_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& angular_corrections_SoA,
             const multiindex<>& cell_index, const size_t cell_flat_index,
             const multiindex<m2m_int_vector>& cell_index_coarse,
             const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
@@ -158,12 +154,10 @@ namespace fmm {
         m2m_kernel operator=(const m2m_kernel& other) = delete;
 
         void apply_stencil(
-            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
-                potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
-                angular_corrections_SoA,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& potential_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& angular_corrections_SoA,
             std::vector<multiindex<>>& stencil);
     };
 
