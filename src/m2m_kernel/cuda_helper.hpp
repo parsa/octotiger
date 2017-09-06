@@ -89,6 +89,7 @@ namespace fmm {
                 return *this->pointer<component_access>(flat_index);
             }
 
+
             template <typename AoS_type>
             __device__ static struct_of_array_data<component_type, num_components, entries, padding>
             from_vector(const std::vector<AoS_type>& org) {
@@ -106,13 +107,6 @@ namespace fmm {
             // constructor that works on preallocated and initialized data
             __device__ struct_of_array_data(component_type* preallocated_data)
               : data(preallocated_data) {}
-
-            __device__ struct_of_array_data(const size_t entries_per_component)
-              : data(new component_type[num_components * padded_entries_per_component]) {}
-
-            __device__ ~struct_of_array_data() {
-                delete[] data;
-            }
 
             __device__ struct_of_array_data(const struct_of_array_data& other) = delete;
 
