@@ -166,13 +166,14 @@ namespace fmm {
         cuda::m2m_cuda cuda_kernel;
         cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA,
             potential_expansions_SoA, angular_corrections_SoA, opts.theta, factor.get_array(),
-            factor_half.get_array(), factor_sixth.get_array());
+            factor_half.get_array(), factor_sixth.get_array(), type);
 
         // auto interaction_future = cuda_helper.get_future();
         // interaction_future.get();
         // std::cout << "The cuda future has completed successfully" << std::endl;
 
-        // kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
+        // kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
+        // potential_expansions_SoA,
         //     angular_corrections_SoA, stencil);
         auto end = std::chrono::high_resolution_clock::now();
 
