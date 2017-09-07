@@ -93,7 +93,7 @@ void initialize(options _opts, std::vector<hpx::id_type> const& localities)
 	node_server::set_hydro(hydro_on);
 	compute_ilist();
         compute_factor();
-        octotiger::fmm::m2m_interactions::stencil = octotiger::fmm::calculate_stencil();
+        octotiger::fmm::stencil = octotiger::fmm::calculate_stencil();
 }
 
 HPX_PLAIN_ACTION(initialize, initialize_action);

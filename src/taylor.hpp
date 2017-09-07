@@ -335,9 +335,13 @@ public:
         return data.data();
     }
 
+    inline std::array<T, taylor_sizes[N - 1]> &get_array() {
+        return data;
+    }
+
     template <class Arc>
     void serialize(Arc& arc, const unsigned) {
-        arc & data;
+        arc& data;
     }
 };
 
@@ -346,82 +350,26 @@ public:
 template <int N, class T>
 taylor_consts taylor<N, T>::tc;
 
-constexpr integer to_aa[] = {
-    -1,
-     4,  7,  9
-};
-constexpr integer to_aaa[] = {
-    -1,
-    10, 16, 19
-};
-constexpr integer to_aaaa[] = {
-    -1,
-    20, 30, 34
-};
+constexpr integer to_aa[] = {-1, 4, 7, 9};
+constexpr integer to_aaa[] = {-1, 10, 16, 19};
+constexpr integer to_aaaa[] = {-1, 20, 30, 34};
 
-constexpr integer to_aab[] = {
-    -1,
-    -1, -1, -1,
-    10, 11, 12, 16, 17, 19
-};
-constexpr integer to_abb[] = {
-    -1,
-    -1, -1, -1,
-    10, 13, 15, 16, 18, 19
-};
-constexpr integer to_aaab[] = {
-    -1,
-    -1, -1, -1,
-    20, 21, 22, 30, 31, 34
-};
-constexpr integer to_abbb[] = {
-    -1,
-    -1, -1, -1,
-    20, 26, 29, 30, 33, 34
-};
-constexpr integer to_aabb[] = {
-    -1,
-    -1, -1, -1,
-    20, 23, 25, 30, 32, 34
-};
+constexpr integer to_aab[] = {-1, -1, -1, -1, 10, 11, 12, 16, 17, 19};
+constexpr integer to_abb[] = {-1, -1, -1, -1, 10, 13, 15, 16, 18, 19};
+constexpr integer to_aaab[] = {-1, -1, -1, -1, 20, 21, 22, 30, 31, 34};
+constexpr integer to_abbb[] = {-1, -1, -1, -1, 20, 26, 29, 30, 33, 34};
+constexpr integer to_aabb[] = {-1, -1, -1, -1, 20, 23, 25, 30, 32, 34};
 
 constexpr integer to_aabc[] = {
-    -1,
-    -1, -1, -1,
-    -1, -1, -1, -1, -1, -1,
-    20, 21, 22, 23, 24, 25, 30, 31, 32, 34
-};
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 20, 21, 22, 23, 24, 25, 30, 31, 32, 34};
 constexpr integer to_abbc[] = {
-    -1,
-    -1, -1, -1,
-    -1, -1, -1, -1, -1, -1,
-    20, 21, 22, 26, 27, 29, 30, 31, 33, 34
-};
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 20, 21, 22, 26, 27, 29, 30, 31, 33, 34};
 constexpr integer to_abcc[] = {
-    -1,
-    -1, -1, -1,
-    -1, -1, -1, -1, -1, -1,
-    20, 23, 25, 26, 28, 29, 30, 32, 33, 34
-};
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 20, 23, 25, 26, 28, 29, 30, 32, 33, 34};
 
-constexpr integer to_a[] = {
-   -1,
-    0,  1,  2,
-    0,  0,  0,  1,  1,  2,
-    0,  0,  0,  0,  0,  0,  1,  1,  1,  2
-};
-constexpr integer to_b[] = {
-   -1,
-   -1, -1, -1,
-    0,  1,  2,  1,  2,  2,
-    0,  0,  0,  1,  1,  2,  1,  1,  2,  2
-};
-constexpr integer to_c[] = {
-   -1,
-   -1, -1, -1,
-   -1, -1, -1, -1, -1, -1,
-    0,  1,  2,  1,  2,  2,  1,  2,  2,  2
-};
+constexpr integer to_a[] = {-1, 0, 1, 2, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2};
+constexpr integer to_b[] = {-1, -1, -1, -1, 0, 1, 2, 1, 2, 2, 0, 0, 0, 1, 1, 2, 1, 1, 2, 2};
+constexpr integer to_c[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 1, 2, 2, 1, 2, 2, 2};
 
 template <>
 inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM>& X) {
@@ -485,27 +433,27 @@ inline void taylor<5, simd_vector>::set_basis(const std::array<simd_vector, NDIM
     }
 
     auto const d22 = 2.0 * d2;
-//     for (integer a = 0; a != NDIM; a++) {
-//         auto const Xad2 = X[a] * d2;
-//         auto const Xad3 = X[a] * d3;
-//         A(a, a) += d1;
-//         A(a, a, a) += Xad2;
-//         A(a, a, a, a) += Xad3 * X[a] + d22;
-//         for (integer b = a; b != NDIM; b++) {
-//             auto const Xabd3 = Xad3 * X[b];
-//             auto const Xbd3 = X[b] * d3;
-//             A(a, a, b) += X[b] * d2;
-//             A(a, b, b) += Xad2;
-//             A(a, a, a, b) += Xabd3;
-//             A(a, b, b, b) += Xabd3;
-//             A(a, a, b, b) += d2;
-//             for (integer c = b; c != NDIM; c++) {
-//                 A(a, a, b, c) += Xbd3 * X[c];
-//                 A(a, b, b, c) += Xad3 * X[c];
-//                 A(a, b, c, c) += Xabd3;
-//             }
-//         }
-//     }
+    //     for (integer a = 0; a != NDIM; a++) {
+    //         auto const Xad2 = X[a] * d2;
+    //         auto const Xad3 = X[a] * d3;
+    //         A(a, a) += d1;
+    //         A(a, a, a) += Xad2;
+    //         A(a, a, a, a) += Xad3 * X[a] + d22;
+    //         for (integer b = a; b != NDIM; b++) {
+    //             auto const Xabd3 = Xad3 * X[b];
+    //             auto const Xbd3 = X[b] * d3;
+    //             A(a, a, b) += X[b] * d2;
+    //             A(a, b, b) += Xad2;
+    //             A(a, a, a, b) += Xabd3;
+    //             A(a, b, b, b) += Xabd3;
+    //             A(a, a, b, b) += d2;
+    //             for (integer c = b; c != NDIM; c++) {
+    //                 A(a, a, b, c) += Xbd3 * X[c];
+    //                 A(a, b, b, c) += Xad3 * X[c];
+    //                 A(a, b, c, c) += Xabd3;
+    //             }
+    //         }
+    //     }
     for (integer i = taylor_sizes[0]; i != taylor_sizes[1]; ++i) {
         A[to_aa[i]] += d1;
         integer const to_a_idx = to_a[i];
@@ -549,4 +497,3 @@ std::ostream& operator<<(std::ostream& os, const taylor<N, T>& t) {
     std::cout << ")";
     return os;
 }
-

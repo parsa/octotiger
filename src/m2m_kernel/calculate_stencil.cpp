@@ -10,6 +10,8 @@ extern options opts;
 namespace octotiger {
 namespace fmm {
 
+    std::vector<multiindex<>> stencil;
+
     std::vector<multiindex<>> calculate_stencil() {
         std::array<std::vector<multiindex<>>, 8> stencils;
 

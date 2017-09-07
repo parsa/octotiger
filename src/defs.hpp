@@ -7,6 +7,10 @@
 
 #include <hpx/config.hpp>
 
+#ifndef NVCC
+#define __device__
+#endif
+
 //#define OCTOTIGER_RESTART_LOAD_SEQ
 
 //#define OCTOTIGER_USE_NODE_CACHE
@@ -235,7 +239,7 @@ constexpr inline integer gindex(integer i, integer j, integer k)
 }
 
 template <typename T>
-constexpr inline T sqr(T const& val)
+__device__ constexpr inline T sqr(T const& val)
 {
     return val * val;
 }

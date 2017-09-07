@@ -25,7 +25,9 @@ namespace fmm {
                 octotiger::fmm::struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>&
                     potential_expansions_SoA,
                 octotiger::fmm::struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>&
-                    angular_corrections_SoA);
+                    angular_corrections_SoA,
+                double theta, std::array<real, 20>& factor, std::array<real, 20>& factor_half,
+                std::array<real, 20>& factor_sixth);
             // private:
             //   cudaStream_t stream_;
         };

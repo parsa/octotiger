@@ -9,16 +9,25 @@
 //
 #include <algorithm>
 
+#include "options.hpp"
+
 // Big picture questions:
 // - use any kind of tiling?
 
 size_t total_neighbors = 0;
 size_t missing_neighbors = 0;
 
+extern options opts;
+
+// required for cuda
+extern taylor<4, real> factor;
+extern taylor<4, real> factor_half;
+extern taylor<4, real> factor_sixth;
+
 namespace octotiger {
 namespace fmm {
 
-    std::vector<multiindex<>> m2m_interactions::stencil;
+    extern std::vector<octotiger::fmm::multiindex<>> stencil;
 
     m2m_interactions::m2m_interactions(std::vector<multipole>& M_ptr,
         std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
@@ -152,7 +161,8 @@ namespace fmm {
 
         cuda::m2m_cuda cuda_kernel;
         cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA,
-            potential_expansions_SoA, angular_corrections_SoA);
+            potential_expansions_SoA, angular_corrections_SoA, opts.theta, factor.get_array(),
+            factor_half.get_array(), factor_sixth.get_array());
         // auto interaction_future = cuda_helper.get_future();
         // interaction_future.get();
         // std::cout << "The cuda future has completed successfully" << std::endl;
