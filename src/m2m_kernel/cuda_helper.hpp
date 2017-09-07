@@ -163,6 +163,15 @@ namespace fmm {
             __device__ size_t get_size_bytes() {
                 return num_components * padded_entries_per_component * sizeof(component_type);
             }
+
+            __device__ inline size_t size() {
+                return num_components * padded_entries_per_component;
+            }
+
+            __device__ component_type& at(size_t component_access, size_t flat_index) {
+                size_t component_array_offset = component_access * padded_entries_per_component;
+                return *(data + flat_index + component_array_offset);
+            }
         };
     }
 }

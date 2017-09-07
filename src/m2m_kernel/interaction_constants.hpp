@@ -54,7 +54,7 @@ namespace fmm {
     // how many stencil elements are processed for one origin cell, before the next
     // cell is processed
     constexpr uint64_t STENCIL_BLOCKING = 8;
-    constexpr uint64_t SOA_PADDING = 19;    // to prevent some of the 4k aliasing
+    constexpr uint64_t SOA_PADDING = 0;    // to prevent some of the 4k aliasing
 
 }    // namespace fmm
 }    // namespace octotiger

@@ -134,8 +134,6 @@ namespace fmm {
             double* angular_corrections_SoA_ptr, octotiger::fmm::multiindex<>* stencil,
             size_t stencil_elements, double theta, double* factor, double* factor_half,
             double* factor_sixth) {
-            const double theta_rec_squared = sqr(1.0 / theta);
-
             // TODO: make sure you pick up the right expansion type
             octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES_PADDED,
                 octotiger::fmm::SOA_PADDING>
@@ -149,6 +147,25 @@ namespace fmm {
             octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES_NOT_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 angular_corrections_SoA(angular_corrections_SoA_ptr);
+
+            // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
+            //     printf("local_expansions_SoA on DEVICE:\n");
+            //     printf("local_expansions_SoA.size(): %lu\n", local_expansions_SoA.size());
+            //     size_t lb = 0;
+            //     for (size_t i = 0; i < local_expansions_SoA.size(); i++) {
+            //         if (lb == 40) {
+            //             lb = 0;
+            //             printf("\n");
+            //         } else if (i > 0) {
+            //             printf(",");
+            //         }
+            //         printf("%lf", local_expansions_SoA.get_underlying_pointer()[i]);
+            //         lb += 1;
+            //     }
+            //     printf("\n");
+            // }
+
+            const double theta_rec_squared = sqr(1.0 / theta);
 
             octotiger::fmm::multiindex<> cell_index(threadIdx.x + INNER_CELLS_PADDING_DEPTH,
                 threadIdx.y + INNER_CELLS_PADDING_DEPTH, threadIdx.z + INNER_CELLS_PADDING_DEPTH);
@@ -946,6 +963,30 @@ namespace fmm {
             cuda_buffer<real> d_angular_corrections_SoA =
                 octotiger::fmm::cuda::move_to_device(angular_corrections_SoA);
 
+            octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>
+                potential_expansions_SoA_copy;
+            d_potential_expansions_SoA.move_to_host(potential_expansions_SoA_copy);
+
+            // for (size_t i = 0; i < potential_expansions_SoA_copy.size(); i++) {
+            //     if (potential_expansions_SoA_copy.get_underlying_pointer()[i] -
+            //             potential_expansions_SoA.get_underlying_pointer()[i] >
+            //         1E-6) {
+            //         throw;
+            //     }
+            // }
+
+            octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>
+                angular_corrections_SoA_copy;
+            d_angular_corrections_SoA.move_to_host(angular_corrections_SoA_copy);
+
+            // for (size_t i = 0; i < angular_corrections_SoA_copy.size(); i++) {
+            //     if (angular_corrections_SoA_copy.get_underlying_pointer()[i] -
+            //             angular_corrections_SoA.get_underlying_pointer()[i] >
+            //         1E-6) {
+            //         throw;
+            //     }
+            // }
+
             std::cout << "moving factor" << std::endl;
             cuda_buffer<real> d_factor = octotiger::fmm::cuda::move_to_device(factor);
             std::cout << "moving factor_half" << std::endl;
@@ -983,6 +1024,29 @@ namespace fmm {
 
             d_potential_expansions_SoA.move_to_host(potential_expansions_SoA);
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA);
+
+            // octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_PADDED, SOA_PADDING>
+            //     local_expansions_SoA_copy;
+            // d_local_expansions_SoA.move_to_host(local_expansions_SoA_copy);
+
+            // for (size_t i = 0; i < local_expansions_SoA_copy.size(); i++) {
+            //     if (local_expansions_SoA_copy.get_underlying_pointer()[i] -
+            //             local_expansions_SoA.get_underlying_pointer()[i] >
+            //         1E-6) {
+            //         throw;
+            //     }
+            // }
+
+            // octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING>
+            //     center_of_masses_SoA_copy;
+            // d_center_of_masses_SoA.move_to_host(center_of_masses_SoA_copy);
+            // for (size_t i = 0; i < center_of_masses_SoA_copy.size(); i++) {
+            //     if (center_of_masses_SoA_copy.get_underlying_pointer()[i] -
+            //             center_of_masses_SoA.get_underlying_pointer()[i] >
+            //         1E-6) {
+            //         throw;
+            //     }
+            // }
 
             // { test(stream_); }
             // throw;

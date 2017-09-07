@@ -183,6 +183,15 @@ namespace fmm {
 
         auto start = std::chrono::high_resolution_clock::now();
 
+        // std::cout << "local_expansions_SoA on HOST:" << std::endl;
+        // for (size_t i = 0; i < local_expansions_SoA.size(); i++) {
+        //     if (i > 0) {
+        //         std::cout << ", ";
+        //     }
+        //     std::cout << local_expansions_SoA.get_underlying_pointer()[i];
+        // }
+        // std::cout << std::endl;
+
         cuda::m2m_cuda cuda_kernel;
         cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA,
             potential_expansions_SoA_cuda, angular_corrections_SoA_cuda, opts.theta,
@@ -195,6 +204,38 @@ namespace fmm {
         kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
             angular_corrections_SoA, stencil);
         auto end = std::chrono::high_resolution_clock::now();
+
+        // std::cout << "potential_expansions_SoA:" << std::endl;
+        // for (size_t i = 0; i < potential_expansions_SoA.size(); i++) {
+        //     if (potential_expansions_SoA.get_underlying_pointer()[i] -
+        //             potential_expansions_SoA_cuda.get_underlying_pointer()[i] >
+        //         1E-6) {
+        //         std::cout << "ref: " << potential_expansions_SoA.get_underlying_pointer()[i]
+        //                   << " mine: " <<
+        //                   potential_expansions_SoA_cuda.get_underlying_pointer()[i]
+        //                   << " abs err: "
+        //                   << (potential_expansions_SoA.get_underlying_pointer()[i] -
+        //                          potential_expansions_SoA_cuda.get_underlying_pointer()[i])
+        //                   << " flat_index: " << i << std::endl;
+        //         throw;
+        //     }
+        // }
+
+        // std::cout << "angular_corrections_SoA:" << std::endl;
+        // for (size_t i = 0; i < angular_corrections_SoA.size(); i++) {
+        //     if (angular_corrections_SoA.get_underlying_pointer()[i] -
+        //             angular_corrections_SoA_cuda.get_underlying_pointer()[i] >
+        //         1E-6) {
+        //         std::cout << "ref: " << angular_corrections_SoA.get_underlying_pointer()[i]
+        //                   << " mine: " <<
+        //                   angular_corrections_SoA_cuda.get_underlying_pointer()[i]
+        //                   << " abs err: "
+        //                   << (angular_corrections_SoA.get_underlying_pointer()[i] -
+        //                          angular_corrections_SoA_cuda.get_underlying_pointer()[i])
+        //                   << " flat_index: " << i << std::endl;
+        //         throw;
+        //     }
+        // }
 
         std::chrono::duration<double, std::milli> duration = end - start;
         std::cout << "new interaction kernel (apply only, ms): " << duration.count() << std::endl;
