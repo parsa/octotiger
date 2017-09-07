@@ -21,8 +21,8 @@ namespace fmm {
 
         component_type* data;
 
-        struct_of_array_data()
-          : data(nullptr) {}
+        // struct_of_array_data()
+        //   : data(nullptr) {}
 
     public:
         template <size_t component_access>
@@ -50,21 +50,21 @@ namespace fmm {
         template <typename AoS_type>
         static struct_of_array_data<component_type, num_components, entries, padding> from_vector(
             const std::vector<AoS_type>& org) {
-            component_type* data =
-                new component_type[num_components * padded_entries_per_component];
+            struct_of_array_data r;
+            component_type* data = r.get_underlying_pointer();
             for (size_t component = 0; component < num_components; component++) {
                 for (size_t entry = 0; entry < org.size(); entry++) {
                     data[component * padded_entries_per_component + entry] = org[entry][component];
                 }
             }
-            return struct_of_array_data(data);
+            return r;
         }
 
         // constructor that works on preallocated and initialized data
         struct_of_array_data(component_type* preallocated_data)
           : data(preallocated_data) {}
 
-        struct_of_array_data(const size_t entries_per_component)
+        struct_of_array_data()
           : data(new component_type[num_components * padded_entries_per_component]) {}
 
         ~struct_of_array_data() {
@@ -91,11 +91,15 @@ namespace fmm {
             }
         }
 
-        double* get_underlying_pointer() {
+        inline double* get_underlying_pointer() {
             return data;
         }
 
-        size_t get_size_bytes() {
+        inline size_t size() {
+            return num_components * padded_entries_per_component;
+        }
+
+        inline size_t get_size_bytes() {
             return num_components * padded_entries_per_component * sizeof(component_type);
         }
     };

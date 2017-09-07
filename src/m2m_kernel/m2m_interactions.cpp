@@ -148,12 +148,32 @@ namespace fmm {
         struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING> center_of_masses_SoA =
             struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING>::from_vector(
                 center_of_masses);
-        struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING> potential_expansions_SoA =
-            struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>::from_vector(
-                potential_expansions);
-        struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING> angular_corrections_SoA =
-            struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>::from_vector(
-                angular_corrections);
+        // struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING> potential_expansions_SoA
+        // =
+        //     struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>::from_vector(
+        //         potential_expansions);
+        // struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING> angular_corrections_SoA =
+        //     struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>::from_vector(
+        //         angular_corrections);
+
+        struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING> potential_expansions_SoA;
+        for (size_t i = 0; i < potential_expansions_SoA.size(); i++) {
+            potential_expansions_SoA.get_underlying_pointer()[i] = 0.0;
+        }
+        struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING> angular_corrections_SoA;
+        for (size_t i = 0; i < angular_corrections_SoA.size(); i++) {
+            angular_corrections_SoA.get_underlying_pointer()[i] = 0.0;
+        }
+
+        struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>
+            potential_expansions_SoA_cuda;
+        for (size_t i = 0; i < potential_expansions_SoA.size(); i++) {
+            potential_expansions_SoA_cuda.get_underlying_pointer()[i] = 0.0;
+        }
+        struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING> angular_corrections_SoA_cuda;
+        for (size_t i = 0; i < angular_corrections_SoA.size(); i++) {
+            angular_corrections_SoA_cuda.get_underlying_pointer()[i] = 0.0;
+        }
 
         m2m_kernel kernel(
             // local_expansions_SoA,
@@ -165,20 +185,21 @@ namespace fmm {
 
         cuda::m2m_cuda cuda_kernel;
         cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA,
-            potential_expansions_SoA, angular_corrections_SoA, opts.theta, factor.get_array(),
-            factor_half.get_array(), factor_sixth.get_array(), type);
+            potential_expansions_SoA_cuda, angular_corrections_SoA_cuda, opts.theta,
+            factor.get_array(), factor_half.get_array(), factor_sixth.get_array(), type);
 
         // auto interaction_future = cuda_helper.get_future();
         // interaction_future.get();
         // std::cout << "The cuda future has completed successfully" << std::endl;
 
-        // kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
-        // potential_expansions_SoA,
-        //     angular_corrections_SoA, stencil);
+        kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
+            angular_corrections_SoA, stencil);
         auto end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> duration = end - start;
         std::cout << "new interaction kernel (apply only, ms): " << duration.count() << std::endl;
+
+        // throw;
 
         // TODO: remove this after finalizing conversion
         // copy back SoA data into non-SoA result
