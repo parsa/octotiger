@@ -83,7 +83,7 @@ if (OCTOTIGER_WITH_RADIATION)
   add_definitions(-DOCTOTIGER_HAVE_RADIATION)
 endif()
 
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11" )
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -G -g" )
 
 set(source_files)
 set(dependencies)

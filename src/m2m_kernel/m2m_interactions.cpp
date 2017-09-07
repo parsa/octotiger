@@ -142,14 +142,18 @@ namespace fmm {
     }
 
     void m2m_interactions::compute_interactions() {
-        struct_of_array_data<real, 20, ENTRIES, SOA_PADDING> local_expansions_SoA =
-            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>::from_vector(local_expansions);
-        struct_of_array_data<real, 3, ENTRIES, SOA_PADDING> center_of_masses_SoA =
-            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>::from_vector(center_of_masses);
-        struct_of_array_data<real, 20, ENTRIES, SOA_PADDING> potential_expansions_SoA =
-            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>::from_vector(potential_expansions);
-        struct_of_array_data<real, 3, ENTRIES, SOA_PADDING> angular_corrections_SoA =
-            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>::from_vector(angular_corrections);
+        struct_of_array_data<real, 20, ENTRIES_PADDED, SOA_PADDING> local_expansions_SoA =
+            struct_of_array_data<real, 20, ENTRIES_PADDED, SOA_PADDING>::from_vector(
+                local_expansions);
+        struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING> center_of_masses_SoA =
+            struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING>::from_vector(
+                center_of_masses);
+        struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING> potential_expansions_SoA =
+            struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>::from_vector(
+                potential_expansions);
+        struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING> angular_corrections_SoA =
+            struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>::from_vector(
+                angular_corrections);
 
         m2m_kernel kernel(
             // local_expansions_SoA,
@@ -163,12 +167,13 @@ namespace fmm {
         cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA,
             potential_expansions_SoA, angular_corrections_SoA, opts.theta, factor.get_array(),
             factor_half.get_array(), factor_sixth.get_array());
+
         // auto interaction_future = cuda_helper.get_future();
         // interaction_future.get();
         // std::cout << "The cuda future has completed successfully" << std::endl;
 
-        kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
-            angular_corrections_SoA, stencil);
+        // kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA, potential_expansions_SoA,
+        //     angular_corrections_SoA, stencil);
         auto end = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> duration = end - start;

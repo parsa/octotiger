@@ -138,36 +138,47 @@ namespace fmm {
             const double theta_rec_squared = sqr(1.0 / theta);
 
             // TODO: make sure you pick up the right expansion type
-            octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES,
+            octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 local_expansions_SoA(local_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES,
+            octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 center_of_masses_SoA(center_of_masses_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES,
+            octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES_NOT_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 potential_expansions_SoA(potential_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES,
+            octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES_NOT_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 angular_corrections_SoA(angular_corrections_SoA_ptr);
-            printf("hello from gpu");
 
-            octotiger::fmm::multiindex<> cell_index(threadIdx.x, threadIdx.y, threadIdx.z);
+            octotiger::fmm::multiindex<> cell_index(threadIdx.x + INNER_CELLS_PADDING_DEPTH,
+                threadIdx.y + INNER_CELLS_PADDING_DEPTH, threadIdx.z + INNER_CELLS_PADDING_DEPTH);
 
             octotiger::fmm::multiindex<> cell_index_coarse(cell_index);
             cell_index_coarse.transform_coarse();
 
             size_t cell_flat_index = to_flat_index_padded(cell_index);
-            size_t cell_flat_index_unpadded = to_inner_flat_index_not_padded(cell_index);
+            octotiger::fmm::multiindex<> cell_index_unpadded(threadIdx.x, threadIdx.y, threadIdx.z);
+            size_t cell_flat_index_unpadded = to_inner_flat_index_not_padded(cell_index_unpadded);
+            // printf("x: %i y: %i z: %i, cell_flat_index: %lu\n", threadIdx.x, threadIdx.y,
+            //     threadIdx.z, cell_flat_index);
+            // printf("x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", threadIdx.x, threadIdx.y,
+            //     threadIdx.z, cell_flat_index_unpadded);
 
             for (size_t i = 0; i < stencil_elements; i++) {
                 octotiger::fmm::multiindex<>& cur_stencil = stencil[i];
+                // printf(
+                //     "stencil x: %i, y: %i, z: %i\n", cur_stencil.x, cur_stencil.y,
+                //     cur_stencil.z);
                 const octotiger::fmm::multiindex<> interaction_partner_index(
                     cell_index.x + cur_stencil.x, cell_index.y + cur_stencil.y,
                     cell_index.z + cur_stencil.z);
+                // printf("partner x: %i, y: %i, z: %i\n", interaction_partner_index.x,
+                //     interaction_partner_index.y, interaction_partner_index.z);
 
                 const size_t interaction_partner_flat_index =
                     to_flat_index_padded(interaction_partner_index);
+                // printf("interaction_partner_flat_index: %lu\n", interaction_partner_flat_index);
 
                 // // check whether all vector elements are in empty border
                 // if (vector_is_empty[interaction_partner_flat_index]) {
@@ -597,33 +608,46 @@ namespace fmm {
         }
 
         void m2m_cuda::compute_interactions(
-            octotiger::fmm::struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_PADDED, SOA_PADDING>&
                 local_expansions_SoA,
-            octotiger::fmm::struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING>&
                 center_of_masses_SoA,
-            octotiger::fmm::struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>&
                 potential_expansions_SoA,
-            octotiger::fmm::struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>&
                 angular_corrections_SoA,
             double theta, std::array<real, 20>& factor, std::array<real, 20>& factor_half,
             std::array<real, 20>& factor_sixth) {
+            std::cout << "moving local_expansions_SoA" << std::endl;
             cuda_buffer<real> d_local_expansions_SoA =
                 octotiger::fmm::cuda::move_to_device(local_expansions_SoA);
+            std::cout << "moving center_of_masses_SoA" << std::endl;
             cuda_buffer<real> d_center_of_masses_SoA =
                 octotiger::fmm::cuda::move_to_device(center_of_masses_SoA);
+            std::cout << "moving potential_expansions_SoA" << std::endl;
             cuda_buffer<real> d_potential_expansions_SoA =
                 octotiger::fmm::cuda::move_to_device(potential_expansions_SoA);
+            std::cout << "moving angular_corrections_SoA" << std::endl;
             cuda_buffer<real> d_angular_corrections_SoA =
                 octotiger::fmm::cuda::move_to_device(angular_corrections_SoA);
 
+            std::cout << "moving factor" << std::endl;
             cuda_buffer<real> d_factor = octotiger::fmm::cuda::move_to_device(factor);
+            std::cout << "moving factor_half" << std::endl;
             cuda_buffer<real> d_factor_half = octotiger::fmm::cuda::move_to_device(factor_half);
+            std::cout << "moving factor_sixth" << std::endl;
             cuda_buffer<real> d_factor_sixth = octotiger::fmm::cuda::move_to_device(factor_sixth);
-
+            std::cout << "moving stencil" << std::endl;
             cuda_buffer<multiindex<>> d_stencil = octotiger::fmm::cuda::move_to_device(stencil);
+            // for (multiindex<> s_e : stencil) {
+            //     std::cout << "x: " << s_e.x << " y: " << s_e.y << " z: " << s_e.z << std::endl;
+            // }
 
-            blocked_interaction_rho<<<1, 1>>>(d_local_expansions_SoA.get_device_ptr(),
-                d_center_of_masses_SoA.get_device_ptr(),
+            // int num_blocks = 1;
+            dim3 grid_spec(1, 1, 1);
+            dim3 threads_per_block(8, 8, 8);
+            blocked_interaction_rho<<<grid_spec, threads_per_block>>>(
+                d_local_expansions_SoA.get_device_ptr(), d_center_of_masses_SoA.get_device_ptr(),
                 d_potential_expansions_SoA.get_device_ptr(),
                 d_angular_corrections_SoA.get_device_ptr(), d_stencil.get_device_ptr(),
                 stencil.size(), theta, d_factor.get_device_ptr(), d_factor_half.get_device_ptr(),
@@ -634,6 +658,7 @@ namespace fmm {
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA);
 
             // { test(stream_); }
+            // throw;
         }
     }
 }

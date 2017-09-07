@@ -45,10 +45,10 @@ namespace fmm {
     }
 
     void m2m_kernel::apply_stencil(
-        struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
-        struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
-        struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& potential_expansions_SoA,
-        struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& angular_corrections_SoA,
+        struct_of_array_data<real, 20, ENTRIES_PADDED, SOA_PADDING>& local_expansions_SoA,
+        struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING>& center_of_masses_SoA,
+        struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>& potential_expansions_SoA,
+        struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>& angular_corrections_SoA,
         std::vector<multiindex<>>& stencil) {
         // for (multiindex<>& stencil_element : stencil) {
         for (size_t outer_stencil_index = 0; outer_stencil_index < stencil.size();

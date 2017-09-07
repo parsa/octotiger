@@ -64,6 +64,7 @@ namespace fmm {
                 data) {
             component_type* d_SoA;
             size_t SoA_bytes = data.get_size_bytes();
+            std::cout << "bytes: " << SoA_bytes << std::endl;
             CUDA_CHECK_ERROR(cudaMalloc(&d_SoA, SoA_bytes));
             component_type* h_SoA = data.get_underlying_pointer();
             CUDA_CHECK_ERROR(cudaMemcpy(d_SoA, h_SoA, SoA_bytes, cudaMemcpyHostToDevice));

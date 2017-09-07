@@ -18,13 +18,13 @@ namespace fmm {
             // }
 
             void compute_interactions(
-                octotiger::fmm::struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>&
+                octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_PADDED, SOA_PADDING>&
                     local_expansions_SoA,
-                octotiger::fmm::struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>&
+                octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING>&
                     center_of_masses_SoA,
-                octotiger::fmm::struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>&
+                octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>&
                     potential_expansions_SoA,
-                octotiger::fmm::struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>&
+                octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>&
                     angular_corrections_SoA,
                 double theta, std::array<real, 20>& factor, std::array<real, 20>& factor_half,
                 std::array<real, 20>& factor_sixth);
