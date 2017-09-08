@@ -214,6 +214,7 @@ namespace fmm {
                         cell_index_coarse, interaction_partner_index_coarse));
 
                 bool mask = theta_rec_squared > theta_c_rec_squared;
+                // mask = !mask;
 
                 real X[NDIM];
                 X[0] = center_of_masses_SoA.value<0>(cell_flat_index);
@@ -692,6 +693,7 @@ namespace fmm {
                         cell_index_coarse, interaction_partner_index_coarse));
 
                 bool mask = theta_rec_squared > theta_c_rec_squared;
+                // mask = !mask;
 
                 real X[NDIM];
                 X[0] = center_of_masses_SoA.value<0>(cell_flat_index);

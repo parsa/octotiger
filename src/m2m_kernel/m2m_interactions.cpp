@@ -205,37 +205,78 @@ namespace fmm {
             angular_corrections_SoA, stencil);
         auto end = std::chrono::high_resolution_clock::now();
 
-        // std::cout << "potential_expansions_SoA:" << std::endl;
-        // for (size_t i = 0; i < potential_expansions_SoA.size(); i++) {
-        //     if (potential_expansions_SoA.get_underlying_pointer()[i] -
-        //             potential_expansions_SoA_cuda.get_underlying_pointer()[i] >
-        //         1E-6) {
-        //         std::cout << "ref: " << potential_expansions_SoA.get_underlying_pointer()[i]
-        //                   << " mine: " <<
-        //                   potential_expansions_SoA_cuda.get_underlying_pointer()[i]
-        //                   << " abs err: "
-        //                   << (potential_expansions_SoA.get_underlying_pointer()[i] -
-        //                          potential_expansions_SoA_cuda.get_underlying_pointer()[i])
-        //                   << " flat_index: " << i << std::endl;
-        //         throw;
-        //     }
-        // }
+        std::cout << "potential_expansions_SoA:" << std::endl;
+        std::cout << "first potential_expansions_SoA_cuda:" << std::endl;
+        std::cout << "0: " << potential_expansions_SoA_cuda.value<0>(0) << std::endl;
+        std::cout << "1: " << potential_expansions_SoA_cuda.value<1>(0) << std::endl;
+        std::cout << "2: " << potential_expansions_SoA_cuda.value<2>(0) << std::endl;
+        std::cout << "3: " << potential_expansions_SoA_cuda.value<3>(0) << std::endl;
+        std::cout << "4: " << potential_expansions_SoA_cuda.value<4>(0) << std::endl;
+        std::cout << "5: " << potential_expansions_SoA_cuda.value<5>(0) << std::endl;
+        std::cout << "6: " << potential_expansions_SoA_cuda.value<6>(0) << std::endl;
+        std::cout << "7: " << potential_expansions_SoA_cuda.value<7>(0) << std::endl;
+        std::cout << "8: " << potential_expansions_SoA_cuda.value<8>(0) << std::endl;
+        std::cout << "9: " << potential_expansions_SoA_cuda.value<9>(0) << std::endl;
+        std::cout << "10: " << potential_expansions_SoA_cuda.value<10>(0) << std::endl;
+        std::cout << "11: " << potential_expansions_SoA_cuda.value<11>(0) << std::endl;
+        std::cout << "12: " << potential_expansions_SoA_cuda.value<12>(0) << std::endl;
+        std::cout << "13: " << potential_expansions_SoA_cuda.value<13>(0) << std::endl;
+        std::cout << "14: " << potential_expansions_SoA_cuda.value<14>(0) << std::endl;
+        std::cout << "15: " << potential_expansions_SoA_cuda.value<15>(0) << std::endl;
+        std::cout << "16: " << potential_expansions_SoA_cuda.value<16>(0) << std::endl;
+        std::cout << "17: " << potential_expansions_SoA_cuda.value<17>(0) << std::endl;
+        std::cout << "18: " << potential_expansions_SoA_cuda.value<18>(0) << std::endl;
+        std::cout << "19: " << potential_expansions_SoA_cuda.value<19>(0) << std::endl;
 
-        // std::cout << "angular_corrections_SoA:" << std::endl;
-        // for (size_t i = 0; i < angular_corrections_SoA.size(); i++) {
-        //     if (angular_corrections_SoA.get_underlying_pointer()[i] -
-        //             angular_corrections_SoA_cuda.get_underlying_pointer()[i] >
-        //         1E-6) {
-        //         std::cout << "ref: " << angular_corrections_SoA.get_underlying_pointer()[i]
-        //                   << " mine: " <<
-        //                   angular_corrections_SoA_cuda.get_underlying_pointer()[i]
-        //                   << " abs err: "
-        //                   << (angular_corrections_SoA.get_underlying_pointer()[i] -
-        //                          angular_corrections_SoA_cuda.get_underlying_pointer()[i])
-        //                   << " flat_index: " << i << std::endl;
-        //         throw;
-        //     }
-        // }
+        std::cout << "first potential_expansions_SoA:" << std::endl;
+        std::cout << "0: " << potential_expansions_SoA.value<0>(0) << std::endl;
+        std::cout << "1: " << potential_expansions_SoA.value<1>(0) << std::endl;
+        std::cout << "2: " << potential_expansions_SoA.value<2>(0) << std::endl;
+        std::cout << "3: " << potential_expansions_SoA.value<3>(0) << std::endl;
+        std::cout << "4: " << potential_expansions_SoA.value<4>(0) << std::endl;
+        std::cout << "5: " << potential_expansions_SoA.value<5>(0) << std::endl;
+        std::cout << "6: " << potential_expansions_SoA.value<6>(0) << std::endl;
+        std::cout << "7: " << potential_expansions_SoA.value<7>(0) << std::endl;
+        std::cout << "8: " << potential_expansions_SoA.value<8>(0) << std::endl;
+        std::cout << "9: " << potential_expansions_SoA.value<9>(0) << std::endl;
+        std::cout << "10: " << potential_expansions_SoA.value<10>(0) << std::endl;
+        std::cout << "11: " << potential_expansions_SoA.value<11>(0) << std::endl;
+        std::cout << "12: " << potential_expansions_SoA.value<12>(0) << std::endl;
+        std::cout << "13: " << potential_expansions_SoA.value<13>(0) << std::endl;
+        std::cout << "14: " << potential_expansions_SoA.value<14>(0) << std::endl;
+        std::cout << "15: " << potential_expansions_SoA.value<15>(0) << std::endl;
+        std::cout << "16: " << potential_expansions_SoA.value<16>(0) << std::endl;
+        std::cout << "17: " << potential_expansions_SoA.value<17>(0) << std::endl;
+        std::cout << "18: " << potential_expansions_SoA.value<18>(0) << std::endl;
+        std::cout << "19: " << potential_expansions_SoA.value<19>(0) << std::endl;
+        for (size_t i = 0; i < potential_expansions_SoA.size(); i++) {
+            if (potential_expansions_SoA.get_underlying_pointer()[i] -
+                    potential_expansions_SoA_cuda.get_underlying_pointer()[i] >
+                1E-10) {
+                std::cout << "ref: " << potential_expansions_SoA.get_underlying_pointer()[i]
+                          << " mine: " << potential_expansions_SoA_cuda.get_underlying_pointer()[i]
+                          << " abs err: "
+                          << (potential_expansions_SoA.get_underlying_pointer()[i] -
+                                 potential_expansions_SoA_cuda.get_underlying_pointer()[i])
+                          << " flat_index: " << i << std::endl;
+                throw;
+            }
+        }
+
+        std::cout << "angular_corrections_SoA:" << std::endl;
+        for (size_t i = 0; i < angular_corrections_SoA.size(); i++) {
+            if (angular_corrections_SoA.get_underlying_pointer()[i] -
+                    angular_corrections_SoA_cuda.get_underlying_pointer()[i] >
+                1E-10) {
+                std::cout << "ref: " << angular_corrections_SoA.get_underlying_pointer()[i]
+                          << " mine: " << angular_corrections_SoA_cuda.get_underlying_pointer()[i]
+                          << " abs err: "
+                          << (angular_corrections_SoA.get_underlying_pointer()[i] -
+                                 angular_corrections_SoA_cuda.get_underlying_pointer()[i])
+                          << " flat_index: " << i << std::endl;
+                throw;
+            }
+        }
 
         std::chrono::duration<double, std::milli> duration = end - start;
         std::cout << "new interaction kernel (apply only, ms): " << duration.count() << std::endl;
