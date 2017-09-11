@@ -597,55 +597,101 @@ namespace fmm {
 
             // the following loops calculate formula (10), potential from B->A
             cur_pot[0] = m_partner[0] * D_lower[0];
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "ref first cur_pot 0: " << cur_pot[0]
+            //               << " m_partner[0]: " << m_partner[0] << " D_lower[0]: " << D_lower[0]
+            //               << std::endl;
+            // }
             cur_pot[1] = m_partner[0] * D_lower[1];
             cur_pot[2] = m_partner[0] * D_lower[2];
             cur_pot[3] = m_partner[0] * D_lower[3];
 
             cur_pot[0] -= m_partner[1] * D_lower[1];
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+	    //   std::cout << "cur_pot 0: " << cur_pot[0] <<  << std::endl;
+            // }
             cur_pot[1] -= m_partner[1] * D_lower[4];
             cur_pot[1] -= m_partner[1] * D_lower[5];
             cur_pot[1] -= m_partner[1] * D_lower[6];
 
             cur_pot[0] -= m_partner[2] * D_lower[2];
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[2] -= m_partner[2] * D_lower[5];
             cur_pot[2] -= m_partner[2] * D_lower[7];
             cur_pot[2] -= m_partner[2] * D_lower[8];
 
             cur_pot[0] -= m_partner[3] * D_lower[3];
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[3] -= m_partner[3] * D_lower[6];
             cur_pot[3] -= m_partner[3] * D_lower[8];
             cur_pot[3] -= m_partner[3] * D_lower[9];
 
             cur_pot[0] += m_partner[4] * (D_lower[4] * factor_half_v[4]);
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[1] += m_partner[4] * (D_lower[10] * factor_half_v[4]);
             cur_pot[2] += m_partner[4] * (D_lower[11] * factor_half_v[4]);
             cur_pot[3] += m_partner[4] * (D_lower[12] * factor_half_v[4]);
 
             cur_pot[0] += m_partner[5] * (D_lower[5] * factor_half_v[5]);
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[1] += m_partner[5] * (D_lower[11] * factor_half_v[5]);
             cur_pot[2] += m_partner[5] * (D_lower[13] * factor_half_v[5]);
             cur_pot[3] += m_partner[5] * (D_lower[14] * factor_half_v[5]);
 
             cur_pot[0] += m_partner[6] * (D_lower[6] * factor_half_v[6]);
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[1] += m_partner[6] * (D_lower[12] * factor_half_v[6]);
             cur_pot[2] += m_partner[6] * (D_lower[14] * factor_half_v[6]);
             cur_pot[3] += m_partner[6] * (D_lower[15] * factor_half_v[6]);
 
             cur_pot[0] += m_partner[7] * (D_lower[7] * factor_half_v[7]);
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[1] += m_partner[7] * (D_lower[13] * factor_half_v[7]);
             cur_pot[2] += m_partner[7] * (D_lower[16] * factor_half_v[7]);
             cur_pot[3] += m_partner[7] * (D_lower[17] * factor_half_v[7]);
 
             cur_pot[0] += m_partner[8] * (D_lower[8] * factor_half_v[8]);
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[1] += m_partner[8] * (D_lower[14] * factor_half_v[8]);
             cur_pot[2] += m_partner[8] * (D_lower[17] * factor_half_v[8]);
             cur_pot[3] += m_partner[8] * (D_lower[18] * factor_half_v[8]);
 
             cur_pot[0] += m_partner[9] * (D_lower[9] * factor_half_v[9]);
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[1] += m_partner[9] * (D_lower[15] * factor_half_v[9]);
             cur_pot[2] += m_partner[9] * (D_lower[18] * factor_half_v[9]);
             cur_pot[3] += m_partner[9] * (D_lower[19] * factor_half_v[9]);
 
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "10 cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
             cur_pot[0] -= m_partner[10] * (D_lower[10] * factor_sixth_v[10]);
             cur_pot[0] -= m_partner[11] * (D_lower[11] * factor_sixth_v[11]);
             cur_pot[0] -= m_partner[12] * (D_lower[12] * factor_sixth_v[12]);
@@ -656,6 +702,10 @@ namespace fmm {
             cur_pot[0] -= m_partner[17] * (D_lower[17] * factor_sixth_v[17]);
             cur_pot[0] -= m_partner[18] * (D_lower[18] * factor_sixth_v[18]);
             cur_pot[0] -= m_partner[19] * (D_lower[19] * factor_sixth_v[19]);
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     std::cout << "10 cur_pot 0: " << cur_pot[0] << std::endl;
+            // }
 
             cur_pot[4] = m_partner[0] * D_lower[4];
             cur_pot[5] = m_partner[0] * D_lower[5];
@@ -795,6 +845,96 @@ namespace fmm {
             Vc::where(mask, tmp).memstore(
                 potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded),
                 Vc::flags::element_aligned);
+
+            if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+                outer_stencil_index + inner_stencil_index == 11) {
+                printf("i: %i\n", outer_stencil_index + inner_stencil_index);
+                printf("ref interaction_partner_index x: %i y: %i z: %i, "
+                       "ref interaction_partner_flat_index: %lu\n",
+                    interaction_partner_index.x, interaction_partner_index.y,
+                    interaction_partner_index.z, interaction_partner_flat_index);
+                printf("ref interaction_partner_index_coarse x: %i y: %i z: %i\n",
+                    interaction_partner_index_coarse.x, interaction_partner_index_coarse.y,
+                    interaction_partner_index_coarse.z);
+                std::cout << "dX 0: " << dX[0] << " 1: " << dX[1] << " 2: " << dX[2] << std::endl;
+
+                // std::cout << "ref local_expansions_SoA.value<0>(interaction_partner_flat_index):
+                // "
+                //           << local_expansions_SoA.value<0>(interaction_partner_flat_index)
+                //           << std::endl;
+                // std::cout << "ref local_expansions_SoA.value<1>(interaction_partner_flat_index):
+                // "
+                //           << local_expansions_SoA.value<1>(interaction_partner_flat_index)
+                //           << std::endl;
+                // std::cout << "ref local_expansions_SoA.value<2>(interaction_partner_flat_index):
+                // "
+                //           << local_expansions_SoA.value<2>(interaction_partner_flat_index)
+                //           << std::endl;
+                // std::cout << "ref local_expansions_SoA.value<3>(interaction_partner_flat_index):
+                // "
+                //           << local_expansions_SoA.value<3>(interaction_partner_flat_index)
+                //           << std::endl;
+                // std::cout << "ref local_expansions_SoA.value<4>(interaction_partner_flat_index):
+                // "
+                //           << local_expansions_SoA.value<4>(interaction_partner_flat_index)
+                //           << std::endl;
+                // std::cout << "ref local_expansions_SoA.value<5>(interaction_partner_flat_index):
+                // "
+                //           << local_expansions_SoA.value<5>(interaction_partner_flat_index)
+                //           << std::endl;
+                // std::cout << "ref local_expansions_SoA.value<6>(interaction_partner_flat_index):
+                // "
+                //           << local_expansions_SoA.value<6>(interaction_partner_flat_index)
+                //           << std::endl;
+
+                printf("ref m_partner:\n");
+                for (size_t k = 0; k < 20; k++) {
+                    std::cout << m_partner[k] << " ";
+                }
+                printf("\n");
+
+                printf("ref D_lower:\n");
+                for (size_t k = 0; k < 20; k++) {
+                    std::cout << D_lower[k] << " ";
+                }
+                printf("\n");
+
+                std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+                // std::cout << "cur_pot 1: " << cur_pot[1] << std::endl;
+                // std::cout << "cur_pot 2: " << cur_pot[2] << std::endl;
+                // std::cout << "cur_pot 3: " << cur_pot[3] << std::endl;
+                // std::cout << "cur_pot 4: " << cur_pot[4] << std::endl;
+
+                // printf("factor:\n");
+                // for (size_t k = 0; k < 20; k++) {
+                //     std::cout << factor[k];
+                // }
+                // printf("\n");
+
+                // printf("factor_half:\n");
+                // for (size_t k = 0; k < 20; k++) {
+                //     std::cout << factor_half_v[k];
+                // }
+                // printf("\n");
+
+                // printf("factor_sixth:\n");
+                // for (size_t k = 0; k < 20; k++) {
+                //     std::cout << factor_sixth_v[k];
+                // }
+                // printf("\n");
+
+                std::cout << "ref potential_expansions_SoA.value<0>(cell_flat_index_unpadded): "
+                          << potential_expansions_SoA.value<0>(cell_flat_index_unpadded)
+                          << std::endl;
+                std::cout << "ref potential_expansions_SoA.value<1>(cell_flat_index_unpadded): "
+                          << potential_expansions_SoA.value<1>(cell_flat_index_unpadded)
+                          << std::endl;
+                std::cout << "ref potential_expansions_SoA.value<2>(cell_flat_index_unpadded): "
+                          << potential_expansions_SoA.value<2>(cell_flat_index_unpadded)
+                          << std::endl;
+                // printf("X 0: %lf, 1: %lf, 2: %lf\n", X[0], X[1], X[2]);
+                // printf("Y 0: %lf, 1: %lf, 2: %lf\n", Y[0], Y[1], Y[2]);
+            }
         }
     }
 }    // namespace fmm

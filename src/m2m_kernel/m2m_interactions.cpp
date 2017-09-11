@@ -252,13 +252,14 @@ namespace fmm {
         for (size_t i = 0; i < potential_expansions_SoA.size(); i++) {
             if (potential_expansions_SoA.get_underlying_pointer()[i] -
                     potential_expansions_SoA_cuda.get_underlying_pointer()[i] >
-                1E-10) {
+                1E-6) {
                 std::cout << "ref: " << potential_expansions_SoA.get_underlying_pointer()[i]
                           << " mine: " << potential_expansions_SoA_cuda.get_underlying_pointer()[i]
                           << " abs err: "
                           << (potential_expansions_SoA.get_underlying_pointer()[i] -
                                  potential_expansions_SoA_cuda.get_underlying_pointer()[i])
                           << " flat_index: " << i << std::endl;
+                std::cout << std::flush;
                 throw;
             }
         }
@@ -267,13 +268,14 @@ namespace fmm {
         for (size_t i = 0; i < angular_corrections_SoA.size(); i++) {
             if (angular_corrections_SoA.get_underlying_pointer()[i] -
                     angular_corrections_SoA_cuda.get_underlying_pointer()[i] >
-                1E-10) {
+                1E-6) {
                 std::cout << "ref: " << angular_corrections_SoA.get_underlying_pointer()[i]
                           << " mine: " << angular_corrections_SoA_cuda.get_underlying_pointer()[i]
                           << " abs err: "
                           << (angular_corrections_SoA.get_underlying_pointer()[i] -
                                  angular_corrections_SoA_cuda.get_underlying_pointer()[i])
                           << " flat_index: " << i << std::endl;
+                std::cout << std::flush;
                 throw;
             }
         }
@@ -285,8 +287,8 @@ namespace fmm {
 
         // TODO: remove this after finalizing conversion
         // copy back SoA data into non-SoA result
-        potential_expansions_SoA.to_non_SoA(potential_expansions);
-        angular_corrections_SoA.to_non_SoA(angular_corrections);
+        potential_expansions_SoA_cuda.to_non_SoA(potential_expansions);
+        angular_corrections_SoA_cuda.to_non_SoA(angular_corrections);
     }
 
     std::vector<expansion>& m2m_interactions::get_local_expansions() {

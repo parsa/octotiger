@@ -28,22 +28,22 @@ namespace fmm {
         class D_split
         {
         public:
-            real (&X)[NDIM];
+            double (&X)[NDIM];
 
-            real X_00;
-            real X_11;
-            real X_22;
+            double X_00;
+            double X_11;
+            double X_22;
 
-            real r2;
-            real r2inv;
+            double r2;
+            double r2inv;
 
-            real d0;
-            real d1;
-            real d2;
-            real d3;
+            double d0;
+            double d1;
+            double d2;
+            double d3;
 
         public:
-            __device__ D_split(real (&X)[NDIM])
+            __device__ D_split(double (&X)[NDIM])
               : X(X) {
                 // X[0] = X_[0];
                 // X[1] = X_[1];
@@ -67,7 +67,7 @@ namespace fmm {
             }
 
             // overload for kernel-specific simd type
-            __device__ inline void calculate_D_lower(real (&A)[20]) {
+            __device__ inline void calculate_D_lower(double (&A)[20]) {
                 // formula (6)
                 A[0] = d0;
 
@@ -75,9 +75,9 @@ namespace fmm {
                 A[2] = X[1] * d1;
                 A[3] = X[2] * d1;
 
-                real X_12 = X[1] * X[2];
-                real X_01 = X[0] * X[1];
-                real X_02 = X[0] * X[2];
+                double X_12 = X[1] * X[2];
+                double X_01 = X[0] * X[1];
+                double X_02 = X[0] * X[2];
 
                 A[4] = d2 * X_00;
                 A[4] += d1;
@@ -92,7 +92,7 @@ namespace fmm {
                 A[9] += d1;
 
                 A[10] = d3 * X_00 * X[0];
-                real d2_X0 = d2 * X[0];
+                double d2_X0 = d2 * X[0];
                 A[10] += 3.0 * d2_X0;
                 A[11] = d3 * X_00 * X[1];
                 A[11] += d2 * X[1];
@@ -107,7 +107,7 @@ namespace fmm {
                 A[15] += d2_X0;
 
                 A[16] = d3 * X_11 * X[1];
-                real d2_X1 = d2 * X[1];
+                double d2_X1 = d2 * X[1];
                 A[16] += 3.0 * d2_X1;
 
                 A[17] = d3 * X_11 * X[2];
@@ -117,7 +117,7 @@ namespace fmm {
                 A[18] += d2 * X[1];
 
                 A[19] = d3 * X_22 * X[2];
-                real d2_X2 = d2 * X[2];
+                double d2_X2 = d2 * X[2];
                 A[19] += 3.0 * d2_X2;
             }
         };
@@ -135,17 +135,17 @@ namespace fmm {
             size_t stencil_elements, double theta, double* factor, double* factor_half,
             double* factor_sixth) {
             // TODO: make sure you pick up the right expansion type
-            octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES_PADDED,
+            octotiger::fmm::cuda::struct_of_array_data<double, 20, octotiger::fmm::ENTRIES_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 local_expansions_SoA(local_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES_PADDED,
+            octotiger::fmm::cuda::struct_of_array_data<double, 3, octotiger::fmm::ENTRIES_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 center_of_masses_SoA(center_of_masses_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES_NOT_PADDED,
-                octotiger::fmm::SOA_PADDING>
+            octotiger::fmm::cuda::struct_of_array_data<double, 20,
+                octotiger::fmm::ENTRIES_NOT_PADDED, octotiger::fmm::SOA_PADDING>
                 potential_expansions_SoA(potential_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES_NOT_PADDED,
-                octotiger::fmm::SOA_PADDING>
+            octotiger::fmm::cuda::struct_of_array_data<double, 3,
+                octotiger::fmm::ENTRIES_NOT_PADDED, octotiger::fmm::SOA_PADDING>
                 angular_corrections_SoA(angular_corrections_SoA_ptr);
 
             // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
@@ -176,11 +176,13 @@ namespace fmm {
             size_t cell_flat_index = to_flat_index_padded(cell_index);
             octotiger::fmm::multiindex<> cell_index_unpadded(threadIdx.x, threadIdx.y, threadIdx.z);
             size_t cell_flat_index_unpadded = to_inner_flat_index_not_padded(cell_index_unpadded);
-            // printf("x: %i y: %i z: %i, cell_flat_index: %lu\n", threadIdx.x, threadIdx.y,
-            //     threadIdx.z, cell_flat_index);
-            // printf("x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", threadIdx.x,
-            // threadIdx.y,
-            //     threadIdx.z, cell_flat_index_unpadded);
+
+            if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
+                printf("x: %i y: %i z: %i, cell_flat_index: %lu\n", cell_index.x, cell_index.y,
+                    cell_index.z, cell_flat_index);
+                printf("x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", cell_index.x,
+                    cell_index.y, cell_index.z, cell_flat_index_unpadded);
+            }
 
             for (size_t i = 0; i < stencil_elements; i++) {
                 octotiger::fmm::multiindex<>& cur_stencil = stencil[i];
@@ -216,23 +218,23 @@ namespace fmm {
                 bool mask = theta_rec_squared > theta_c_rec_squared;
                 // mask = !mask;
 
-                real X[NDIM];
+                double X[NDIM];
                 X[0] = center_of_masses_SoA.value<0>(cell_flat_index);
                 X[1] = center_of_masses_SoA.value<1>(cell_flat_index);
                 X[2] = center_of_masses_SoA.value<2>(cell_flat_index);
 
-                real Y[NDIM];
+                double Y[NDIM];
                 Y[0] = center_of_masses_SoA.value<0>(interaction_partner_flat_index);
                 Y[1] = center_of_masses_SoA.value<1>(interaction_partner_flat_index);
                 Y[2] = center_of_masses_SoA.value<2>(interaction_partner_flat_index);
 
-                real dX[NDIM];
+                double dX[NDIM];
                 dX[0] = X[0] - Y[0];
                 dX[1] = X[1] - Y[1];
                 dX[2] = X[2] - Y[2];
 
                 // TODO: does this get initialized
-                real m_partner[20];
+                double m_partner[20];
 
                 m_partner[0] = local_expansions_SoA.value<0>(interaction_partner_flat_index);
                 m_partner[1] = local_expansions_SoA.value<1>(interaction_partner_flat_index);
@@ -265,12 +267,12 @@ namespace fmm {
                 // formula (6)-(9) and (19)
                 D_split D_calculator(dX);
                 // TODO: this translates to an initialization loop, bug!
-                real D_lower[20];
+                double D_lower[20];
                 D_calculator.calculate_D_lower(D_lower);
 
                 // expansion_v current_potential;
                 // TODO: this translates to an initialization loop, bug!
-                real cur_pot[10];
+                double cur_pot[10];
 
                 // 10-19 are not cached!
 
@@ -350,7 +352,8 @@ namespace fmm {
                 cur_pot[8] -= m_partner[3] * D_lower[18];
                 cur_pot[9] -= m_partner[3] * D_lower[19];
 
-                real tmp = potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0];
+                double tmp =
+                    potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0];
                 if (mask) {
                     *potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded) = tmp;
                 }
@@ -465,39 +468,39 @@ namespace fmm {
                 // Initalize moments and momentum
                 // this branch computes the angular momentum correction, (20) in the
                 // paper divide by mass of other cell
-                // struct_of_array_iterator<expansion, real, 20> m_cell_iterator(
+                // struct_of_array_iterator<expansion, double, 20> m_cell_iterator(
                 //     local_expansions_SoA, cell_flat_index);
 
-                real const n0_constant =
+                double const n0_constant =
                     m_partner[0] / local_expansions_SoA.value<0>(cell_flat_index);
 
                 // m_cell_iterator.increment(10);
 
                 // calculating the coefficients for formula (M are the octopole moments)
                 // the coefficients are calculated in (17) and (18)
-                // struct_of_array_iterator<space_vector, real, 3>
+                // struct_of_array_iterator<space_vector, double, 3>
                 // current_angular_correction_result(
                 //     angular_corrections_SoA, cell_flat_index_unpadded);
 
-                real D_upper[15];
+                double D_upper[15];
                 // D_calculator.calculate_D_upper(D_upper);
 
-                real current_angular_correction[NDIM];
+                double current_angular_correction[NDIM];
                 current_angular_correction[0] = 0.0;
                 current_angular_correction[1] = 0.0;
                 current_angular_correction[2] = 0.0;
 
                 D_upper[0] =
                     D_calculator.X[0] * D_calculator.X[0] * D_calculator.d3 + 2.0 * D_calculator.d2;
-                real d3_X00 = D_calculator.d3 * D_calculator.X_00;
+                double d3_X00 = D_calculator.d3 * D_calculator.X_00;
                 D_upper[0] += D_calculator.d2;
                 D_upper[0] += 5.0 * d3_X00;
-                real d3_X01 = D_calculator.d3 * D_calculator.X[0] * D_calculator.X[1];
+                double d3_X01 = D_calculator.d3 * D_calculator.X[0] * D_calculator.X[1];
                 D_upper[1] = 3.0 * d3_X01;
-                real X_02 = D_calculator.X[0] * D_calculator.X[2];
-                real d3_X02 = D_calculator.d3 * X_02;
+                double X_02 = D_calculator.X[0] * D_calculator.X[2];
+                double d3_X02 = D_calculator.d3 * X_02;
                 D_upper[2] = 3.0 * d3_X02;
-                real n0_tmp =
+                double n0_tmp =
                     m_partner[10] - local_expansions_SoA.value<10>(cell_flat_index) * n0_constant;
                 // m_cell_iterator++; // 11
 
@@ -506,10 +509,10 @@ namespace fmm {
                 current_angular_correction[2] -= n0_tmp * (D_upper[2] * factor_sixth[10]);
 
                 D_upper[3] = D_calculator.d2;
-                real d3_X11 = D_calculator.d3 * D_calculator.X_11;
+                double d3_X11 = D_calculator.d3 * D_calculator.X_11;
                 D_upper[3] += d3_X11;
                 D_upper[3] += D_calculator.d3 * D_calculator.X_00;
-                real d3_X12 = D_calculator.d3 * D_calculator.X[1] * D_calculator.X[2];
+                double d3_X12 = D_calculator.d3 * D_calculator.X[1] * D_calculator.X[2];
                 D_upper[4] = d3_X12;
 
                 n0_tmp =
@@ -520,7 +523,7 @@ namespace fmm {
                 current_angular_correction[2] -= n0_tmp * (D_upper[4] * factor_sixth[11]);
 
                 D_upper[5] = D_calculator.d2;
-                real d3_X22 = D_calculator.d3 * D_calculator.X_22;
+                double d3_X22 = D_calculator.d3 * D_calculator.X_22;
                 D_upper[5] += d3_X22;
                 D_upper[5] += d3_X00;
 
@@ -633,17 +636,17 @@ namespace fmm {
             const double theta_rec_squared = sqr(1.0 / theta);
 
             // TODO: make sure you pick up the right expansion type
-            octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES_PADDED,
+            octotiger::fmm::cuda::struct_of_array_data<double, 20, octotiger::fmm::ENTRIES_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 local_expansions_SoA(local_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES_PADDED,
+            octotiger::fmm::cuda::struct_of_array_data<double, 3, octotiger::fmm::ENTRIES_PADDED,
                 octotiger::fmm::SOA_PADDING>
                 center_of_masses_SoA(center_of_masses_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 20, octotiger::fmm::ENTRIES_NOT_PADDED,
-                octotiger::fmm::SOA_PADDING>
+            octotiger::fmm::cuda::struct_of_array_data<double, 20,
+                octotiger::fmm::ENTRIES_NOT_PADDED, octotiger::fmm::SOA_PADDING>
                 potential_expansions_SoA(potential_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<real, 3, octotiger::fmm::ENTRIES_NOT_PADDED,
-                octotiger::fmm::SOA_PADDING>
+            octotiger::fmm::cuda::struct_of_array_data<double, 3,
+                octotiger::fmm::ENTRIES_NOT_PADDED, octotiger::fmm::SOA_PADDING>
                 angular_corrections_SoA(angular_corrections_SoA_ptr);
 
             octotiger::fmm::multiindex<> cell_index(threadIdx.x + INNER_CELLS_PADDING_DEPTH,
@@ -660,6 +663,13 @@ namespace fmm {
             // printf("x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", threadIdx.x,
             // threadIdx.y,
             //     threadIdx.z, cell_flat_index_unpadded);
+
+            if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
+                printf("non_rho x: %i y: %i z: %i, cell_flat_index: %lu\n", cell_index.x,
+                    cell_index.y, cell_index.z, cell_flat_index);
+                printf("non_rho x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", cell_index.x,
+                    cell_index.y, cell_index.z, cell_flat_index_unpadded);
+            }
 
             for (size_t i = 0; i < stencil_elements; i++) {
                 octotiger::fmm::multiindex<>& cur_stencil = stencil[i];
@@ -695,23 +705,39 @@ namespace fmm {
                 bool mask = theta_rec_squared > theta_c_rec_squared;
                 // mask = !mask;
 
-                real X[NDIM];
+                double X[NDIM];
                 X[0] = center_of_masses_SoA.value<0>(cell_flat_index);
                 X[1] = center_of_masses_SoA.value<1>(cell_flat_index);
                 X[2] = center_of_masses_SoA.value<2>(cell_flat_index);
 
-                real Y[NDIM];
+                double Y[NDIM];
                 Y[0] = center_of_masses_SoA.value<0>(interaction_partner_flat_index);
                 Y[1] = center_of_masses_SoA.value<1>(interaction_partner_flat_index);
                 Y[2] = center_of_masses_SoA.value<2>(interaction_partner_flat_index);
 
-                real dX[NDIM];
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
+                //     printf("non_rho interaction_partner_index x: %i y: %i z: %i, "
+                //            "non_rho interaction_partner_flat_index: %lu\n",
+                //         interaction_partner_index.x, interaction_partner_index.y,
+                //         interaction_partner_index.z, interaction_partner_flat_index);
+                //     printf("non_rho interaction_partner_index_coarse x: %i y: %i z: %i\n",
+                //         interaction_partner_index_coarse.x, interaction_partner_index_coarse.y,
+                //         interaction_partner_index_coarse.z);
+                //     printf("theta: %lf\n", theta);
+                //     printf("local_expansions_SoA.value<0>(interaction_partner_flat_index):
+                //     %lf\n",
+                //         local_expansions_SoA.value<0>(interaction_partner_flat_index));
+                //     printf("X 0: %lf, 1: %lf, 2: %lf\n", X[0], X[1], X[2]);
+                //     printf("Y 0: %lf, 1: %lf, 2: %lf\n", Y[0], Y[1], Y[2]);
+                // }
+
+                double dX[NDIM];
                 dX[0] = X[0] - Y[0];
                 dX[1] = X[1] - Y[1];
                 dX[2] = X[2] - Y[2];
 
                 // TODO: does this get initialized
-                real m_partner[20];
+                double m_partner[20];
 
                 m_partner[0] = local_expansions_SoA.value<0>(interaction_partner_flat_index);
                 m_partner[1] = local_expansions_SoA.value<1>(interaction_partner_flat_index);
@@ -744,52 +770,97 @@ namespace fmm {
                 // formula (6)-(9) and (19)
                 D_split D_calculator(dX);
                 // TODO: this translates to an initialization loop, bug!
-                real D_lower[20];
+                double D_lower[20];
                 D_calculator.calculate_D_lower(D_lower);
 
                 // expansion_v current_potential;
                 // TODO: this translates to an initialization loop, bug!
-                real cur_pot[10];
+                double cur_pot[10];
 
                 // 10-19 are not cached!
 
                 // the following loops calculate formula (10), potential from B->A
 
                 cur_pot[0] = m_partner[0] * D_lower[0];
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("non_rho first cur_pot 0: %.6e, m_partner[0]: %.6e, D_lower[0]: %.6e,\n",
+                //         cur_pot[0], m_partner[0], D_lower[0]);
+                // }
                 cur_pot[1] = m_partner[0] * D_lower[1];
                 cur_pot[2] = m_partner[0] * D_lower[2];
                 cur_pot[3] = m_partner[0] * D_lower[3];
 
+		cur_pot[0] -= m_partner[1] * D_lower[1];
+
+                cur_pot[1] -= m_partner[1] * D_lower[4];
+                cur_pot[1] -= m_partner[1] * D_lower[5];
+                cur_pot[1] -= m_partner[1] * D_lower[6];
+
+                cur_pot[0] -= m_partner[2] * D_lower[2];
+
+                cur_pot[2] -= m_partner[2] * D_lower[5];
+                cur_pot[2] -= m_partner[2] * D_lower[7];
+                cur_pot[2] -= m_partner[2] * D_lower[8];
+
+                cur_pot[0] -= m_partner[3] * D_lower[3];
+
+                cur_pot[3] -= m_partner[3] * D_lower[6];
+                cur_pot[3] -= m_partner[3] * D_lower[8];
+                cur_pot[3] -= m_partner[3] * D_lower[9];
+
                 cur_pot[0] += m_partner[4] * (D_lower[4] * factor_half[4]);
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("cur_pot 0: %.6e, m_partner[4]: %.6e, D_lower[4]: %.6e, factor_half[4]: "
+                //            "%.6e\n",
+                //         cur_pot[0], m_partner[4], D_lower[4], factor_half[4]);
+                // }
                 cur_pot[1] += m_partner[4] * (D_lower[10] * factor_half[4]);
                 cur_pot[2] += m_partner[4] * (D_lower[11] * factor_half[4]);
                 cur_pot[3] += m_partner[4] * (D_lower[12] * factor_half[4]);
 
                 cur_pot[0] += m_partner[5] * (D_lower[5] * factor_half[5]);
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
+                // }
                 cur_pot[1] += m_partner[5] * (D_lower[11] * factor_half[5]);
                 cur_pot[2] += m_partner[5] * (D_lower[13] * factor_half[5]);
                 cur_pot[3] += m_partner[5] * (D_lower[14] * factor_half[5]);
 
                 cur_pot[0] += m_partner[6] * (D_lower[6] * factor_half[6]);
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
+                // }
                 cur_pot[1] += m_partner[6] * (D_lower[12] * factor_half[6]);
                 cur_pot[2] += m_partner[6] * (D_lower[14] * factor_half[6]);
                 cur_pot[3] += m_partner[6] * (D_lower[15] * factor_half[6]);
 
                 cur_pot[0] += m_partner[7] * (D_lower[7] * factor_half[7]);
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
+                // }
                 cur_pot[1] += m_partner[7] * (D_lower[13] * factor_half[7]);
                 cur_pot[2] += m_partner[7] * (D_lower[16] * factor_half[7]);
                 cur_pot[3] += m_partner[7] * (D_lower[17] * factor_half[7]);
 
                 cur_pot[0] += m_partner[8] * (D_lower[8] * factor_half[8]);
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
+                // }
                 cur_pot[1] += m_partner[8] * (D_lower[14] * factor_half[8]);
                 cur_pot[2] += m_partner[8] * (D_lower[17] * factor_half[8]);
                 cur_pot[3] += m_partner[8] * (D_lower[18] * factor_half[8]);
 
                 cur_pot[0] += m_partner[9] * (D_lower[9] * factor_half[9]);
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
+                // }
                 cur_pot[1] += m_partner[9] * (D_lower[15] * factor_half[9]);
                 cur_pot[2] += m_partner[9] * (D_lower[18] * factor_half[9]);
                 cur_pot[3] += m_partner[9] * (D_lower[19] * factor_half[9]);
 
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("10 cur_pot 0: %.6e\n", cur_pot[0]);
+                // }
                 cur_pot[0] -= m_partner[10] * (D_lower[10] * factor_sixth[10]);
                 cur_pot[0] -= m_partner[11] * (D_lower[11] * factor_sixth[11]);
                 cur_pot[0] -= m_partner[12] * (D_lower[12] * factor_sixth[12]);
@@ -800,6 +871,9 @@ namespace fmm {
                 cur_pot[0] -= m_partner[17] * (D_lower[17] * factor_sixth[17]);
                 cur_pot[0] -= m_partner[18] * (D_lower[18] * factor_sixth[18]);
                 cur_pot[0] -= m_partner[19] * (D_lower[19] * factor_sixth[19]);
+                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                //     printf("10 cur_pot 0: %.6e\n", cur_pot[0]);
+                // }
 
                 cur_pot[4] = m_partner[0] * D_lower[4];
                 cur_pot[5] = m_partner[0] * D_lower[5];
@@ -829,7 +903,8 @@ namespace fmm {
                 cur_pot[8] -= m_partner[3] * D_lower[18];
                 cur_pot[9] -= m_partner[3] * D_lower[19];
 
-                real tmp = potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0];
+                double tmp =
+                    potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0];
                 if (mask) {
                     *potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded) = tmp;
                 }
@@ -938,34 +1013,125 @@ namespace fmm {
                 if (mask) {
                     *potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded) = tmp;
                 }
+
+                if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
+                    printf("i: %i\n", i);
+                    printf("non_rho interaction_partner_index x: %i y: %i z: %i, "
+                           "non_rho interaction_partner_flat_index: %lu\n",
+                        interaction_partner_index.x, interaction_partner_index.y,
+                        interaction_partner_index.z, interaction_partner_flat_index);
+                    printf("non_rho interaction_partner_index_coarse x: %i y: %i z: %i\n",
+                        interaction_partner_index_coarse.x, interaction_partner_index_coarse.y,
+                        interaction_partner_index_coarse.z);
+                    printf("dX 0: %.6e, 1: %.6e, 2:%.6e\n", dX[0], dX[1], dX[2]);
+
+                    // printf("non_rho
+                    // local_expansions_SoA.value<0>(interaction_partner_flat_index): "
+                    //        "%.6e\n",
+                    //     local_expansions_SoA.value<0>(interaction_partner_flat_index));
+                    // printf("non_rho
+                    // local_expansions_SoA.value<1>(interaction_partner_flat_index): "
+                    //        "%.6e\n",
+                    //     local_expansions_SoA.value<1>(interaction_partner_flat_index));
+                    // printf("non_rho
+                    // local_expansions_SoA.value<2>(interaction_partner_flat_index): "
+                    //        "%.6e\n",
+                    //     local_expansions_SoA.value<2>(interaction_partner_flat_index));
+                    // printf("non_rho
+                    // local_expansions_SoA.value<3>(interaction_partner_flat_index): "
+                    //        "%.6e\n",
+                    //     local_expansions_SoA.value<3>(interaction_partner_flat_index));
+                    // printf("non_rho
+                    // local_expansions_SoA.value<4>(interaction_partner_flat_index): "
+                    //        "%.6e\n",
+                    //     local_expansions_SoA.value<4>(interaction_partner_flat_index));
+                    // printf("non_rho
+                    // local_expansions_SoA.value<5>(interaction_partner_flat_index): "
+                    //        "%.6e\n",
+                    //     local_expansions_SoA.value<5>(interaction_partner_flat_index));
+                    // printf("non_rho
+                    // local_expansions_SoA.value<6>(interaction_partner_flat_index): "
+                    //        "%.6e\n",
+                    //     local_expansions_SoA.value<6>(interaction_partner_flat_index));
+
+                    // printf("D_lower 0: %.6e\n", D_lower[0]);
+                    // printf("D_lower 1: %.6e\n", D_lower[1]);
+                    // printf("D_lower 2: %.6e\n", D_lower[2]);
+                    // printf("D_lower 3: %.6e\n", D_lower[3]);
+                    // printf("D_lower 4: %.6e\n", D_lower[4]);
+
+                    printf("ref m_partner:\n");
+                    for (size_t k = 0; k < 20; k++) {
+                        printf("%.5e ", m_partner[k]);
+                    }
+                    printf("\n");
+
+                    printf("ref D_lower:\n");
+                    for (size_t k = 0; k < 20; k++) {
+                        printf("%.5e ", D_lower[k]);
+                    }
+                    printf("\n");
+
+                    printf("cur_pot 0: %.6e\n", cur_pot[0]);
+
+                    // printf("factor:\n");
+                    // for (size_t k = 0; k < 20; k++) {
+                    //     printf("%lf ", factor[k]);
+                    // }
+                    // printf("\n");
+
+                    // printf("factor_half:\n");
+                    // for (size_t k = 0; k < 20; k++) {
+                    //     printf("%lf ", factor_half[k]);
+                    // }
+                    // printf("\n");
+
+                    // printf("factor_sixth:\n");
+                    // for (size_t k = 0; k < 20; k++) {
+                    //     printf("%lf", factor_sixth[k]);
+                    // }
+                    // printf("\n");
+
+                    printf("non_rho potential_expansions_SoA.value<0>(cell_flat_index_unpadded): "
+                           "%.6e\n",
+                        potential_expansions_SoA.value<0>(cell_flat_index_unpadded));
+                    printf("non_rho potential_expansions_SoA.value<1>(cell_flat_index_unpadded): "
+                           "%.6e\n",
+                        potential_expansions_SoA.value<1>(cell_flat_index_unpadded));
+                    printf("non_rho potential_expansions_SoA.value<2>(cell_flat_index_unpadded): "
+                           "%.6e\n",
+                        potential_expansions_SoA.value<02>(cell_flat_index_unpadded));
+                    // printf("X 0: %lf, 1: %lf, 2: %lf\n", X[0], X[1], X[2]);
+                    // printf("Y 0: %lf, 1: %lf, 2: %lf\n", Y[0], Y[1], Y[2]);
+                }
             }
         }
 
         void m2m_cuda::compute_interactions(
-            octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_PADDED, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<double, 20, ENTRIES_PADDED, SOA_PADDING>&
                 local_expansions_SoA,
-            octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<double, 3, ENTRIES_PADDED, SOA_PADDING>&
                 center_of_masses_SoA,
-            octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<double, 20, ENTRIES_NOT_PADDED, SOA_PADDING>&
                 potential_expansions_SoA,
-            octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<double, 3, ENTRIES_NOT_PADDED, SOA_PADDING>&
                 angular_corrections_SoA,
-            double theta, std::array<real, 20>& factor, std::array<real, 20>& factor_half,
-            std::array<real, 20>& factor_sixth, gsolve_type type) {
+            double theta, std::array<double, 20>& factor, std::array<double, 20>& factor_half,
+            std::array<double, 20>& factor_sixth, gsolve_type type) {
             std::cout << "moving local_expansions_SoA" << std::endl;
-            cuda_buffer<real> d_local_expansions_SoA =
+            cuda_buffer<double> d_local_expansions_SoA =
                 octotiger::fmm::cuda::move_to_device(local_expansions_SoA);
             std::cout << "moving center_of_masses_SoA" << std::endl;
-            cuda_buffer<real> d_center_of_masses_SoA =
+            cuda_buffer<double> d_center_of_masses_SoA =
                 octotiger::fmm::cuda::move_to_device(center_of_masses_SoA);
             std::cout << "moving potential_expansions_SoA" << std::endl;
-            cuda_buffer<real> d_potential_expansions_SoA =
+            cuda_buffer<double> d_potential_expansions_SoA =
                 octotiger::fmm::cuda::move_to_device(potential_expansions_SoA);
             std::cout << "moving angular_corrections_SoA" << std::endl;
-            cuda_buffer<real> d_angular_corrections_SoA =
+            cuda_buffer<double> d_angular_corrections_SoA =
                 octotiger::fmm::cuda::move_to_device(angular_corrections_SoA);
 
-            octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_NOT_PADDED, SOA_PADDING>
+            octotiger::fmm::struct_of_array_data<double, 20, ENTRIES_NOT_PADDED, SOA_PADDING>
                 potential_expansions_SoA_copy;
             d_potential_expansions_SoA.move_to_host(potential_expansions_SoA_copy);
 
@@ -977,7 +1143,7 @@ namespace fmm {
             //     }
             // }
 
-            octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_NOT_PADDED, SOA_PADDING>
+            octotiger::fmm::struct_of_array_data<double, 3, ENTRIES_NOT_PADDED, SOA_PADDING>
                 angular_corrections_SoA_copy;
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA_copy);
 
@@ -990,11 +1156,11 @@ namespace fmm {
             // }
 
             std::cout << "moving factor" << std::endl;
-            cuda_buffer<real> d_factor = octotiger::fmm::cuda::move_to_device(factor);
+            cuda_buffer<double> d_factor = octotiger::fmm::cuda::move_to_device(factor);
             std::cout << "moving factor_half" << std::endl;
-            cuda_buffer<real> d_factor_half = octotiger::fmm::cuda::move_to_device(factor_half);
+            cuda_buffer<double> d_factor_half = octotiger::fmm::cuda::move_to_device(factor_half);
             std::cout << "moving factor_sixth" << std::endl;
-            cuda_buffer<real> d_factor_sixth = octotiger::fmm::cuda::move_to_device(factor_sixth);
+            cuda_buffer<double> d_factor_sixth = octotiger::fmm::cuda::move_to_device(factor_sixth);
             std::cout << "moving stencil" << std::endl;
             cuda_buffer<multiindex<>> d_stencil = octotiger::fmm::cuda::move_to_device(stencil);
             // for (multiindex<> s_e : stencil) {
@@ -1027,7 +1193,7 @@ namespace fmm {
             d_potential_expansions_SoA.move_to_host(potential_expansions_SoA);
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA);
 
-            // octotiger::fmm::struct_of_array_data<real, 20, ENTRIES_PADDED, SOA_PADDING>
+            // octotiger::fmm::struct_of_array_data<double, 20, ENTRIES_PADDED, SOA_PADDING>
             //     local_expansions_SoA_copy;
             // d_local_expansions_SoA.move_to_host(local_expansions_SoA_copy);
 
@@ -1039,7 +1205,7 @@ namespace fmm {
             //     }
             // }
 
-            // octotiger::fmm::struct_of_array_data<real, 3, ENTRIES_PADDED, SOA_PADDING>
+            // octotiger::fmm::struct_of_array_data<double, 3, ENTRIES_PADDED, SOA_PADDING>
             //     center_of_masses_SoA_copy;
             // d_center_of_masses_SoA.move_to_host(center_of_masses_SoA_copy);
             // for (size_t i = 0; i < center_of_masses_SoA_copy.size(); i++) {

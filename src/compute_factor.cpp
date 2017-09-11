@@ -28,4 +28,28 @@ void compute_factor() {
         factor_sixth[i] = (1.0 / 6.0) * factor[i];
         factor_sixth_v[i] = sixth_v * factor[i];
     }
+
+    printf("factor_half:\n");
+    for (size_t k = 0; k < 20; k++) {
+        printf("%lf", factor_half[k]);
+    }
+    printf("\n");
+
+    printf("factor_sixth:\n");
+    for (size_t k = 0; k < 20; k++) {
+        printf("%lf", factor_sixth[k]);
+    }
+    printf("\n");
+
+    printf("factor_half:\n");
+    for (size_t k = 0; k < 20; k++) {
+        std::cout << factor_half_v[k];
+    }
+    printf("\n");
+
+    printf("factor_sixth:\n");
+    for (size_t k = 0; k < 20; k++) {
+        std::cout << factor_sixth_v[k];
+    }
+    printf("\n");
 }
