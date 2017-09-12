@@ -846,95 +846,95 @@ namespace fmm {
                 potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded),
                 Vc::flags::element_aligned);
 
-            if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
-                outer_stencil_index + inner_stencil_index == 11) {
-                printf("i: %i\n", outer_stencil_index + inner_stencil_index);
-                printf("ref interaction_partner_index x: %i y: %i z: %i, "
-                       "ref interaction_partner_flat_index: %lu\n",
-                    interaction_partner_index.x, interaction_partner_index.y,
-                    interaction_partner_index.z, interaction_partner_flat_index);
-                printf("ref interaction_partner_index_coarse x: %i y: %i z: %i\n",
-                    interaction_partner_index_coarse.x, interaction_partner_index_coarse.y,
-                    interaction_partner_index_coarse.z);
-                std::cout << "dX 0: " << dX[0] << " 1: " << dX[1] << " 2: " << dX[2] << std::endl;
+            // if (cell_index.x == 8 && cell_index.y == 8 && cell_index.z == 8 &&
+            //     outer_stencil_index + inner_stencil_index == 11) {
+            //     printf("i: %i\n", outer_stencil_index + inner_stencil_index);
+            //     printf("ref interaction_partner_index x: %i y: %i z: %i, "
+            //            "ref interaction_partner_flat_index: %lu\n",
+            //         interaction_partner_index.x, interaction_partner_index.y,
+            //         interaction_partner_index.z, interaction_partner_flat_index);
+            //     printf("ref interaction_partner_index_coarse x: %i y: %i z: %i\n",
+            //         interaction_partner_index_coarse.x, interaction_partner_index_coarse.y,
+            //         interaction_partner_index_coarse.z);
+            //     std::cout << "dX 0: " << dX[0] << " 1: " << dX[1] << " 2: " << dX[2] << std::endl;
 
-                // std::cout << "ref local_expansions_SoA.value<0>(interaction_partner_flat_index):
-                // "
-                //           << local_expansions_SoA.value<0>(interaction_partner_flat_index)
-                //           << std::endl;
-                // std::cout << "ref local_expansions_SoA.value<1>(interaction_partner_flat_index):
-                // "
-                //           << local_expansions_SoA.value<1>(interaction_partner_flat_index)
-                //           << std::endl;
-                // std::cout << "ref local_expansions_SoA.value<2>(interaction_partner_flat_index):
-                // "
-                //           << local_expansions_SoA.value<2>(interaction_partner_flat_index)
-                //           << std::endl;
-                // std::cout << "ref local_expansions_SoA.value<3>(interaction_partner_flat_index):
-                // "
-                //           << local_expansions_SoA.value<3>(interaction_partner_flat_index)
-                //           << std::endl;
-                // std::cout << "ref local_expansions_SoA.value<4>(interaction_partner_flat_index):
-                // "
-                //           << local_expansions_SoA.value<4>(interaction_partner_flat_index)
-                //           << std::endl;
-                // std::cout << "ref local_expansions_SoA.value<5>(interaction_partner_flat_index):
-                // "
-                //           << local_expansions_SoA.value<5>(interaction_partner_flat_index)
-                //           << std::endl;
-                // std::cout << "ref local_expansions_SoA.value<6>(interaction_partner_flat_index):
-                // "
-                //           << local_expansions_SoA.value<6>(interaction_partner_flat_index)
-                //           << std::endl;
+            //     // std::cout << "ref local_expansions_SoA.value<0>(interaction_partner_flat_index):
+            //     // "
+            //     //           << local_expansions_SoA.value<0>(interaction_partner_flat_index)
+            //     //           << std::endl;
+            //     // std::cout << "ref local_expansions_SoA.value<1>(interaction_partner_flat_index):
+            //     // "
+            //     //           << local_expansions_SoA.value<1>(interaction_partner_flat_index)
+            //     //           << std::endl;
+            //     // std::cout << "ref local_expansions_SoA.value<2>(interaction_partner_flat_index):
+            //     // "
+            //     //           << local_expansions_SoA.value<2>(interaction_partner_flat_index)
+            //     //           << std::endl;
+            //     // std::cout << "ref local_expansions_SoA.value<3>(interaction_partner_flat_index):
+            //     // "
+            //     //           << local_expansions_SoA.value<3>(interaction_partner_flat_index)
+            //     //           << std::endl;
+            //     // std::cout << "ref local_expansions_SoA.value<4>(interaction_partner_flat_index):
+            //     // "
+            //     //           << local_expansions_SoA.value<4>(interaction_partner_flat_index)
+            //     //           << std::endl;
+            //     // std::cout << "ref local_expansions_SoA.value<5>(interaction_partner_flat_index):
+            //     // "
+            //     //           << local_expansions_SoA.value<5>(interaction_partner_flat_index)
+            //     //           << std::endl;
+            //     // std::cout << "ref local_expansions_SoA.value<6>(interaction_partner_flat_index):
+            //     // "
+            //     //           << local_expansions_SoA.value<6>(interaction_partner_flat_index)
+            //     //           << std::endl;
 
-                printf("ref m_partner:\n");
-                for (size_t k = 0; k < 20; k++) {
-                    std::cout << m_partner[k] << " ";
-                }
-                printf("\n");
+            //     printf("ref m_partner:\n");
+            //     for (size_t k = 0; k < 20; k++) {
+            //         std::cout << m_partner[k] << " ";
+            //     }
+            //     printf("\n");
 
-                printf("ref D_lower:\n");
-                for (size_t k = 0; k < 20; k++) {
-                    std::cout << D_lower[k] << " ";
-                }
-                printf("\n");
+            //     printf("ref D_lower:\n");
+            //     for (size_t k = 0; k < 20; k++) {
+            //         std::cout << D_lower[k] << " ";
+            //     }
+            //     printf("\n");
 
-                std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
-                // std::cout << "cur_pot 1: " << cur_pot[1] << std::endl;
-                // std::cout << "cur_pot 2: " << cur_pot[2] << std::endl;
-                // std::cout << "cur_pot 3: " << cur_pot[3] << std::endl;
-                // std::cout << "cur_pot 4: " << cur_pot[4] << std::endl;
+            //     std::cout << "cur_pot 0: " << cur_pot[0] << std::endl;
+            //     // std::cout << "cur_pot 1: " << cur_pot[1] << std::endl;
+            //     // std::cout << "cur_pot 2: " << cur_pot[2] << std::endl;
+            //     // std::cout << "cur_pot 3: " << cur_pot[3] << std::endl;
+            //     // std::cout << "cur_pot 4: " << cur_pot[4] << std::endl;
 
-                // printf("factor:\n");
-                // for (size_t k = 0; k < 20; k++) {
-                //     std::cout << factor[k];
-                // }
-                // printf("\n");
+            //     // printf("factor:\n");
+            //     // for (size_t k = 0; k < 20; k++) {
+            //     //     std::cout << factor[k];
+            //     // }
+            //     // printf("\n");
 
-                // printf("factor_half:\n");
-                // for (size_t k = 0; k < 20; k++) {
-                //     std::cout << factor_half_v[k];
-                // }
-                // printf("\n");
+            //     // printf("factor_half:\n");
+            //     // for (size_t k = 0; k < 20; k++) {
+            //     //     std::cout << factor_half_v[k];
+            //     // }
+            //     // printf("\n");
 
-                // printf("factor_sixth:\n");
-                // for (size_t k = 0; k < 20; k++) {
-                //     std::cout << factor_sixth_v[k];
-                // }
-                // printf("\n");
+            //     // printf("factor_sixth:\n");
+            //     // for (size_t k = 0; k < 20; k++) {
+            //     //     std::cout << factor_sixth_v[k];
+            //     // }
+            //     // printf("\n");
 
-                std::cout << "ref potential_expansions_SoA.value<0>(cell_flat_index_unpadded): "
-                          << potential_expansions_SoA.value<0>(cell_flat_index_unpadded)
-                          << std::endl;
-                std::cout << "ref potential_expansions_SoA.value<1>(cell_flat_index_unpadded): "
-                          << potential_expansions_SoA.value<1>(cell_flat_index_unpadded)
-                          << std::endl;
-                std::cout << "ref potential_expansions_SoA.value<2>(cell_flat_index_unpadded): "
-                          << potential_expansions_SoA.value<2>(cell_flat_index_unpadded)
-                          << std::endl;
-                // printf("X 0: %lf, 1: %lf, 2: %lf\n", X[0], X[1], X[2]);
-                // printf("Y 0: %lf, 1: %lf, 2: %lf\n", Y[0], Y[1], Y[2]);
-            }
+            //     std::cout << "ref potential_expansions_SoA.value<0>(cell_flat_index_unpadded): "
+            //               << potential_expansions_SoA.value<0>(cell_flat_index_unpadded)
+            //               << std::endl;
+            //     std::cout << "ref potential_expansions_SoA.value<1>(cell_flat_index_unpadded): "
+            //               << potential_expansions_SoA.value<1>(cell_flat_index_unpadded)
+            //               << std::endl;
+            //     std::cout << "ref potential_expansions_SoA.value<2>(cell_flat_index_unpadded): "
+            //               << potential_expansions_SoA.value<2>(cell_flat_index_unpadded)
+            //               << std::endl;
+            //     // printf("X 0: %lf, 1: %lf, 2: %lf\n", X[0], X[1], X[2]);
+            //     // printf("Y 0: %lf, 1: %lf, 2: %lf\n", Y[0], Y[1], Y[2]);
+            // }
         }
     }
 }    // namespace fmm

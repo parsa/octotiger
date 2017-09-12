@@ -32,6 +32,7 @@ endif()
 if(OCTOTIGER_WITH_CUDA)
   find_package(CUDA REQUIRED)
   include_directories(${CUDA_TOOLKIT_INCLUDE})
+  add_definitions(-DOCTOTIGER_WITH_CUDA)
 endif()
 
 
@@ -46,32 +47,32 @@ else()
 endif()
 
 if(NOT MSVC)
-    include_directories(${CMAKE_SOURCE_DIR}/src ~/include ${Silo_INCLUDE_DIR})
+  include_directories(${CMAKE_SOURCE_DIR}/src ~/include ${Silo_INCLUDE_DIR})
 
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set( COMMON_FLAGS "-Wno-ignored-attributes -Wno-attributes -Wno-deprecated-declarations -ffast-math")
-    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-        #set( CMAKE_CXX_FLAGS_RELEASE "-Ofast -ipo" )
-        #set( CMAKE_C_FLAGS_RELEASE "-Ofast -ipo" )
-        #set( CMAKE_Fortran_FLAGS_RELEASE "-Ofast -ipo" )
-        #set( CMAKE_EXE_LINKER_FLAGS_RELEASE "-Ofast -ipo" )
-        set( COMMON_FLAGS "-Wno-attributes -Wno-deprecated")
-    endif()
-    set(CMAKE_CXX_FLAGS "${COMMON_FLAGS} ${CMAKE_CXX_FLAGS}")
-    set(CMAKE_C_FLAGS "${COMMON_FLAGS} ${CMAKE_C_FLAGS}")
-    set(CMAKE_F_FLAGS "${COMMON_FLAGS} ${CMAKE_F_FLAGS}")
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set( COMMON_FLAGS "-Wno-ignored-attributes -Wno-attributes -Wno-deprecated-declarations -ffast-math")
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    #set( CMAKE_CXX_FLAGS_RELEASE "-Ofast -ipo" )
+    #set( CMAKE_C_FLAGS_RELEASE "-Ofast -ipo" )
+    #set( CMAKE_Fortran_FLAGS_RELEASE "-Ofast -ipo" )
+    #set( CMAKE_EXE_LINKER_FLAGS_RELEASE "-Ofast -ipo" )
+    set( COMMON_FLAGS "-Wno-attributes -Wno-deprecated")
+  endif()
+  set(CMAKE_CXX_FLAGS "${COMMON_FLAGS} ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS "${COMMON_FLAGS} ${CMAKE_C_FLAGS}")
+  set(CMAKE_F_FLAGS "${COMMON_FLAGS} ${CMAKE_F_FLAGS}")
 else()
-    # enable solution folders for MSVC
-    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+  # enable solution folders for MSVC
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-    add_definitions(-D_USE_MATH_DEFINES)
-    add_definitions(-DNOMINMAX)
-    include_directories(${CMAKE_SOURCE_DIR}/src)
+  add_definitions(-D_USE_MATH_DEFINES)
+  add_definitions(-DNOMINMAX)
+  include_directories(${CMAKE_SOURCE_DIR}/src)
 
-    hpx_add_compile_flag(-wd4068)   # unknown pragma
-    hpx_add_compile_flag(-wd4244)
-    hpx_add_compile_flag(-wd4267)
-    hpx_add_compile_flag(-wd4800)
+  hpx_add_compile_flag(-wd4068)   # unknown pragma
+  hpx_add_compile_flag(-wd4244)
+  hpx_add_compile_flag(-wd4267)
+  hpx_add_compile_flag(-wd4800)
 endif()
 
 # handle other options
@@ -92,95 +93,110 @@ set(dependencies ${Silo_LIBRARY})
 
 # Octotiger executable
 set(source_files ${source_files}
-    src/eos.cpp
-    src/scf_data.cpp
-    src/exact_sod.cpp
-    src/geometry.cpp
-    src/grid.cpp
-    src/grid_fmm.cpp
-    src/grid_output.cpp
-    src/grid_scf.cpp
-    src/lane_emden.cpp
-    src/main.cpp
-    src/new.cpp
-    src/node_client.cpp
-    src/node_location.cpp
-    src/node_server.cpp
-    src/node_server_actions_1.cpp
-    src/node_server_actions_2.cpp
-    src/node_server_actions_3.cpp
-    src/options.cpp
-    src/physcon.cpp
-    src/problem.cpp
-    src/profiler.cpp
-    src/rad_grid.cpp
-    src/real.cpp
-    src/roe.cpp
-    src/scf_data.cpp
-    src/stack_trace.cpp
-    src/taylor.cpp
-    src/util.cpp
-    src/compute_factor.cpp
-    src/m2m_kernel/m2m_interactions.cpp
-    src/m2m_kernel/calculate_stencil.cpp
-    src/m2m_kernel/m2m_kernel.cpp
-    src/m2m_kernel/interactions_iterators.cpp
-    src/m2m_kernel/m2m_kernel_blocked_interaction.cpp
+  src/eos.cpp
+  src/scf_data.cpp
+  src/exact_sod.cpp
+  src/geometry.cpp
+  src/grid.cpp
+  src/grid_fmm.cpp
+  src/grid_output.cpp
+  src/grid_scf.cpp
+  src/lane_emden.cpp
+  src/main.cpp
+  src/new.cpp
+  src/node_client.cpp
+  src/node_location.cpp
+  src/node_server.cpp
+  src/node_server_actions_1.cpp
+  src/node_server_actions_2.cpp
+  src/node_server_actions_3.cpp
+  src/options.cpp
+  src/physcon.cpp
+  src/problem.cpp
+  src/profiler.cpp
+  src/rad_grid.cpp
+  src/real.cpp
+  src/roe.cpp
+  src/scf_data.cpp
+  src/stack_trace.cpp
+  src/taylor.cpp
+  src/util.cpp
+  src/compute_factor.cpp
+  src/m2m_kernel/m2m_interactions.cpp
+  src/m2m_kernel/calculate_stencil.cpp
+  src/m2m_kernel/m2m_kernel.cpp
+  src/m2m_kernel/interactions_iterators.cpp
+  src/m2m_kernel/m2m_kernel_blocked_interaction.cpp
+  )
+
+if(OCTOTIGER_WITH_CUDA)
+  set(source_files ${source_files}
     src/m2m_kernel/m2m_cuda.cu
-)
+    )
+endif()
 
 set(header_files
-    src/channel.hpp
-    src/container_device.hpp
-    src/defs.hpp
-    src/diagnostics.hpp
-    src/eos.hpp
-    src/exact_sod.hpp
-    src/future.hpp
-    src/geometry.hpp
-    src/grid.hpp
-    src/lane_emden.hpp
-    src/node_client.hpp
-    src/node_location.hpp
-    src/node_server.hpp
-    src/options.hpp
-    src/physcon.hpp
-    src/problem.hpp
-    src/profiler.hpp
-    src/rad_grid.hpp
-    src/real.hpp
-    src/roe.hpp
-    src/scf_data.hpp
-    src/set_locality_data.hpp
-    src/simd.hpp
-    src/space_vector.hpp
-    src/state.hpp
-    src/struct_eos.hpp
-    src/taylor.hpp
-    src/util.hpp
-    src/compute_factor.hpp
-    src/m2m_kernel/interaction_constants.hpp
-    src/m2m_kernel/m2m_interactions.hpp
-    src/m2m_kernel/multiindex.hpp
-    src/m2m_kernel/calculate_stencil.hpp
-    src/m2m_kernel/m2m_kernel.hpp
-    src/m2m_kernel/compare_interaction_lists.hpp
-    src/m2m_kernel/m2m_simd_types.hpp
-    src/m2m_kernel/m2m_taylor_set_basis.hpp
-)
+  src/channel.hpp
+  src/container_device.hpp
+  src/defs.hpp
+  src/diagnostics.hpp
+  src/eos.hpp
+  src/exact_sod.hpp
+  src/future.hpp
+  src/geometry.hpp
+  src/grid.hpp
+  src/lane_emden.hpp
+  src/node_client.hpp
+  src/node_location.hpp
+  src/node_server.hpp
+  src/options.hpp
+  src/physcon.hpp
+  src/problem.hpp
+  src/profiler.hpp
+  src/rad_grid.hpp
+  src/real.hpp
+  src/roe.hpp
+  src/scf_data.hpp
+  src/set_locality_data.hpp
+  src/simd.hpp
+  src/space_vector.hpp
+  src/state.hpp
+  src/struct_eos.hpp
+  src/taylor.hpp
+  src/util.hpp
+  src/compute_factor.hpp
+  src/m2m_kernel/interaction_constants.hpp
+  src/m2m_kernel/m2m_interactions.hpp
+  src/m2m_kernel/multiindex.hpp
+  src/m2m_kernel/calculate_stencil.hpp
+  src/m2m_kernel/m2m_kernel.hpp
+  src/m2m_kernel/compare_interaction_lists.hpp
+  src/m2m_kernel/m2m_simd_types.hpp
+  src/m2m_kernel/m2m_taylor_set_basis.hpp
+  )
 
-  # DEPENDENCIES
-  #   ${dependencies}
+# DEPENDENCIES
+#   ${dependencies}
 
-cuda_add_executable(
-  octotiger
-  # SOURCES
+if(OCTOTIGER_WITH_CUDA)
+  cuda_add_executable(
+    octotiger
+    # SOURCES
     ${source_files}
-  # HEADERS
+    # HEADERS
     # ${header_files}
-  # FOLDER  "Octotiger"
-)
-
-hpx_setup_target(octotiger)
-
-
+    # FOLDER  "Octotiger"
+    )
+  hpx_setup_target(octotiger)
+else()
+  add_hpx_executable(
+    octotiger
+    DEPENDENCIES
+    ${dependencies}
+    SOURCES
+    ${source_files}
+    HEADERS
+    ${header_files}
+    FOLDER  "Octotiger"
+    )
+endif()
