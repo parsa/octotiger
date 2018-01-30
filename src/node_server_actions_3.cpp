@@ -286,7 +286,10 @@ void node_server::start_run(bool scf, integer ngrids)
     printf( "Starting run...\n" );
     auto fut_ptr = me.get_ptr();
     node_server* root_ptr = fut_ptr.get();
+    real output_dt = opts.output_dt;
+    output_cnt = root_ptr->get_rotation_count() / output_dt;
     if( opts.output_only ) {
+    	printf( "CYCLE: %i\n", int(output_cnt));
     	diagnostics();
         output(opts.data_dir, opts.output_filename, output_cnt, false);
     	return;
@@ -295,13 +298,11 @@ void node_server::start_run(bool scf, integer ngrids)
     solve_gravity(false,false);
     ngrids = regrid(me.get_gid(), grid::get_omega(), -1,  false);
 
-    real output_dt = opts.output_dt;
 
     printf("OMEGA = %e, output_dt = %e\n", grid::get_omega(), output_dt);
     real& t = current_time;
     integer step_num = 0;
 
-    output_cnt = root_ptr->get_rotation_count() / output_dt;
 
     profiler_output(stdout);
 

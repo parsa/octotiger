@@ -273,10 +273,10 @@ void grid::output(const output_list_type& olists,
 				int shapetype[1] = {DB_ZONETYPE_HEX};
 				int shapecnt[1] = {nzones};
 				const char* coord_names[NDIM] = {"x", "y", "z"};
-				auto olist = DBMakeOptlist(1);
+				auto olist = DBMakeOptlist(2);
 				double time = double(t);
 				int ndim = 3;
-				//DBAddOption(olist, DBOPT_CYCLE, &cycle);
+				DBAddOption(olist, DBOPT_CYCLE, &cycle);
 				DBAddOption(olist, DBOPT_DTIME, &time);
 				//DBAddOption(olist, DBOPT_NSPACE, &ndim );
                 std::string filename = dirname + base;
@@ -285,7 +285,7 @@ void grid::output(const output_list_type& olists,
 				DBfile *db = DBCreateReal(filename.c_str(), DB_CLOBBER, DB_LOCAL, "Euler Mesh", DB_PDB);
 				assert(db);
 				DBPutZonelist2(db, "zones", nzones, int(NDIM), zone_nodes.data(), nzones * NVERTEX, 0, 0, 0, shapetype, shapesize,
-						shapecnt, nshapes, olist);
+						shapecnt, nshapes, NULL);
 				DBPutUcdmesh(db, "mesh", int(NDIM), const_cast<char**>(coord_names), node_coords.data(), nnodes, nzones, "zones", nullptr, DB_DOUBLE,
 						olist);
 				const char* analytic_names[] = {"rho_a", "egas_a", "sx_a", "sy_a", "sz_a", "tau_a"};
