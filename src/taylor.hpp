@@ -327,6 +327,9 @@ public:
     OCTOTIGER_FORCEINLINE const T* ptr() const {
         return data.data();
     }
+    inline std::array<T, taylor_sizes[N - 1]> &get_array() {
+        return data;
+    }
 
     template <class Arc>
     void serialize(Arc& arc, const unsigned) {

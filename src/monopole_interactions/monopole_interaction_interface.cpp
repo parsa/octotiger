@@ -65,15 +65,6 @@ namespace fmm {
                 auto x = dir.operator[](ZDIM) + 1;
                 auto y = dir.operator[](YDIM) + 1;
                 auto z = dir.operator[](XDIM) + 1;
-                // std::cout << dir.flat_index_with_center() << ":" << z << " " << y << " " << x <<
-                // std::endl;
-                // std::cout << dir.flat_index_with_center() << ":" << z + 1 << " " << y + 1 << " "
-                // << x+1 << std::endl;
-                // std::cout << dir.flat_index_with_center() << ":" << (z + 1) * 3 * 3 << " " << (y
-                // + 1) * 3 << " " << (x+1) << std::endl;
-                // std::cout << dir.flat_index_with_center() << ":" << (z + 1) * 3 * 3  + (y + 1) *
-                // 3  + (x+1) << std::endl;
-                // std::cin.get();
 
                 // this dir is setup as a multipole - and we only consider multipoles here
                 if (!neighbor.is_monopole) {
@@ -191,30 +182,27 @@ namespace fmm {
             // Convert input structure to new datastructure (SoA)
             if (p2p_type == interaction_kernel_type::SOA_CPU &&
                 p2m_type == interaction_kernel_type::SOA_CPU) {
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>
-                    potential_expansions_SoA;
+                struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING> potential_expansions_SoA;
                 // auto start = std::chrono::high_resolution_clock::now();
                 if (multipole_neighbors_exist) {
-                    struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>
-                        angular_corrections_SoA;
+                    struct_of_array_data<real, 3, INNER_CELLS, SOA_PADDING> angular_corrections_SoA;
                     kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
                         potential_expansions_SoA, angular_corrections_SoA, stencil, type, x_skip,
                         y_skip, z_skip);
                     if (type == RHO) {
-                        angular_corrections_SoA.to_non_SoA(grid_ptr->get_L_c());
+                        angular_corrections_SoA.to_non_SoA<space_vector>(grid_ptr->get_L_c());
                     }
                 }
                 kernel_monopoles.apply_stencil(
                     local_monopoles, potential_expansions_SoA, stencil, four, dx);
-                potential_expansions_SoA.to_non_SoA(grid_ptr->get_L());
+                potential_expansions_SoA.to_non_SoA<expansion>(grid_ptr->get_L());
 
                 // for (size_t i = 0; i < L.size(); i++) {
                 //     L[i] = potential_expansions[i];
                 // }
 
             } else if (p2p_type == interaction_kernel_type::SOA_CPU) {
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>
-                    potential_expansions_SoA;
+                struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING> potential_expansions_SoA;
                 kernel_monopoles.apply_stencil(
                     local_monopoles, potential_expansions_SoA, stencil, four, dx);
 
@@ -231,18 +219,16 @@ namespace fmm {
                         }
                     }
                 }
-                potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
+                potential_expansions_SoA.add_to_non_SoA<expansion>(grid_ptr->get_L());
             } else if (p2m_type == interaction_kernel_type::SOA_CPU) {
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>
-                    potential_expansions_SoA;
+                struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING> potential_expansions_SoA;
                 if (multipole_neighbors_exist) {
-                    struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>
-                        angular_corrections_SoA;
+                    struct_of_array_data<real, 3, INNER_CELLS, SOA_PADDING> angular_corrections_SoA;
                     kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
                         potential_expansions_SoA, angular_corrections_SoA, stencil, type, x_skip,
                         y_skip, z_skip);
                     if (type == RHO) {
-                        angular_corrections_SoA.to_non_SoA(grid_ptr->get_L_c());
+                        angular_corrections_SoA.to_non_SoA<space_vector>(grid_ptr->get_L_c());
                     }
                 }
 
@@ -259,7 +245,7 @@ namespace fmm {
                         }
                     }
                 }
-                potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
+                potential_expansions_SoA.add_to_non_SoA<expansion>(grid_ptr->get_L());
             } else {
                 // old-style interaction calculation
                 // computes inner interactions

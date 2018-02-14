@@ -2,6 +2,8 @@
 #include "taylor.hpp"
 
 taylor<4, real> factor;
+taylor<4, real> factor_half;
+taylor<4, real> factor_sixth;
 taylor<4, m2m_vector> factor_half_v;
 taylor<4, m2m_vector> factor_sixth_v;
 
@@ -21,7 +23,9 @@ void compute_factor() {
     const m2m_vector half_v(1.0 / 2.0);
     const m2m_vector sixth_v(1.0 / 6.0);
     for (size_t i = 0; i < factor.size(); i++) {
+        factor_half[i] = 0.5 * factor[i];
         factor_half_v[i] = half_v * factor[i];
+        factor_sixth[i] = (1.0 / 6.0) * factor[i];
         factor_sixth_v[i] = sixth_v * factor[i];
     }
 }

@@ -4,18 +4,25 @@
 
 #include "defs.hpp"
 
+#ifndef NDIM
+#define NDIM 3
+#endif
+#ifndef INX
+#define INX 8
+#endif
+
 namespace octotiger {
 
-namespace detail {
+// namespace detail {
 
-    constexpr uint64_t const_pow(uint64_t base, uint64_t exp) {
-        if (exp >= 1) {
-            return base * const_pow(base, exp - 1);
-        } else {
-            return 1;
-        }
-    }
-}
+//     constexpr uint64_t const_pow(uint64_t base, uint64_t exp) {
+//         if (exp >= 1) {
+//             return base * const_pow(base, exp - 1);
+//         } else {
+//             return 1;
+//         }
+//     }
+// }
 
 namespace fmm {
 
@@ -25,8 +32,8 @@ namespace fmm {
     // number of expansions in each cell per direction
     constexpr int64_t INNER_CELLS_PER_DIRECTION = INX;    // 8
 
-    // number of expansions in each cell (inner cells)
-    constexpr uint64_t INNER_CELLS = detail::const_pow(INNER_CELLS_PER_DIRECTION, DIMENSION);
+    constexpr uint64_t INNER_CELLS =
+        INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION;
 
     // TODO: change this to 4 as soon as simplified padding works
     constexpr uint64_t INNER_CELLS_PADDING_DEPTH = INX;    // 8
@@ -35,7 +42,7 @@ namespace fmm {
 
     constexpr uint64_t ENTRIES = PADDED_STRIDE * PADDED_STRIDE * PADDED_STRIDE;
 
-    constexpr uint64_t EXPANSION_COUNT_PADDED = detail::const_pow(PADDED_STRIDE, DIMENSION);
+    constexpr uint64_t EXPANSION_COUNT_PADDED = ENTRIES;
     constexpr uint64_t EXPANSION_COUNT_NOT_PADDED = INNER_CELLS;
 
     // how many stencil elements are processed for one origin cell, before the next

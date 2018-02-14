@@ -13,21 +13,12 @@ namespace octotiger {
 namespace fmm {
     namespace monopole_interactions {
 
-        // TODO:
-        // - check codegen and fix in Vc
-        // - check for amount of temporaries
-        // - try to replace expensive operations like sqrt
-        // - remove all sqr()
-        // - increase INX
-
         void p2m_kernel::blocked_interaction_rho(
-            struct_of_array_data<expansion, real, 20, ENTRIES,
-                SOA_PADDING>& __restrict__ local_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES,
-                SOA_PADDING>& __restrict__ center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, INNER_CELLS,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& __restrict__ local_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& __restrict__ center_of_masses_SoA,
+            struct_of_array_data<real, 20, INNER_CELLS,
                 SOA_PADDING>& __restrict__ potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, INNER_CELLS,
+            struct_of_array_data<real, 3, INNER_CELLS,
                 SOA_PADDING>& __restrict__ angular_corrections_SoA,
             const multiindex<>& __restrict__ cell_index, const size_t cell_flat_index,
             const multiindex<m2m_int_vector>& __restrict__ cell_index_coarse,
@@ -280,22 +271,16 @@ namespace fmm {
         }
 
         void p2m_kernel::blocked_interaction_non_rho(
-            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
-                potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
-                angular_corrections_SoA,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+            struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING>& potential_expansions_SoA,
+            struct_of_array_data<real, 3, INNER_CELLS, SOA_PADDING>& angular_corrections_SoA,
             const multiindex<>& cell_index, const size_t cell_flat_index,
             const multiindex<m2m_int_vector>& cell_index_coarse,
             const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
             const multiindex<>& interaction_partner_index,
             const size_t interaction_partner_flat_index,
             multiindex<m2m_int_vector>& interaction_partner_index_coarse) {
-            // TODO: should change name to something better (not taylor, but space_vector)
-            // struct_of_array_taylor<space_vector, real, 3> X =
-            //     center_of_masses_SoA.get_view(cell_flat_index);
-
             std::array<m2m_vector, NDIM> X;
             X[0] = center_of_masses_SoA.value<0>(cell_flat_index);
             X[1] = center_of_masses_SoA.value<1>(cell_flat_index);

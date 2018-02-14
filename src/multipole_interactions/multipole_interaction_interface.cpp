@@ -1,5 +1,9 @@
 #include "multipole_interaction_interface.hpp"
 
+#ifdef OCTOTIGER_WITH_CUDA
+#include "m2m_cuda.hpp"
+#endif
+
 #include "../common_kernel/interactions_iterators.hpp"
 #include "calculate_stencil.hpp"
 #include "m2m_kernel.hpp"
@@ -7,14 +11,19 @@
 
 #include <algorithm>
 
-// Big picture questions:
-// - use any kind of tiling?
+#include "options.hpp"
+
+// required for cuda
+extern options opts;
+extern taylor<4, real> factor;
+extern taylor<4, real> factor_half;
+extern taylor<4, real> factor_sixth;
 
 namespace octotiger {
 namespace fmm {
     namespace multipole_interactions {
 
-    two_phase_stencil multipole_interaction_interface::stencil;
+        two_phase_stencil multipole_interaction_interface::stencil;
         multipole_interaction_interface::multipole_interaction_interface(void)
           : neighbor_empty_multipole(27)
           , neighbor_empty_monopole(27)
@@ -75,7 +84,7 @@ namespace fmm {
                             local_expansions_SoA.set_AoS_value(std::move(expansion()), flat_index);
                             center_of_masses_SoA.set_AoS_value(
                                 std::move(space_vector()), flat_index);
-                    local_monopoles.at(flat_index) = 0.0;
+                            local_monopoles.at(flat_index) = 0.0;
                         });
                         neighbor_empty_multipole[dir.flat_index_with_center()] = true;
                     } else {
@@ -93,7 +102,7 @@ namespace fmm {
                                     std::move(neighbor_M_ptr.at(flat_index_unpadded)), flat_index);
                                 center_of_masses_SoA.set_AoS_value(
                                     std::move(neighbor_com0.at(flat_index_unpadded)), flat_index);
-                    local_monopoles.at(flat_index) = 0.0;
+                                local_monopoles.at(flat_index) = 0.0;
 
                             });
                     }
@@ -111,7 +120,7 @@ namespace fmm {
                             local_expansions_SoA.set_AoS_value(std::move(expansion()), flat_index);
                             center_of_masses_SoA.set_AoS_value(
                                 std::move(space_vector()), flat_index);
-                    local_monopoles.at(flat_index) = 0.0;
+                            local_monopoles.at(flat_index) = 0.0;
 
                         });
                         neighbor_empty_monopole[dir.flat_index_with_center()] = true;
@@ -120,29 +129,26 @@ namespace fmm {
                         // Get multipole data into our input structure
                         std::vector<real>& neighbor_mons = *(neighbor.data.m);
                         std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
-                        iterate_inner_cells_padding(
-                            dir, [this, neighbor_mons, xbase, dx](const multiindex<>& i,
-                                     const size_t flat_index, const multiindex<>& i_unpadded,
-                                     const size_t flat_index_unpadded) {
-                                // local_expansions.at(flat_index) = 0.0;
-                                // center_of_masses.at(flat_index) = 0.0;
+                        iterate_inner_cells_padding(dir, [this, neighbor_mons, xbase, dx](
+                                                             const multiindex<>& i,
+                                                             const size_t flat_index,
+                                                             const multiindex<>& i_unpadded,
+                                                             const size_t flat_index_unpadded) {
+                            // local_expansions.at(flat_index) = 0.0;
+                            // center_of_masses.at(flat_index) = 0.0;
 
-                                space_vector e;
-                                e[0] = (i.x) * dx + xbase[0] -
-                                INNER_CELLS_PER_DIRECTION * dx;
-                                e[1] = (i.y) * dx + xbase[1] -
-                                INNER_CELLS_PER_DIRECTION * dx;
-                                e[2] = (i.z) * dx + xbase[2] -
-                                INNER_CELLS_PER_DIRECTION * dx;
-                                center_of_masses_SoA.set_AoS_value(
-                                    std::move(e), flat_index);
-                                // local_monopoles.at(flat_index) =
-                                // neighbor_mons.at(flat_index_unpadded);
+                            space_vector e;
+                            e[0] = (i.x) * dx + xbase[0] - INNER_CELLS_PER_DIRECTION * dx;
+                            e[1] = (i.y) * dx + xbase[1] - INNER_CELLS_PER_DIRECTION * dx;
+                            e[2] = (i.z) * dx + xbase[2] - INNER_CELLS_PER_DIRECTION * dx;
+                            center_of_masses_SoA.set_AoS_value(std::move(e), flat_index);
+                            // local_monopoles.at(flat_index) =
+                            // neighbor_mons.at(flat_index_unpadded);
                             local_expansions_SoA.set_AoS_value(std::move(expansion()), flat_index);
-                                // local_expansions_SoA.set_value(
-                                //     std::move(neighbor_mons.at(flat_index_unpadded)), flat_index);
-                    local_monopoles.at(flat_index) = neighbor_mons.at(flat_index_unpadded);
-                            });
+                            // local_expansions_SoA.set_value(
+                            //     std::move(neighbor_mons.at(flat_index_unpadded)), flat_index);
+                            local_monopoles.at(flat_index) = neighbor_mons.at(flat_index_unpadded);
+                        });
                         monopole_neighbors_exist = true;
                         x_skip[z][y][x] = false;
                     }
@@ -182,9 +188,27 @@ namespace fmm {
             std::vector<neighbor_gravity_type>& all_neighbor_interaction_data) {
             if (m2m_type == interaction_kernel_type::SOA_CPU &&
                 m2p_type == interaction_kernel_type::SOA_CPU) {
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>
+#ifdef OCTOTIGER_WITH_CUDA
+                struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING>
                     potential_expansions_SoA;
-                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>
+                for (size_t i = 0; i < potential_expansions_SoA.size(); i++) {
+                    potential_expansions_SoA.get_underlying_pointer()[i] = 0.0;
+                }
+                struct_of_array_data<real, 3, INNER_CELLS, SOA_PADDING>
+                    angular_corrections_SoA;
+                for (size_t i = 0; i < angular_corrections_SoA.size(); i++) {
+                    angular_corrections_SoA.get_underlying_pointer()[i] = 0.0;
+                }
+                cuda::m2m_cuda cuda_kernel;
+                // auto start = std::chrono::high_resolution_clock::now();
+                cuda_kernel.compute_interactions(local_expansions_SoA, center_of_masses_SoA,
+                    potential_expansions_SoA, angular_corrections_SoA, opts.theta,
+                    factor.get_array(), factor_half.get_array(), factor_sixth.get_array(), type);
+                // auto end = std::chrono::high_resolution_clock::now();
+#else
+                struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING>
+                    potential_expansions_SoA;
+                struct_of_array_data<real, 3, INNER_CELLS, SOA_PADDING>
                     angular_corrections_SoA;
 
                 // if (monopole_neighbors_exist) {
@@ -195,24 +219,27 @@ namespace fmm {
                 // }
                 m2m_kernel kernel(neighbor_empty_multipole);
                 kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
-                                     potential_expansions_SoA, angular_corrections_SoA, local_monopoles,
-                    stencil, type);
+                    potential_expansions_SoA, angular_corrections_SoA, local_monopoles, stencil,
+                    type);
 
+#endif
                 if (type == RHO) {
-                    angular_corrections_SoA.to_non_SoA(grid_ptr->get_L_c());
+                  angular_corrections_SoA.to_non_SoA<space_vector>(grid_ptr->get_L_c());
                 }
 
-                potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
-
+                potential_expansions_SoA.add_to_non_SoA<expansion>(grid_ptr->get_L());
             } else if (m2m_type == interaction_kernel_type::SOA_CPU) {
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>
+                struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING>
                     potential_expansions_SoA;
-                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>
+                struct_of_array_data<real, 3, INNER_CELLS, SOA_PADDING>
                     angular_corrections_SoA;
+#ifdef OCTOTIGER_WITH_CUDA
+#else
                 m2m_kernel kernel(neighbor_empty_multipole);
                 kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
-                                     potential_expansions_SoA, angular_corrections_SoA, local_monopoles,
-                    stencil, type);
+                    potential_expansions_SoA, angular_corrections_SoA, local_monopoles, stencil,
+                    type);
+#endif
 
                 std::vector<expansion>& L = grid_ptr->get_L();
                 std::vector<space_vector>& L_c = grid_ptr->get_L_c();
@@ -227,23 +254,24 @@ namespace fmm {
                         }
                     }
                 }
-                potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
-                angular_corrections_SoA.add_to_non_SoA(grid_ptr->get_L_c());
+                potential_expansions_SoA.add_to_non_SoA<expansion>(grid_ptr->get_L());
+                angular_corrections_SoA.add_to_non_SoA<space_vector>(grid_ptr->get_L_c());
 
             } else if (m2p_type == interaction_kernel_type::SOA_CPU) {
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>
+                struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING>
                     potential_expansions_SoA;
-                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>
+                struct_of_array_data<real, 3, INNER_CELLS, SOA_PADDING>
                     angular_corrections_SoA;
                 // if (monopole_neighbors_exist) {
-                //     mixed_interactions_kernel.apply_stencil(local_monopoles, local_expansions_SoA,
+                //     mixed_interactions_kernel.apply_stencil(local_monopoles,
+                //     local_expansions_SoA,
                 //         center_of_masses_SoA, potential_expansions_SoA, angular_corrections_SoA,
                 //         stencil_mixed_interactions, type, dX, xBase, x_skip, y_skip, z_skip);
                 // }
                 m2m_kernel kernel(neighbor_empty_multipole);
                 kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
-                                     potential_expansions_SoA, angular_corrections_SoA, local_monopoles,
-                    stencil, type);
+                    potential_expansions_SoA, angular_corrections_SoA, local_monopoles, stencil,
+                    type);
 
                 std::vector<expansion>& L = grid_ptr->get_L();
                 std::vector<space_vector>& L_c = grid_ptr->get_L_c();
@@ -261,8 +289,8 @@ namespace fmm {
                         }
                     }
                 }
-                potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
-                angular_corrections_SoA.add_to_non_SoA(grid_ptr->get_L_c());
+                potential_expansions_SoA.add_to_non_SoA<expansion>(grid_ptr->get_L());
+                angular_corrections_SoA.add_to_non_SoA<space_vector>(grid_ptr->get_L_c());
             } else {
                 // old-style interaction calculation
                 // computes inner interactions

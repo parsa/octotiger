@@ -29,19 +29,11 @@ namespace fmm {
         }
 
         void p2p_kernel::apply_stencil(std::vector<real>& local_expansions,
-            struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+            struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING>&
                 potential_expansions_SoA,
             std::vector<multiindex<>>& stencil, std::vector<std::array<real, 4>>& four, real dx) {
-            // for(auto i = 0; i < local_expansions.size(); i++)
-            //   std::cout << local_expansions[i] << " ";
-            // for (multiindex<>& stencil_element : stencil) {
             for (size_t outer_stencil_index = 0; outer_stencil_index < stencil.size();
                  outer_stencil_index += P2P_STENCIL_BLOCKING) {
-                // std::cout << "stencil_element: " << stencil_element << std::endl;
-                // TODO: remove after proper vectorization
-                // multiindex<> se(stencil_element.x, stencil_element.y, stencil_element.z);
-                // std::cout << "se: " << se << std::endl;
-                // iterate_inner_cells_padded_stencil(se, *this);
                 for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
                     for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1 += 2) {
                         // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
@@ -49,7 +41,6 @@ namespace fmm {
                              i2 += m2m_vector::size()) {
                             const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
                                 i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
-                            // BUG: indexing has to be done with uint32_t because of Vc limitation
                             const int64_t cell_flat_index =
                                 to_flat_index_padded(cell_index);    // iii0...
                             const multiindex<> cell_index_unpadded(i0, i1, i2);

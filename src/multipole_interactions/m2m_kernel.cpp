@@ -16,28 +16,9 @@ namespace octotiger {
 namespace fmm {
     namespace multipole_interactions {
 
-        m2m_kernel::m2m_kernel(
-            // struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
-            // local_expansions_SoA,
-            // struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
-            // center_of_masses_SoA,
-            // struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
-            // potential_expansions_SoA,
-            // struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
-            // angular_corrections_SoA,
-            std::vector<bool>& neighbor_empty)
-          :    // local_expansions(local_expansions),
-          // local_expansions_SoA(local_expansions_SoA)
-          // , center_of_masses(center_of_masses),
-          // center_of_masses_SoA(center_of_masses_SoA)
-          // , potential_expansions(potential_expansions)
-          // , potential_expansions_SoA(potential_expansions_SoA)
-          // , angular_corrections(angular_corrections)
-          // , angular_corrections_SoA(angular_corrections_SoA),
-          neighbor_empty(neighbor_empty)
-          , theta_rec_squared(sqr(1.0 / opts.theta))
-        // , theta_rec_squared_scalar(sqr(1.0 / opts.theta))
-        {
+        m2m_kernel::m2m_kernel(std::vector<bool>& neighbor_empty)
+          : neighbor_empty(neighbor_empty)
+          , theta_rec_squared(sqr(1.0 / opts.theta)) {
             for (size_t i = 0; i < m2m_int_vector::size(); i++) {
                 offset_vector[i] = i;
             }
@@ -46,12 +27,10 @@ namespace fmm {
         }
 
         void m2m_kernel::apply_stencil(
-            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
-                potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
-                angular_corrections_SoA,
+            struct_of_array_data<real, 20, ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            struct_of_array_data<real, 3, ENTRIES, SOA_PADDING>& center_of_masses_SoA,
+            struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING>& potential_expansions_SoA,
+            struct_of_array_data<real, 3, INNER_CELLS, SOA_PADDING>& angular_corrections_SoA,
             std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type) {
             // vectors_check_empty();
             // for (multiindex<>& stencil_element : stencil) {
@@ -90,10 +69,9 @@ namespace fmm {
                             if (type == RHO) {
                                 this->blocked_interaction_rho(local_expansions_SoA,
                                     center_of_masses_SoA, potential_expansions_SoA,
-                                    angular_corrections_SoA, mons,
-                                    cell_index, cell_flat_index, cell_index_coarse,
-                                    cell_index_unpadded, cell_flat_index_unpadded, stencil,
-                                    outer_stencil_index);
+                                    angular_corrections_SoA, mons, cell_index, cell_flat_index,
+                                    cell_index_coarse, cell_index_unpadded,
+                                    cell_flat_index_unpadded, stencil, outer_stencil_index);
                             } else {
                                 this->blocked_interaction_non_rho(local_expansions_SoA,
                                     center_of_masses_SoA, potential_expansions_SoA,
@@ -106,18 +84,6 @@ namespace fmm {
                 }
             }
         }
-
-        // void m2m_kernel::apply_stencil_element(multiindex& stencil_element) {
-        //     // execute kernel for individual interactions for every inner cell
-        //     // use this object as a functor for the iteration
-        //     iterate_inner_cells_padded_stencil(stencil_element, *this);
-
-        //     // std::cout << "potential_expansions.size(): " <<
-        //     potential_expansions.size() <<
-        //     std::endl;
-        //     // std::cout << "potential_expansions[0]: " << potential_expansions[0];
-        //     // std::cout << std::endl;
-        // }
 
         void m2m_kernel::vectors_check_empty() {
             for (size_t i0 = 0; i0 < PADDED_STRIDE; i0 += 1) {

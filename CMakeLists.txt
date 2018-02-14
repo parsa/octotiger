@@ -139,7 +139,7 @@ set(source_files ${source_files}
 
 if(OCTOTIGER_WITH_CUDA)
   set(source_files ${source_files}
-    #src/m2m_kernel/m2m_cuda.cu
+    src/multipole_interactions/m2m_cuda.cu
     )
 endif()
 

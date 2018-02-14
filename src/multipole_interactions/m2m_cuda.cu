@@ -2,9 +2,9 @@
 
 #include <array>
 #include <vector>
+#include "common_kernel/multiindex.hpp"
+#include "common_kernel/struct_of_array_data.hpp"
 #include "cuda_helper.hpp"
-#include "multiindex.hpp"
-#include "struct_of_array_data.hpp"
 
 namespace octotiger {
 namespace fmm {
@@ -24,6 +24,11 @@ namespace fmm {
     extern std::vector<octotiger::fmm::multiindex<>> stencil;
 
     namespace cuda {
+
+        template <typename T>
+        __device__ constexpr inline T sqr(T const& val) {
+            return val * val;
+        }
 
         class D_split
         {
@@ -135,17 +140,17 @@ namespace fmm {
             size_t stencil_elements, double theta, double* factor, double* factor_half,
             double* factor_sixth) {
             // TODO: make sure you pick up the right expansion type
-            octotiger::fmm::cuda::struct_of_array_data<double, 20, octotiger::fmm::ENTRIES_PADDED,
+            octotiger::fmm::cuda::struct_of_array_data<double, 20, octotiger::fmm::ENTRIES,
                 octotiger::fmm::SOA_PADDING>
                 local_expansions_SoA(local_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<double, 3, octotiger::fmm::ENTRIES_PADDED,
+            octotiger::fmm::cuda::struct_of_array_data<double, 3, octotiger::fmm::ENTRIES,
                 octotiger::fmm::SOA_PADDING>
                 center_of_masses_SoA(center_of_masses_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<double, 20,
-                octotiger::fmm::ENTRIES_NOT_PADDED, octotiger::fmm::SOA_PADDING>
+            octotiger::fmm::cuda::struct_of_array_data<double, 20, octotiger::fmm::INNER_CELLS,
+                octotiger::fmm::SOA_PADDING>
                 potential_expansions_SoA(potential_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<double, 3,
-                octotiger::fmm::ENTRIES_NOT_PADDED, octotiger::fmm::SOA_PADDING>
+            octotiger::fmm::cuda::struct_of_array_data<double, 3, octotiger::fmm::INNER_CELLS,
+                octotiger::fmm::SOA_PADDING>
                 angular_corrections_SoA(angular_corrections_SoA_ptr);
 
             // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
@@ -173,9 +178,10 @@ namespace fmm {
             octotiger::fmm::multiindex<> cell_index_coarse(cell_index);
             cell_index_coarse.transform_coarse();
 
-            size_t cell_flat_index = to_flat_index_padded(cell_index);
+            size_t cell_flat_index = octotiger::fmm::to_flat_index_padded(cell_index);
             octotiger::fmm::multiindex<> cell_index_unpadded(threadIdx.x, threadIdx.y, threadIdx.z);
-            size_t cell_flat_index_unpadded = to_inner_flat_index_not_padded(cell_index_unpadded);
+            size_t cell_flat_index_unpadded =
+                octotiger::fmm::to_inner_flat_index_not_padded(cell_index_unpadded);
 
             if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
                 printf("x: %i y: %i z: %i, cell_flat_index: %lu\n", cell_index.x, cell_index.y,
@@ -196,7 +202,7 @@ namespace fmm {
                 //     interaction_partner_index.y, interaction_partner_index.z);
 
                 const size_t interaction_partner_flat_index =
-                    to_flat_index_padded(interaction_partner_index);
+                    octotiger::fmm::to_flat_index_padded(interaction_partner_index);
                 // printf("interaction_partner_flat_index: %lu\n", interaction_partner_flat_index);
 
                 // // check whether all vector elements are in empty border
@@ -636,17 +642,17 @@ namespace fmm {
             const double theta_rec_squared = sqr(1.0 / theta);
 
             // TODO: make sure you pick up the right expansion type
-            octotiger::fmm::cuda::struct_of_array_data<double, 20, octotiger::fmm::ENTRIES_PADDED,
+            octotiger::fmm::cuda::struct_of_array_data<double, 20, octotiger::fmm::ENTRIES,
                 octotiger::fmm::SOA_PADDING>
                 local_expansions_SoA(local_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<double, 3, octotiger::fmm::ENTRIES_PADDED,
+            octotiger::fmm::cuda::struct_of_array_data<double, 3, octotiger::fmm::ENTRIES,
                 octotiger::fmm::SOA_PADDING>
                 center_of_masses_SoA(center_of_masses_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<double, 20,
-                octotiger::fmm::ENTRIES_NOT_PADDED, octotiger::fmm::SOA_PADDING>
+            octotiger::fmm::cuda::struct_of_array_data<double, 20, octotiger::fmm::INNER_CELLS,
+                octotiger::fmm::SOA_PADDING>
                 potential_expansions_SoA(potential_expansions_SoA_ptr);
-            octotiger::fmm::cuda::struct_of_array_data<double, 3,
-                octotiger::fmm::ENTRIES_NOT_PADDED, octotiger::fmm::SOA_PADDING>
+            octotiger::fmm::cuda::struct_of_array_data<double, 3, octotiger::fmm::INNER_CELLS,
+                octotiger::fmm::SOA_PADDING>
                 angular_corrections_SoA(angular_corrections_SoA_ptr);
 
             octotiger::fmm::multiindex<> cell_index(threadIdx.x + INNER_CELLS_PADDING_DEPTH,
@@ -655,9 +661,10 @@ namespace fmm {
             octotiger::fmm::multiindex<> cell_index_coarse(cell_index);
             cell_index_coarse.transform_coarse();
 
-            size_t cell_flat_index = to_flat_index_padded(cell_index);
+            size_t cell_flat_index = octotiger::fmm::to_flat_index_padded(cell_index);
             octotiger::fmm::multiindex<> cell_index_unpadded(threadIdx.x, threadIdx.y, threadIdx.z);
-            size_t cell_flat_index_unpadded = to_inner_flat_index_not_padded(cell_index_unpadded);
+            size_t cell_flat_index_unpadded =
+                octotiger::fmm::to_inner_flat_index_not_padded(cell_index_unpadded);
             // printf("x: %i y: %i z: %i, cell_flat_index: %lu\n", threadIdx.x, threadIdx.y,
             //     threadIdx.z, cell_flat_index);
             // printf("x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", threadIdx.x,
@@ -683,7 +690,7 @@ namespace fmm {
                 //     interaction_partner_index.y, interaction_partner_index.z);
 
                 const size_t interaction_partner_flat_index =
-                    to_flat_index_padded(interaction_partner_index);
+                    octotiger::fmm::to_flat_index_padded(interaction_partner_index);
                 // printf("interaction_partner_flat_index: %lu\n", interaction_partner_flat_index);
 
                 // // check whether all vector elements are in empty border
@@ -783,14 +790,15 @@ namespace fmm {
 
                 cur_pot[0] = m_partner[0] * D_lower[0];
                 // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("non_rho first cur_pot 0: %.6e, m_partner[0]: %.6e, D_lower[0]: %.6e,\n",
+                //     printf("non_rho first cur_pot 0: %.6e, m_partner[0]: %.6e, D_lower[0]:
+                //     %.6e,\n",
                 //         cur_pot[0], m_partner[0], D_lower[0]);
                 // }
                 cur_pot[1] = m_partner[0] * D_lower[1];
                 cur_pot[2] = m_partner[0] * D_lower[2];
                 cur_pot[3] = m_partner[0] * D_lower[3];
 
-		cur_pot[0] -= m_partner[1] * D_lower[1];
+                cur_pot[0] -= m_partner[1] * D_lower[1];
 
                 cur_pot[1] -= m_partner[1] * D_lower[4];
                 cur_pot[1] -= m_partner[1] * D_lower[5];
@@ -810,7 +818,8 @@ namespace fmm {
 
                 cur_pot[0] += m_partner[4] * (D_lower[4] * factor_half[4]);
                 // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("cur_pot 0: %.6e, m_partner[4]: %.6e, D_lower[4]: %.6e, factor_half[4]: "
+                //     printf("cur_pot 0: %.6e, m_partner[4]: %.6e, D_lower[4]: %.6e,
+                //     factor_half[4]: "
                 //            "%.6e\n",
                 //         cur_pot[0], m_partner[4], D_lower[4], factor_half[4]);
                 // }
@@ -1107,17 +1116,34 @@ namespace fmm {
             }
         }
 
-        void m2m_cuda::compute_interactions(
-            octotiger::fmm::struct_of_array_data<double, 20, ENTRIES_PADDED, SOA_PADDING>&
-                local_expansions_SoA,
-            octotiger::fmm::struct_of_array_data<double, 3, ENTRIES_PADDED, SOA_PADDING>&
+        void m2m_cuda::compute_interactions(octotiger::fmm::struct_of_array_data<double, 20,
+                                                ENTRIES, SOA_PADDING>& local_expansions_SoA,
+
+            octotiger::fmm::struct_of_array_data<double, 3, ENTRIES, SOA_PADDING>&
                 center_of_masses_SoA,
-            octotiger::fmm::struct_of_array_data<double, 20, ENTRIES_NOT_PADDED, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<double, 20, INNER_CELLS, SOA_PADDING>&
                 potential_expansions_SoA,
-            octotiger::fmm::struct_of_array_data<double, 3, ENTRIES_NOT_PADDED, SOA_PADDING>&
+            octotiger::fmm::struct_of_array_data<double, 3, INNER_CELLS, SOA_PADDING>&
                 angular_corrections_SoA,
             double theta, std::array<double, 20>& factor, std::array<double, 20>& factor_half,
             std::array<double, 20>& factor_sixth, gsolve_type type) {
+            int nDevices;
+
+            // cudaGetDeviceCount(&nDevices);
+            // for (int i = 0; i < nDevices; i++) {
+            //   cudaDeviceProp prop;
+            //   cudaGetDeviceProperties(&prop, i);
+            //   printf("Device Number: %d\n", i);
+            //   printf("  Device name: %s\n", prop.name);
+            //   printf("  Memory Clock Rate (KHz): %d\n",
+            //          prop.memoryClockRate);
+            //   printf("  Memory Bus Width (bits): %d\n",
+            //          prop.memoryBusWidth);
+            //   printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
+            //          2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+            // }
+            // std::cin.get();
+            CUDA_CHECK_ERROR(cudaSetDevice(0));
             std::cout << "moving local_expansions_SoA" << std::endl;
             cuda_buffer<double> d_local_expansions_SoA =
                 octotiger::fmm::cuda::move_to_device(local_expansions_SoA);
@@ -1130,8 +1156,9 @@ namespace fmm {
             std::cout << "moving angular_corrections_SoA" << std::endl;
             cuda_buffer<double> d_angular_corrections_SoA =
                 octotiger::fmm::cuda::move_to_device(angular_corrections_SoA);
+            // std::cin.get();
 
-            octotiger::fmm::struct_of_array_data<double, 20, ENTRIES_NOT_PADDED, SOA_PADDING>
+            octotiger::fmm::struct_of_array_data<double, 20, INNER_CELLS, SOA_PADDING>
                 potential_expansions_SoA_copy;
             d_potential_expansions_SoA.move_to_host(potential_expansions_SoA_copy);
 
@@ -1143,7 +1170,7 @@ namespace fmm {
             //     }
             // }
 
-            octotiger::fmm::struct_of_array_data<double, 3, ENTRIES_NOT_PADDED, SOA_PADDING>
+            octotiger::fmm::struct_of_array_data<double, 3, INNER_CELLS, SOA_PADDING>
                 angular_corrections_SoA_copy;
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA_copy);
 
@@ -1193,7 +1220,7 @@ namespace fmm {
             d_potential_expansions_SoA.move_to_host(potential_expansions_SoA);
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA);
 
-            // octotiger::fmm::struct_of_array_data<double, 20, ENTRIES_PADDED, SOA_PADDING>
+            // octotiger::fmm::struct_of_array_data<double, 20, ENTRIES, SOA_PADDING>
             //     local_expansions_SoA_copy;
             // d_local_expansions_SoA.move_to_host(local_expansions_SoA_copy);
 
@@ -1205,7 +1232,7 @@ namespace fmm {
             //     }
             // }
 
-            // octotiger::fmm::struct_of_array_data<double, 3, ENTRIES_PADDED, SOA_PADDING>
+            // octotiger::fmm::struct_of_array_data<double, 3, ENTRIES, SOA_PADDING>
             //     center_of_masses_SoA_copy;
             // d_center_of_masses_SoA.move_to_host(center_of_masses_SoA_copy);
             // for (size_t i = 0; i < center_of_masses_SoA_copy.size(); i++) {
