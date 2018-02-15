@@ -192,9 +192,9 @@ namespace fmm {
             tmp[19] = *potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded);
 
             double tmp_cor[NDIM];
-            tmp_cor[0] = *angular_corrections_SoA.value<0>(cell_flat_index_unpadded);
-            tmp_cor[1] = *angular_corrections_SoA.value<1>(cell_flat_index_unpadded);
-            tmp_cor[2] = *angular_corrections_SoA.value<2>(cell_flat_index_unpadded);
+            tmp_cor[0] = *angular_corrections_SoA.pointer<0>(cell_flat_index_unpadded);
+            tmp_cor[1] = *angular_corrections_SoA.pointer<1>(cell_flat_index_unpadded);
+            tmp_cor[2] = *angular_corrections_SoA.pointer<2>(cell_flat_index_unpadded);
 
             for (size_t i = 0; i < stencil_elements; i++) {
                 octotiger::fmm::multiindex<>& cur_stencil = stencil[i];
@@ -925,16 +925,13 @@ namespace fmm {
             // }
             // std::cin.get();
             CUDA_CHECK_ERROR(cudaSetDevice(0));
-            std::cout << "moving local_expansions_SoA" << std::endl;
+            std::cout << "started moving of data" << std::endl;
             cuda_buffer<double> d_local_expansions_SoA =
                 octotiger::fmm::cuda::move_to_device(local_expansions_SoA);
-            std::cout << "moving center_of_masses_SoA" << std::endl;
             cuda_buffer<double> d_center_of_masses_SoA =
                 octotiger::fmm::cuda::move_to_device(center_of_masses_SoA);
-            std::cout << "moving potential_expansions_SoA" << std::endl;
             cuda_buffer<double> d_potential_expansions_SoA =
                 octotiger::fmm::cuda::move_to_device(potential_expansions_SoA);
-            std::cout << "moving angular_corrections_SoA" << std::endl;
             cuda_buffer<double> d_angular_corrections_SoA =
                 octotiger::fmm::cuda::move_to_device(angular_corrections_SoA);
             // std::cin.get();
@@ -947,13 +944,10 @@ namespace fmm {
                 angular_corrections_SoA_copy;
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA_copy);
 
-            std::cout << "moving factor" << std::endl;
+            std::cout << "started moving of const data" << std::endl;
             cuda_buffer<double> d_factor = octotiger::fmm::cuda::move_to_device(factor);
-            std::cout << "moving factor_half" << std::endl;
             cuda_buffer<double> d_factor_half = octotiger::fmm::cuda::move_to_device(factor_half);
-            std::cout << "moving factor_sixth" << std::endl;
             cuda_buffer<double> d_factor_sixth = octotiger::fmm::cuda::move_to_device(factor_sixth);
-            std::cout << "moving stencil" << std::endl;
             cuda_buffer<multiindex<>> d_stencil = octotiger::fmm::cuda::move_to_device(stencil);
             // for (multiindex<> s_e : stencil) {
             //     std::cout << "x: " << s_e.x << " y: " << s_e.y << " z: " << s_e.z << std::endl;
@@ -962,6 +956,8 @@ namespace fmm {
             // int num_blocks = 1;
             dim3 grid_spec(1, 1, 1);
             dim3 threads_per_block(8, 8, 8);
+
+            std::cout << "started kernel" << std::endl;
             if (type == RHO) {
                 blocked_interaction_rho<<<grid_spec, threads_per_block>>>(
                     d_local_expansions_SoA.get_device_ptr(),
@@ -981,9 +977,11 @@ namespace fmm {
                     d_factor_half.get_device_ptr(), d_factor_sixth.get_device_ptr());
                 CUDA_CHECK_ERROR(cudaThreadSynchronize());
             }
+            std::cout << "finished kernel" << std::endl;
 
             d_potential_expansions_SoA.move_to_host(potential_expansions_SoA);
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA);
+            std::cout << "finished output movement" << std::endl;
         }
     }
 }
