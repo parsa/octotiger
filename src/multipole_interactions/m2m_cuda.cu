@@ -153,23 +153,6 @@ namespace fmm {
                 octotiger::fmm::SOA_PADDING>
                 angular_corrections_SoA(angular_corrections_SoA_ptr);
 
-            // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
-            //     printf("local_expansions_SoA on DEVICE:\n");
-            //     printf("local_expansions_SoA.size(): %lu\n", local_expansions_SoA.size());
-            //     size_t lb = 0;
-            //     for (size_t i = 0; i < local_expansions_SoA.size(); i++) {
-            //         if (lb == 40) {
-            //             lb = 0;
-            //             printf("\n");
-            //         } else if (i > 0) {
-            //             printf(",");
-            //         }
-            //         printf("%lf", local_expansions_SoA.get_underlying_pointer()[i]);
-            //         lb += 1;
-            //     }
-            //     printf("\n");
-            // }
-
             const double theta_rec_squared = sqr(1.0 / theta);
 
             octotiger::fmm::multiindex<> cell_index(threadIdx.x + INNER_CELLS_PADDING_DEPTH,
@@ -183,32 +166,14 @@ namespace fmm {
             size_t cell_flat_index_unpadded =
                 octotiger::fmm::to_inner_flat_index_not_padded(cell_index_unpadded);
 
-            if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
-                printf("x: %i y: %i z: %i, cell_flat_index: %lu\n", cell_index.x, cell_index.y,
-                    cell_index.z, cell_flat_index);
-                printf("x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", cell_index.x,
-                    cell_index.y, cell_index.z, cell_flat_index_unpadded);
-            }
-
             for (size_t i = 0; i < stencil_elements; i++) {
                 octotiger::fmm::multiindex<>& cur_stencil = stencil[i];
-                // printf(
-                //     "stencil x: %i, y: %i, z: %i\n", cur_stencil.x, cur_stencil.y,
-                //     cur_stencil.z);
                 const octotiger::fmm::multiindex<> interaction_partner_index(
                     cell_index.x + cur_stencil.x, cell_index.y + cur_stencil.y,
                     cell_index.z + cur_stencil.z);
-                // printf("partner x: %i, y: %i, z: %i\n", interaction_partner_index.x,
-                //     interaction_partner_index.y, interaction_partner_index.z);
 
                 const size_t interaction_partner_flat_index =
                     octotiger::fmm::to_flat_index_padded(interaction_partner_index);
-                // printf("interaction_partner_flat_index: %lu\n", interaction_partner_flat_index);
-
-                // // check whether all vector elements are in empty border
-                // if (vector_is_empty[interaction_partner_flat_index]) {
-                //     continue;
-                // }
 
                 // implicitly broadcasts to vector
                 octotiger::fmm::multiindex<> interaction_partner_index_coarse(
@@ -665,38 +630,15 @@ namespace fmm {
             octotiger::fmm::multiindex<> cell_index_unpadded(threadIdx.x, threadIdx.y, threadIdx.z);
             size_t cell_flat_index_unpadded =
                 octotiger::fmm::to_inner_flat_index_not_padded(cell_index_unpadded);
-            // printf("x: %i y: %i z: %i, cell_flat_index: %lu\n", threadIdx.x, threadIdx.y,
-            //     threadIdx.z, cell_flat_index);
-            // printf("x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", threadIdx.x,
-            // threadIdx.y,
-            //     threadIdx.z, cell_flat_index_unpadded);
-
-            if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
-                printf("non_rho x: %i y: %i z: %i, cell_flat_index: %lu\n", cell_index.x,
-                    cell_index.y, cell_index.z, cell_flat_index);
-                printf("non_rho x: %i y: %i z: %i, cell_flat_index_unpadded: %lu\n", cell_index.x,
-                    cell_index.y, cell_index.z, cell_flat_index_unpadded);
-            }
 
             for (size_t i = 0; i < stencil_elements; i++) {
                 octotiger::fmm::multiindex<>& cur_stencil = stencil[i];
-                // printf(
-                //     "stencil x: %i, y: %i, z: %i\n", cur_stencil.x, cur_stencil.y,
-                //     cur_stencil.z);
                 const octotiger::fmm::multiindex<> interaction_partner_index(
                     cell_index.x + cur_stencil.x, cell_index.y + cur_stencil.y,
                     cell_index.z + cur_stencil.z);
-                // printf("partner x: %i, y: %i, z: %i\n", interaction_partner_index.x,
-                //     interaction_partner_index.y, interaction_partner_index.z);
 
                 const size_t interaction_partner_flat_index =
                     octotiger::fmm::to_flat_index_padded(interaction_partner_index);
-                // printf("interaction_partner_flat_index: %lu\n", interaction_partner_flat_index);
-
-                // // check whether all vector elements are in empty border
-                // if (vector_is_empty[interaction_partner_flat_index]) {
-                //     continue;
-                // }
 
                 // implicitly broadcasts to vector
                 octotiger::fmm::multiindex<> interaction_partner_index_coarse(
@@ -722,21 +664,6 @@ namespace fmm {
                 Y[1] = center_of_masses_SoA.value<1>(interaction_partner_flat_index);
                 Y[2] = center_of_masses_SoA.value<2>(interaction_partner_flat_index);
 
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0) {
-                //     printf("non_rho interaction_partner_index x: %i y: %i z: %i, "
-                //            "non_rho interaction_partner_flat_index: %lu\n",
-                //         interaction_partner_index.x, interaction_partner_index.y,
-                //         interaction_partner_index.z, interaction_partner_flat_index);
-                //     printf("non_rho interaction_partner_index_coarse x: %i y: %i z: %i\n",
-                //         interaction_partner_index_coarse.x, interaction_partner_index_coarse.y,
-                //         interaction_partner_index_coarse.z);
-                //     printf("theta: %lf\n", theta);
-                //     printf("local_expansions_SoA.value<0>(interaction_partner_flat_index):
-                //     %lf\n",
-                //         local_expansions_SoA.value<0>(interaction_partner_flat_index));
-                //     printf("X 0: %lf, 1: %lf, 2: %lf\n", X[0], X[1], X[2]);
-                //     printf("Y 0: %lf, 1: %lf, 2: %lf\n", Y[0], Y[1], Y[2]);
-                // }
 
                 double dX[NDIM];
                 dX[0] = X[0] - Y[0];
@@ -789,11 +716,6 @@ namespace fmm {
                 // the following loops calculate formula (10), potential from B->A
 
                 cur_pot[0] = m_partner[0] * D_lower[0];
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("non_rho first cur_pot 0: %.6e, m_partner[0]: %.6e, D_lower[0]:
-                //     %.6e,\n",
-                //         cur_pot[0], m_partner[0], D_lower[0]);
-                // }
                 cur_pot[1] = m_partner[0] * D_lower[1];
                 cur_pot[2] = m_partner[0] * D_lower[2];
                 cur_pot[3] = m_partner[0] * D_lower[3];
@@ -817,59 +739,35 @@ namespace fmm {
                 cur_pot[3] -= m_partner[3] * D_lower[9];
 
                 cur_pot[0] += m_partner[4] * (D_lower[4] * factor_half[4]);
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("cur_pot 0: %.6e, m_partner[4]: %.6e, D_lower[4]: %.6e,
-                //     factor_half[4]: "
-                //            "%.6e\n",
-                //         cur_pot[0], m_partner[4], D_lower[4], factor_half[4]);
-                // }
                 cur_pot[1] += m_partner[4] * (D_lower[10] * factor_half[4]);
                 cur_pot[2] += m_partner[4] * (D_lower[11] * factor_half[4]);
                 cur_pot[3] += m_partner[4] * (D_lower[12] * factor_half[4]);
 
                 cur_pot[0] += m_partner[5] * (D_lower[5] * factor_half[5]);
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
-                // }
                 cur_pot[1] += m_partner[5] * (D_lower[11] * factor_half[5]);
                 cur_pot[2] += m_partner[5] * (D_lower[13] * factor_half[5]);
                 cur_pot[3] += m_partner[5] * (D_lower[14] * factor_half[5]);
 
                 cur_pot[0] += m_partner[6] * (D_lower[6] * factor_half[6]);
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
-                // }
                 cur_pot[1] += m_partner[6] * (D_lower[12] * factor_half[6]);
                 cur_pot[2] += m_partner[6] * (D_lower[14] * factor_half[6]);
                 cur_pot[3] += m_partner[6] * (D_lower[15] * factor_half[6]);
 
                 cur_pot[0] += m_partner[7] * (D_lower[7] * factor_half[7]);
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
-                // }
                 cur_pot[1] += m_partner[7] * (D_lower[13] * factor_half[7]);
                 cur_pot[2] += m_partner[7] * (D_lower[16] * factor_half[7]);
                 cur_pot[3] += m_partner[7] * (D_lower[17] * factor_half[7]);
 
                 cur_pot[0] += m_partner[8] * (D_lower[8] * factor_half[8]);
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
-                // }
                 cur_pot[1] += m_partner[8] * (D_lower[14] * factor_half[8]);
                 cur_pot[2] += m_partner[8] * (D_lower[17] * factor_half[8]);
                 cur_pot[3] += m_partner[8] * (D_lower[18] * factor_half[8]);
 
                 cur_pot[0] += m_partner[9] * (D_lower[9] * factor_half[9]);
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("cur_pot 0: %.6e\n", cur_pot[0]);
-                // }
                 cur_pot[1] += m_partner[9] * (D_lower[15] * factor_half[9]);
                 cur_pot[2] += m_partner[9] * (D_lower[18] * factor_half[9]);
                 cur_pot[3] += m_partner[9] * (D_lower[19] * factor_half[9]);
 
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("10 cur_pot 0: %.6e\n", cur_pot[0]);
-                // }
                 cur_pot[0] -= m_partner[10] * (D_lower[10] * factor_sixth[10]);
                 cur_pot[0] -= m_partner[11] * (D_lower[11] * factor_sixth[11]);
                 cur_pot[0] -= m_partner[12] * (D_lower[12] * factor_sixth[12]);
@@ -880,9 +778,6 @@ namespace fmm {
                 cur_pot[0] -= m_partner[17] * (D_lower[17] * factor_sixth[17]);
                 cur_pot[0] -= m_partner[18] * (D_lower[18] * factor_sixth[18]);
                 cur_pot[0] -= m_partner[19] * (D_lower[19] * factor_sixth[19]);
-                // if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                //     printf("10 cur_pot 0: %.6e\n", cur_pot[0]);
-                // }
 
                 cur_pot[4] = m_partner[0] * D_lower[4];
                 cur_pot[5] = m_partner[0] * D_lower[5];
@@ -1022,97 +917,6 @@ namespace fmm {
                 if (mask) {
                     *potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded) = tmp;
                 }
-
-                if (threadIdx.x == 0 && threadIdx.y == 0 && threadIdx.z == 0 && i == 11) {
-                    printf("i: %i\n", i);
-                    printf("non_rho interaction_partner_index x: %i y: %i z: %i, "
-                           "non_rho interaction_partner_flat_index: %lu\n",
-                        interaction_partner_index.x, interaction_partner_index.y,
-                        interaction_partner_index.z, interaction_partner_flat_index);
-                    printf("non_rho interaction_partner_index_coarse x: %i y: %i z: %i\n",
-                        interaction_partner_index_coarse.x, interaction_partner_index_coarse.y,
-                        interaction_partner_index_coarse.z);
-                    printf("dX 0: %.6e, 1: %.6e, 2:%.6e\n", dX[0], dX[1], dX[2]);
-
-                    // printf("non_rho
-                    // local_expansions_SoA.value<0>(interaction_partner_flat_index): "
-                    //        "%.6e\n",
-                    //     local_expansions_SoA.value<0>(interaction_partner_flat_index));
-                    // printf("non_rho
-                    // local_expansions_SoA.value<1>(interaction_partner_flat_index): "
-                    //        "%.6e\n",
-                    //     local_expansions_SoA.value<1>(interaction_partner_flat_index));
-                    // printf("non_rho
-                    // local_expansions_SoA.value<2>(interaction_partner_flat_index): "
-                    //        "%.6e\n",
-                    //     local_expansions_SoA.value<2>(interaction_partner_flat_index));
-                    // printf("non_rho
-                    // local_expansions_SoA.value<3>(interaction_partner_flat_index): "
-                    //        "%.6e\n",
-                    //     local_expansions_SoA.value<3>(interaction_partner_flat_index));
-                    // printf("non_rho
-                    // local_expansions_SoA.value<4>(interaction_partner_flat_index): "
-                    //        "%.6e\n",
-                    //     local_expansions_SoA.value<4>(interaction_partner_flat_index));
-                    // printf("non_rho
-                    // local_expansions_SoA.value<5>(interaction_partner_flat_index): "
-                    //        "%.6e\n",
-                    //     local_expansions_SoA.value<5>(interaction_partner_flat_index));
-                    // printf("non_rho
-                    // local_expansions_SoA.value<6>(interaction_partner_flat_index): "
-                    //        "%.6e\n",
-                    //     local_expansions_SoA.value<6>(interaction_partner_flat_index));
-
-                    // printf("D_lower 0: %.6e\n", D_lower[0]);
-                    // printf("D_lower 1: %.6e\n", D_lower[1]);
-                    // printf("D_lower 2: %.6e\n", D_lower[2]);
-                    // printf("D_lower 3: %.6e\n", D_lower[3]);
-                    // printf("D_lower 4: %.6e\n", D_lower[4]);
-
-                    printf("ref m_partner:\n");
-                    for (size_t k = 0; k < 20; k++) {
-                        printf("%.5e ", m_partner[k]);
-                    }
-                    printf("\n");
-
-                    printf("ref D_lower:\n");
-                    for (size_t k = 0; k < 20; k++) {
-                        printf("%.5e ", D_lower[k]);
-                    }
-                    printf("\n");
-
-                    printf("cur_pot 0: %.6e\n", cur_pot[0]);
-
-                    // printf("factor:\n");
-                    // for (size_t k = 0; k < 20; k++) {
-                    //     printf("%lf ", factor[k]);
-                    // }
-                    // printf("\n");
-
-                    // printf("factor_half:\n");
-                    // for (size_t k = 0; k < 20; k++) {
-                    //     printf("%lf ", factor_half[k]);
-                    // }
-                    // printf("\n");
-
-                    // printf("factor_sixth:\n");
-                    // for (size_t k = 0; k < 20; k++) {
-                    //     printf("%lf", factor_sixth[k]);
-                    // }
-                    // printf("\n");
-
-                    printf("non_rho potential_expansions_SoA.value<0>(cell_flat_index_unpadded): "
-                           "%.6e\n",
-                        potential_expansions_SoA.value<0>(cell_flat_index_unpadded));
-                    printf("non_rho potential_expansions_SoA.value<1>(cell_flat_index_unpadded): "
-                           "%.6e\n",
-                        potential_expansions_SoA.value<1>(cell_flat_index_unpadded));
-                    printf("non_rho potential_expansions_SoA.value<2>(cell_flat_index_unpadded): "
-                           "%.6e\n",
-                        potential_expansions_SoA.value<02>(cell_flat_index_unpadded));
-                    // printf("X 0: %lf, 1: %lf, 2: %lf\n", X[0], X[1], X[2]);
-                    // printf("Y 0: %lf, 1: %lf, 2: %lf\n", Y[0], Y[1], Y[2]);
-                }
             }
         }
 
@@ -1162,25 +966,11 @@ namespace fmm {
                 potential_expansions_SoA_copy;
             d_potential_expansions_SoA.move_to_host(potential_expansions_SoA_copy);
 
-            // for (size_t i = 0; i < potential_expansions_SoA_copy.size(); i++) {
-            //     if (potential_expansions_SoA_copy.get_underlying_pointer()[i] -
-            //             potential_expansions_SoA.get_underlying_pointer()[i] >
-            //         1E-6) {
-            //         throw;
-            //     }
-            // }
 
             octotiger::fmm::struct_of_array_data<double, 3, INNER_CELLS, SOA_PADDING>
                 angular_corrections_SoA_copy;
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA_copy);
 
-            // for (size_t i = 0; i < angular_corrections_SoA_copy.size(); i++) {
-            //     if (angular_corrections_SoA_copy.get_underlying_pointer()[i] -
-            //             angular_corrections_SoA.get_underlying_pointer()[i] >
-            //         1E-6) {
-            //         throw;
-            //     }
-            // }
 
             std::cout << "moving factor" << std::endl;
             cuda_buffer<double> d_factor = octotiger::fmm::cuda::move_to_device(factor);
@@ -1220,31 +1010,6 @@ namespace fmm {
             d_potential_expansions_SoA.move_to_host(potential_expansions_SoA);
             d_angular_corrections_SoA.move_to_host(angular_corrections_SoA);
 
-            // octotiger::fmm::struct_of_array_data<double, 20, ENTRIES, SOA_PADDING>
-            //     local_expansions_SoA_copy;
-            // d_local_expansions_SoA.move_to_host(local_expansions_SoA_copy);
-
-            // for (size_t i = 0; i < local_expansions_SoA_copy.size(); i++) {
-            //     if (local_expansions_SoA_copy.get_underlying_pointer()[i] -
-            //             local_expansions_SoA.get_underlying_pointer()[i] >
-            //         1E-6) {
-            //         throw;
-            //     }
-            // }
-
-            // octotiger::fmm::struct_of_array_data<double, 3, ENTRIES, SOA_PADDING>
-            //     center_of_masses_SoA_copy;
-            // d_center_of_masses_SoA.move_to_host(center_of_masses_SoA_copy);
-            // for (size_t i = 0; i < center_of_masses_SoA_copy.size(); i++) {
-            //     if (center_of_masses_SoA_copy.get_underlying_pointer()[i] -
-            //             center_of_masses_SoA.get_underlying_pointer()[i] >
-            //         1E-6) {
-            //         throw;
-            //     }
-            // }
-
-            // { test(stream_); }
-            // throw;
         }
     }
 }
