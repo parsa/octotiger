@@ -192,9 +192,9 @@ namespace fmm {
             tmp[19] = *potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded);
 
             double tmp_cor[NDIM];
-            tmp_cor[0] = angular_corrections_SoA.value<0>(cell_flat_index_unpadded);
-            tmp_cor[1] = angular_corrections_SoA.value<0>(cell_flat_index_unpadded);
-            tmp_cor[2] = angular_corrections_SoA.value<0>(cell_flat_index_unpadded);
+            tmp_cor[0] = *angular_corrections_SoA.value<0>(cell_flat_index_unpadded);
+            tmp_cor[1] = *angular_corrections_SoA.value<1>(cell_flat_index_unpadded);
+            tmp_cor[2] = *angular_corrections_SoA.value<2>(cell_flat_index_unpadded);
 
             for (size_t i = 0; i < stencil_elements; i++) {
                 octotiger::fmm::multiindex<>& cur_stencil = stencil[i];
@@ -549,15 +549,15 @@ namespace fmm {
                 current_angular_correction[1] -= n0_tmp * (D_upper[13] * factor_sixth[19]);
                 current_angular_correction[2] -= n0_tmp * (D_upper[14] * factor_sixth[19]);
 
-                tmp_cor[0] = (angular_corrections_SoA.value<0>(cell_flat_index_unpadded) +
+                tmp_cor[0] += (angular_corrections_SoA.value<0>(cell_flat_index_unpadded) +
                                  current_angular_correction[0]) *
                     mask;
 
-                tmp_cor[1] = (angular_corrections_SoA.value<1>(cell_flat_index_unpadded) +
+                tmp_cor[1] += (angular_corrections_SoA.value<1>(cell_flat_index_unpadded) +
                                  current_angular_correction[1]) *
                     mask;
 
-                tmp_cor[2] = (angular_corrections_SoA.value<2>(cell_flat_index_unpadded) +
+                tmp_cor[2] += (angular_corrections_SoA.value<2>(cell_flat_index_unpadded) +
                                  current_angular_correction[2]) *
                     mask;
             }
