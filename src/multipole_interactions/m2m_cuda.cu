@@ -191,7 +191,6 @@ namespace fmm {
             tmp[18] = *potential_expansions_SoA.pointer<18>(cell_flat_index_unpadded);
             tmp[19] = *potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded);
 
-
             double tmp_cor[NDIM];
             tmp_cor[0] = angular_corrections_SoA.value<0>(cell_flat_index_unpadded);
             tmp_cor[1] = angular_corrections_SoA.value<0>(cell_flat_index_unpadded);
@@ -347,54 +346,63 @@ namespace fmm {
                 tmp[0] +=
                     (potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0]) *
                     mask;
-
-                tmp[1] += (potential_expansions_SoA.value<1>(cell_flat_index_unpadded) + cur_pot[1]) * mask;
-
-                tmp[2] += (potential_expansions_SoA.value<2>(cell_flat_index_unpadded) + cur_pot[2]) * mask;
-
-                tmp[3] += (potential_expansions_SoA.value<3>(cell_flat_index_unpadded) + cur_pot[3]) * mask;
-
-                tmp[4] += (potential_expansions_SoA.value<4>(cell_flat_index_unpadded) + cur_pot[4]) * mask;
-
-                tmp[5] += (potential_expansions_SoA.value<5>(cell_flat_index_unpadded) + cur_pot[5]) * mask;
-
-                tmp[6] += (potential_expansions_SoA.value<6>(cell_flat_index_unpadded) + cur_pot[6]) * mask;
-
-                tmp[7] += (potential_expansions_SoA.value<7>(cell_flat_index_unpadded) + cur_pot[7]) * mask;
-
-                tmp[8] += (potential_expansions_SoA.value<8>(cell_flat_index_unpadded) + cur_pot[8]) * mask;
-
-                tmp[9] += (potential_expansions_SoA.value<9>(cell_flat_index_unpadded) + cur_pot[9]) * mask;
-
+                tmp[1] +=
+                    (potential_expansions_SoA.value<1>(cell_flat_index_unpadded) + cur_pot[1]) *
+                    mask;
+                tmp[2] +=
+                    (potential_expansions_SoA.value<2>(cell_flat_index_unpadded) + cur_pot[2]) *
+                    mask;
+                tmp[3] +=
+                    (potential_expansions_SoA.value<3>(cell_flat_index_unpadded) + cur_pot[3]) *
+                    mask;
+                tmp[4] +=
+                    (potential_expansions_SoA.value<4>(cell_flat_index_unpadded) + cur_pot[4]) *
+                    mask;
+                tmp[5] +=
+                    (potential_expansions_SoA.value<5>(cell_flat_index_unpadded) + cur_pot[5]) *
+                    mask;
+                tmp[6] +=
+                    (potential_expansions_SoA.value<6>(cell_flat_index_unpadded) + cur_pot[6]) *
+                    mask;
+                tmp[7] +=
+                    (potential_expansions_SoA.value<7>(cell_flat_index_unpadded) + cur_pot[7]) *
+                    mask;
+                tmp[8] +=
+                    (potential_expansions_SoA.value<8>(cell_flat_index_unpadded) + cur_pot[8]) *
+                    mask;
+                tmp[9] +=
+                    (potential_expansions_SoA.value<9>(cell_flat_index_unpadded) + cur_pot[9]) *
+                    mask;
                 tmp[10] += (potential_expansions_SoA.value<10>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[10]) * mask;
-
+                               m_partner[0] * D_lower[10]) *
+                    mask;
                 tmp[11] += (potential_expansions_SoA.value<11>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[11]) * mask;
-
+                               m_partner[0] * D_lower[11]) *
+                    mask;
                 tmp[12] += (potential_expansions_SoA.value<12>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[12]) * mask;
-
+                               m_partner[0] * D_lower[12]) *
+                    mask;
                 tmp[13] += (potential_expansions_SoA.value<13>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[13]) * mask;
-
+                               m_partner[0] * D_lower[13]) *
+                    mask;
                 tmp[14] += (potential_expansions_SoA.value<14>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[14]) * mask;
-
+                               m_partner[0] * D_lower[14]) *
+                    mask;
                 tmp[15] += (potential_expansions_SoA.value<15>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[15]) * mask;
-
+                               m_partner[0] * D_lower[15]) *
+                    mask;
                 tmp[16] += (potential_expansions_SoA.value<16>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[16]) * mask;
-
+                               m_partner[0] * D_lower[16]) *
+                    mask;
                 tmp[17] += (potential_expansions_SoA.value<17>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[17]) * mask;
-
+                               m_partner[0] * D_lower[17]) *
+                    mask;
                 tmp[18] += (potential_expansions_SoA.value<18>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[18]) * mask;
-
+                               m_partner[0] * D_lower[18]) *
+                    mask;
                 tmp[19] += (potential_expansions_SoA.value<19>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[19]) * mask;
+                               m_partner[0] * D_lower[19]) *
+                    mask;
 
                 ////////////// angular momentum correction, if enabled /////////////////////////
 
@@ -542,18 +550,20 @@ namespace fmm {
                 current_angular_correction[2] -= n0_tmp * (D_upper[14] * factor_sixth[19]);
 
                 tmp_cor[0] = (angular_corrections_SoA.value<0>(cell_flat_index_unpadded) +
-                              current_angular_correction[0]) * mask;
+                                 current_angular_correction[0]) *
+                    mask;
 
                 tmp_cor[1] = (angular_corrections_SoA.value<1>(cell_flat_index_unpadded) +
-                             current_angular_correction[1]) * mask;
+                                 current_angular_correction[1]) *
+                    mask;
 
                 tmp_cor[2] = (angular_corrections_SoA.value<2>(cell_flat_index_unpadded) +
-                             current_angular_correction[2]) * mask;
+                                 current_angular_correction[2]) *
+                    mask;
             }
             *angular_corrections_SoA.pointer<0>(cell_flat_index_unpadded) = tmp_cor[0];
             *angular_corrections_SoA.pointer<1>(cell_flat_index_unpadded) = tmp_cor[1];
             *angular_corrections_SoA.pointer<2>(cell_flat_index_unpadded) = tmp_cor[2];
-
 
             *potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded) = tmp[0];
             *potential_expansions_SoA.pointer<1>(cell_flat_index_unpadded) = tmp[1];
@@ -609,6 +619,35 @@ namespace fmm {
             size_t cell_flat_index_unpadded =
                 octotiger::fmm::to_inner_flat_index_not_padded(cell_index_unpadded);
 
+            double X[NDIM];
+            X[0] = center_of_masses_SoA.value<0>(cell_flat_index);
+            X[1] = center_of_masses_SoA.value<1>(cell_flat_index);
+            X[2] = center_of_masses_SoA.value<2>(cell_flat_index);
+            double Y[NDIM];
+            double dX[NDIM];
+            double m_partner[20];
+            double tmp[20];
+            tmp[0] = *potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded);
+            tmp[1] = *potential_expansions_SoA.pointer<1>(cell_flat_index_unpadded);
+            tmp[2] = *potential_expansions_SoA.pointer<2>(cell_flat_index_unpadded);
+            tmp[3] = *potential_expansions_SoA.pointer<3>(cell_flat_index_unpadded);
+            tmp[4] = *potential_expansions_SoA.pointer<4>(cell_flat_index_unpadded);
+            tmp[5] = *potential_expansions_SoA.pointer<5>(cell_flat_index_unpadded);
+            tmp[6] = *potential_expansions_SoA.pointer<6>(cell_flat_index_unpadded);
+            tmp[7] = *potential_expansions_SoA.pointer<7>(cell_flat_index_unpadded);
+            tmp[8] = *potential_expansions_SoA.pointer<8>(cell_flat_index_unpadded);
+            tmp[9] = *potential_expansions_SoA.pointer<9>(cell_flat_index_unpadded);
+            tmp[10] = *potential_expansions_SoA.pointer<10>(cell_flat_index_unpadded);
+            tmp[11] = *potential_expansions_SoA.pointer<11>(cell_flat_index_unpadded);
+            tmp[12] = *potential_expansions_SoA.pointer<12>(cell_flat_index_unpadded);
+            tmp[13] = *potential_expansions_SoA.pointer<13>(cell_flat_index_unpadded);
+            tmp[14] = *potential_expansions_SoA.pointer<14>(cell_flat_index_unpadded);
+            tmp[15] = *potential_expansions_SoA.pointer<15>(cell_flat_index_unpadded);
+            tmp[16] = *potential_expansions_SoA.pointer<16>(cell_flat_index_unpadded);
+            tmp[17] = *potential_expansions_SoA.pointer<17>(cell_flat_index_unpadded);
+            tmp[18] = *potential_expansions_SoA.pointer<18>(cell_flat_index_unpadded);
+            tmp[19] = *potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded);
+
             for (size_t i = 0; i < stencil_elements; i++) {
                 octotiger::fmm::multiindex<>& cur_stencil = stencil[i];
                 const octotiger::fmm::multiindex<> interaction_partner_index(
@@ -629,26 +668,17 @@ namespace fmm {
                     static_cast<double>(detail::distance_squared_reciprocal(
                         cell_index_coarse, interaction_partner_index_coarse));
 
-                bool mask = theta_rec_squared > theta_c_rec_squared;
+                const bool mask_b = theta_rec_squared > theta_c_rec_squared;
+                const double mask = mask_b ? 1.0 : 0.0;
                 // mask = !mask;
 
-                double X[NDIM];
-                X[0] = center_of_masses_SoA.value<0>(cell_flat_index);
-                X[1] = center_of_masses_SoA.value<1>(cell_flat_index);
-                X[2] = center_of_masses_SoA.value<2>(cell_flat_index);
-
-                double Y[NDIM];
                 Y[0] = center_of_masses_SoA.value<0>(interaction_partner_flat_index);
                 Y[1] = center_of_masses_SoA.value<1>(interaction_partner_flat_index);
                 Y[2] = center_of_masses_SoA.value<2>(interaction_partner_flat_index);
 
-                double dX[NDIM];
                 dX[0] = X[0] - Y[0];
                 dX[1] = X[1] - Y[1];
                 dX[2] = X[2] - Y[2];
-
-                // TODO: does this get initialized
-                double m_partner[20];
 
                 m_partner[0] = local_expansions_SoA.value<0>(interaction_partner_flat_index);
                 m_partner[1] = local_expansions_SoA.value<1>(interaction_partner_flat_index);
@@ -784,117 +814,87 @@ namespace fmm {
                 cur_pot[8] -= m_partner[3] * D_lower[18];
                 cur_pot[9] -= m_partner[3] * D_lower[19];
 
-                double tmp =
-                    potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<1>(cell_flat_index_unpadded) + cur_pot[1];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<1>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<2>(cell_flat_index_unpadded) + cur_pot[2];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<2>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<3>(cell_flat_index_unpadded) + cur_pot[3];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<3>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<4>(cell_flat_index_unpadded) + cur_pot[4];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<4>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<5>(cell_flat_index_unpadded) + cur_pot[5];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<5>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<6>(cell_flat_index_unpadded) + cur_pot[6];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<6>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<7>(cell_flat_index_unpadded) + cur_pot[7];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<7>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<8>(cell_flat_index_unpadded) + cur_pot[8];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<8>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<9>(cell_flat_index_unpadded) + cur_pot[9];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<9>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<10>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[10];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<10>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<11>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[11];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<11>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<12>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[12];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<12>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<13>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[13];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<13>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<14>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[14];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<14>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<15>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[15];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<15>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<16>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[16];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<16>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<17>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[17];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<17>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<18>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[18];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<18>(cell_flat_index_unpadded) = tmp;
-                }
-
-                tmp = potential_expansions_SoA.value<19>(cell_flat_index_unpadded) +
-                    m_partner[0] * D_lower[19];
-                if (mask) {
-                    *potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded) = tmp;
-                }
+                tmp[0] +=
+                    (potential_expansions_SoA.value<0>(cell_flat_index_unpadded) + cur_pot[0]) *
+                    mask;
+                tmp[1] +=
+                    (potential_expansions_SoA.value<1>(cell_flat_index_unpadded) + cur_pot[1]) *
+                    mask;
+                tmp[2] +=
+                    (potential_expansions_SoA.value<2>(cell_flat_index_unpadded) + cur_pot[2]) *
+                    mask;
+                tmp[3] +=
+                    (potential_expansions_SoA.value<3>(cell_flat_index_unpadded) + cur_pot[3]) *
+                    mask;
+                tmp[4] +=
+                    (potential_expansions_SoA.value<4>(cell_flat_index_unpadded) + cur_pot[4]) *
+                    mask;
+                tmp[5] +=
+                    (potential_expansions_SoA.value<5>(cell_flat_index_unpadded) + cur_pot[5]) *
+                    mask;
+                tmp[6] +=
+                    (potential_expansions_SoA.value<6>(cell_flat_index_unpadded) + cur_pot[6]) *
+                    mask;
+                tmp[7] +=
+                    (potential_expansions_SoA.value<7>(cell_flat_index_unpadded) + cur_pot[7]) *
+                    mask;
+                tmp[8] +=
+                    (potential_expansions_SoA.value<8>(cell_flat_index_unpadded) + cur_pot[8]) *
+                    mask;
+                tmp[9] +=
+                    (potential_expansions_SoA.value<9>(cell_flat_index_unpadded) + cur_pot[9]) *
+                    mask;
+                tmp[10] += (potential_expansions_SoA.value<10>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[10]) *
+                    mask;
+                tmp[11] += (potential_expansions_SoA.value<11>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[11]) *
+                    mask;
+                tmp[12] += (potential_expansions_SoA.value<12>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[12]) *
+                    mask;
+                tmp[13] += (potential_expansions_SoA.value<13>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[13]) *
+                    mask;
+                tmp[14] += (potential_expansions_SoA.value<14>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[14]) *
+                    mask;
+                tmp[15] += (potential_expansions_SoA.value<15>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[15]) *
+                    mask;
+                tmp[16] += (potential_expansions_SoA.value<16>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[16]) *
+                    mask;
+                tmp[17] += (potential_expansions_SoA.value<17>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[17]) *
+                    mask;
+                tmp[18] += (potential_expansions_SoA.value<18>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[18]) *
+                    mask;
+                tmp[19] += (potential_expansions_SoA.value<19>(cell_flat_index_unpadded) +
+                               m_partner[0] * D_lower[19]) *
+                    mask;
             }
+            *potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded) = tmp[0];
+            *potential_expansions_SoA.pointer<1>(cell_flat_index_unpadded) = tmp[1];
+            *potential_expansions_SoA.pointer<2>(cell_flat_index_unpadded) = tmp[2];
+            *potential_expansions_SoA.pointer<3>(cell_flat_index_unpadded) = tmp[3];
+            *potential_expansions_SoA.pointer<4>(cell_flat_index_unpadded) = tmp[4];
+            *potential_expansions_SoA.pointer<5>(cell_flat_index_unpadded) = tmp[5];
+            *potential_expansions_SoA.pointer<6>(cell_flat_index_unpadded) = tmp[6];
+            *potential_expansions_SoA.pointer<7>(cell_flat_index_unpadded) = tmp[7];
+            *potential_expansions_SoA.pointer<8>(cell_flat_index_unpadded) = tmp[8];
+            *potential_expansions_SoA.pointer<9>(cell_flat_index_unpadded) = tmp[9];
+            *potential_expansions_SoA.pointer<10>(cell_flat_index_unpadded) = tmp[10];
+            *potential_expansions_SoA.pointer<11>(cell_flat_index_unpadded) = tmp[11];
+            *potential_expansions_SoA.pointer<12>(cell_flat_index_unpadded) = tmp[12];
+            *potential_expansions_SoA.pointer<13>(cell_flat_index_unpadded) = tmp[13];
+            *potential_expansions_SoA.pointer<14>(cell_flat_index_unpadded) = tmp[14];
+            *potential_expansions_SoA.pointer<15>(cell_flat_index_unpadded) = tmp[15];
+            *potential_expansions_SoA.pointer<16>(cell_flat_index_unpadded) = tmp[16];
+            *potential_expansions_SoA.pointer<17>(cell_flat_index_unpadded) = tmp[17];
+            *potential_expansions_SoA.pointer<18>(cell_flat_index_unpadded) = tmp[18];
+            *potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded) = tmp[19];
         }
 
         void m2m_cuda::compute_interactions(octotiger::fmm::struct_of_array_data<double, 20,
