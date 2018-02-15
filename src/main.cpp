@@ -95,6 +95,8 @@ void initialize(options _opts, std::vector<hpx::id_type> const& localities) {
 	node_server::set_hydro(hydro_on);
 	compute_ilist();
     compute_factor();
+    octotiger::fmm::
+        stencil = octotiger::fmm::calculate_stencil();
     octotiger::fmm::multipole_interactions::multipole_interaction_interface::
         stencil = octotiger::fmm::multipole_interactions::calculate_stencil();
     octotiger::fmm::monopole_interactions::monopole_interaction_interface::stencil =

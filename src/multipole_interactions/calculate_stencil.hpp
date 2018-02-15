@@ -6,6 +6,9 @@
 
 namespace octotiger {
 namespace fmm {
+    extern std::vector<octotiger::fmm::multiindex<>> stencil;
+
+    std::vector<multiindex<>> calculate_stencil();
     namespace multipole_interactions {
 
         two_phase_stencil calculate_stencil(void);

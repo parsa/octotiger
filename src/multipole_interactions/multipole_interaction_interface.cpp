@@ -205,6 +205,13 @@ namespace fmm {
                     potential_expansions_SoA, angular_corrections_SoA, opts.theta,
                     factor.get_array(), factor_half.get_array(), factor_sixth.get_array(), type);
                 // auto end = std::chrono::high_resolution_clock::now();
+
+                if (monopole_neighbors_exist) {
+                    mixed_interactions_kernel.apply_stencil(local_monopoles,
+                    local_expansions_SoA,
+                        center_of_masses_SoA, potential_expansions_SoA, angular_corrections_SoA,
+                        stencil.stencil_elements, type, dX, xBase, x_skip, y_skip, z_skip);
+                }
 #else
                 struct_of_array_data<real, 20, INNER_CELLS, SOA_PADDING>
                     potential_expansions_SoA;
