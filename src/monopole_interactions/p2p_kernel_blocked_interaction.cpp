@@ -88,6 +88,7 @@ namespace fmm {
                     continue;
                 }
                 data_changed = true;
+                p2p_counter++;
                 m2m_vector monopole;
                 Vc::where(mask, monopole) = m2m_vector(
                     mons.data() + interaction_partner_flat_index, Vc::flags::element_aligned);

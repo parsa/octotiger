@@ -152,7 +152,8 @@ namespace fmm {
             // void calculate_coarse_indices();
 
         public:
-            static size_t multipole_callcounter;
+            static size_t multipole_callcounter_rho;
+            static size_t multipole_callcounter_non_rho;
             m2m_kernel(
                 //            struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
                 //            local_expansions_SoA,

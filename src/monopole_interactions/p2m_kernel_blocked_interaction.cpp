@@ -64,6 +64,7 @@ namespace fmm {
                 return;
             }
             // data_changed = true;
+            p2m_counter_rho++;
 
             std::array<m2m_vector, NDIM> Y;
             Y[0] = center_of_masses_SoA.value<0>(interaction_partner_flat_index);
@@ -318,6 +319,7 @@ namespace fmm {
             if (Vc::none_of(mask)) {
                 return;
             }
+            p2m_counter_non_rho++;
 
             std::array<m2m_vector, NDIM> Y;
             Y[0] = center_of_masses_SoA.value<0>(interaction_partner_flat_index);

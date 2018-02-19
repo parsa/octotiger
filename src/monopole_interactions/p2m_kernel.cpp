@@ -15,6 +15,8 @@ extern options opts;
 namespace octotiger {
 namespace fmm {
     namespace monopole_interactions {
+    size_t p2m_kernel::p2m_counter_rho = 0;
+    size_t p2m_kernel::p2m_counter_non_rho = 0;
 
         p2m_kernel::p2m_kernel(std::vector<bool>& neighbor_empty)
           : neighbor_empty(neighbor_empty)

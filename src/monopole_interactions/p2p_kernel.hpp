@@ -43,6 +43,7 @@ namespace fmm {
             // void calculate_coarse_indices();
 
         public:
+            static size_t p2p_counter;
             p2p_kernel(std::vector<bool>& neighbor_empty);
 
             p2p_kernel(p2p_kernel& other) = delete;

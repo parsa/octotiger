@@ -61,6 +61,8 @@ namespace fmm {
             void vectors_check_empty();
 
         public:
+            static size_t p2m_counter_rho;
+            static size_t p2m_counter_non_rho;
             p2m_kernel(std::vector<bool>& neighbor_empty);
 
             p2m_kernel(p2m_kernel& other) = delete;

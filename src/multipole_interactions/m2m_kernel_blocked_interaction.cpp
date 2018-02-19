@@ -117,7 +117,7 @@ namespace fmm {
                     continue;
                 }
                 changed_data = true;
-                multipole_callcounter++;
+                multipole_callcounter_rho++;
 
                 // struct_of_array_iterator<space_vector, real, 3> Y(
                 //     center_of_masses_SoA, interaction_partner_flat_index);
@@ -665,6 +665,7 @@ namespace fmm {
                     continue;
                 }
                 changed_data = true;
+                multipole_callcounter_non_rho++;
 
                 // struct_of_array_iterator<space_vector, real, 3> Y(
                 //     center_of_masses_SoA, interaction_partner_flat_index);

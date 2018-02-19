@@ -174,8 +174,18 @@ int hpx_main(int argc, char* argv[]) {
 		throw;
 	}
 	printf("Exiting...\n");
-    std::cout << "Overall multipole interactions call: " <<
-            octotiger::fmm::multipole_interactions::m2m_kernel::multipole_callcounter << std::endl;
+    std::cout << "Overall multipole interactions calls:: RHO: " <<
+            octotiger::fmm::multipole_interactions::m2m_kernel::multipole_callcounter_rho
+              << " NON-RHO: " <<
+            octotiger::fmm::multipole_interactions::m2m_kernel::multipole_callcounter_non_rho
+              << std::endl;
+    std::cout << "Overall monopoles monopoles interactions calls: " <<
+            octotiger::fmm::monopole_interactions::p2p_kernel::p2p_counter << std::endl;
+    std::cout << "Overall monopole multipole interactions calls:: RHO: " <<
+            octotiger::fmm::monopole_interactions::p2m_kernel::p2m_counter_rho
+              << " NON-RHO: " <<
+            octotiger::fmm::monopole_interactions::p2m_kernel::p2m_counter_non_rho
+              << std::endl;
 	return hpx::finalize();
 }
 
