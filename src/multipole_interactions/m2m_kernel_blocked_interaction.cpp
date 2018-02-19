@@ -117,6 +117,7 @@ namespace fmm {
                     continue;
                 }
                 changed_data = true;
+                multipole_callcounter++;
 
                 // struct_of_array_iterator<space_vector, real, 3> Y(
                 //     center_of_masses_SoA, interaction_partner_flat_index);

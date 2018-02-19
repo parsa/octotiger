@@ -174,6 +174,8 @@ int hpx_main(int argc, char* argv[]) {
 		throw;
 	}
 	printf("Exiting...\n");
+    std::cout << "Overall multipole interactions call: " <<
+            octotiger::fmm::multipole_interactions::m2m_kernel::multipole_callcounter << std::endl;
 	return hpx::finalize();
 }
 

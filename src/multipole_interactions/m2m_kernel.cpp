@@ -15,6 +15,7 @@ extern options opts;
 namespace octotiger {
 namespace fmm {
     namespace multipole_interactions {
+    size_t m2m_kernel::multipole_callcounter = 0;
 
         m2m_kernel::m2m_kernel(
             // struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
