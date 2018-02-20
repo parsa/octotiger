@@ -14,6 +14,9 @@ namespace fmm {
     namespace monopole_interactions {
 
         constexpr uint64_t P2P_STENCIL_BLOCKING = 24;
+    constexpr size_t p2p_vc_operations = 26;
+    constexpr size_t p2p_flop = p2p_vc_operations * m2m_vector::size();
+
         class p2p_kernel
         {
         private:

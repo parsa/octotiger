@@ -28,6 +28,7 @@ namespace fmm {
             multiindex<m2m_int_vector> cell_index_coarse2(cell_index_coarse);
             for (size_t j = 0; j < m2m_int_vector::size(); j++)
                 cell_index_coarse2.y[j] += 1;
+            // 5
             std::array<m2m_vector, 2> d_components;
             d_components[0] = 1.0 / dx;
             d_components[1] = -1.0 / sqr(dx);
@@ -90,6 +91,7 @@ namespace fmm {
                 data_changed = true;
                 p2p_counter++;
                 m2m_vector monopole;
+                // 2
                 Vc::where(mask, monopole) = m2m_vector(
                     mons.data() + interaction_partner_flat_index, Vc::flags::element_aligned);
                 m2m_vector monopole2;
@@ -102,6 +104,7 @@ namespace fmm {
                     four_constants[outer_stencil_index + inner_stencil_index][2],
                     four_constants[outer_stencil_index + inner_stencil_index][3]};
 
+                // 24
                 tmpstore[0] = tmpstore[0] + four[0] * monopole * d_components[0];
                 tmpstore[1] = tmpstore[1] + four[1] * monopole * d_components[1];
                 tmpstore[2] = tmpstore[2] + four[2] * monopole * d_components[1];

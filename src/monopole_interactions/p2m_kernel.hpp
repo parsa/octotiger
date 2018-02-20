@@ -13,6 +13,13 @@ namespace octotiger {
 namespace fmm {
     namespace monopole_interactions {
         constexpr uint64_t P2M_STENCIL_BLOCKING = 1;
+    //  3+13+55+4+12+12+12+12+12+12+12+12+6+8+4
+    constexpr size_t non_rho_p2m_vc_operations = 189;
+    constexpr size_t non_rho_p2m_flop = non_rho_p2m_vc_operations * m2m_vector::size();
+    // 14+9+6+9+3+9+2+9+2+9+10+7+10+11+10+16+6+3
+    constexpr size_t only_rho_p2m_vc_operations = 145;
+    constexpr size_t only_rho_p2m_flop = only_rho_p2m_vc_operations * m2m_vector::size();
+    constexpr size_t rho_p2m_flop = non_rho_p2m_flop + only_rho_p2m_flop;
 
         class p2m_kernel
         {

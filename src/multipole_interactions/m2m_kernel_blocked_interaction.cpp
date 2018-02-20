@@ -687,6 +687,7 @@ namespace fmm {
 
                 // distance between cells in all dimensions
                 // TODO: replace by m2m_vector for vectorization or get rid of temporary
+                //3
                 std::array<m2m_vector, NDIM> dX;
                 dX[0] = center_of_masses_SoA.value<0>(cell_flat_index) -
                     center_of_masses_SoA.value<0>(interaction_partner_flat_index);
@@ -703,7 +704,7 @@ namespace fmm {
                     mons.data() + interaction_partner_flat_index, Vc::flags::element_aligned);
                 // 1
                 mask = mask & mask_phase_one;    // do not load multipoles outside the inner stencil
-                // 1
+                // 21
                 Vc::where(mask, m_partner[0]) =
                     m_partner[0] + local_expansions_SoA.value<0>(interaction_partner_flat_index);
                 Vc::where(mask, m_partner[1]) =
