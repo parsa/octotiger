@@ -186,6 +186,44 @@ int hpx_main(int argc, char* argv[]) {
               << " NON-RHO: " <<
             octotiger::fmm::monopole_interactions::p2m_kernel::p2m_counter_non_rho
               << std::endl;
+    const size_t multipole_flops_non_rho =
+            octotiger::fmm::multipole_interactions::m2m_kernel::multipole_callcounter_non_rho *
+            octotiger::fmm::multipole_interactions::non_rho_flop;
+    const size_t multipole_flops_rho =
+            octotiger::fmm::multipole_interactions::m2m_kernel::multipole_callcounter_rho *
+            octotiger::fmm::multipole_interactions::rho_flop;
+    const size_t multipole_overall_flops = multipole_flops_non_rho + multipole_flops_rho;
+
+    const size_t p2p_flops =
+            octotiger::fmm::monopole_interactions::p2p_kernel::p2p_counter *
+            octotiger::fmm::monopole_interactions::p2p_flop;
+
+    const size_t p2m_flops_non_rho =
+            octotiger::fmm::monopole_interactions::p2m_kernel::p2m_counter_non_rho *
+            octotiger::fmm::monopole_interactions::non_rho_p2m_flop;
+    const size_t p2m_flops_rho =
+            octotiger::fmm::monopole_interactions::p2m_kernel::p2m_counter_rho *
+            octotiger::fmm::monopole_interactions::rho_p2m_flop;
+    const size_t monopole_overall_flops = p2m_flops_non_rho + p2m_flops_rho;
+
+    const size_t g_divisor = 1000 * 1000 * 1000;
+
+    std::cout << "Multipole GFLOPs non rho: " << multipole_flops_non_rho << " -> "
+              << multipole_flops_non_rho / g_divisor << " GFLOP " << std::endl;
+    std::cout << "Multipole GFLOPs rho: " << multipole_flops_rho << " -> "
+              << multipole_flops_rho / g_divisor << " GFLOP " << std::endl;
+    std::cout << "Monopole Monopole GFLOPs : " << p2p_flops << " -> "
+              << p2p_flops / g_divisor << " GFLOP " << std::endl;
+    std::cout << "Monopole Multipole GFLOPs non rho : " << p2m_flops_non_rho << " -> "
+              << p2m_flops_non_rho / g_divisor << " GFLOP " << std::endl;
+    std::cout << "Monopole Multipole GFLOPs rho : " << p2m_flops_rho << " -> "
+              << p2m_flops_rho / g_divisor << " GFLOP " << std::endl;
+    std::cout << "----------------------------------------" << std::endl;
+    const size_t overall_flops = multipole_flops_non_rho + multipole_flops_rho + p2p_flops +
+                          p2m_flops_rho + p2m_flops_non_rho;
+    std::cout << "Overall: " << overall_flops << " -> " << overall_flops / g_divisor << "GFLOPs"
+              << std::endl;
+
 	return hpx::finalize();
 }
 
