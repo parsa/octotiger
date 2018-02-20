@@ -188,30 +188,37 @@ namespace fmm {
             }
 
             // overload for kernel-specific simd type
+            //  55
             inline void calculate_D_lower(std::array<m2m_vector, 20>& A) {
                 // formula (6)
                 A[0] = d0;
 
+                // 3
                 A[1] = X[0] * d1;
                 A[2] = X[1] * d1;
                 A[3] = X[2] * d1;
 
+                // 3
                 m2m_vector X_12 = X[1] * X[2];
                 m2m_vector X_01 = X[0] * X[1];
                 m2m_vector X_02 = X[0] * X[2];
 
+                // 4
                 A[4] = d2 * X_00;
                 A[4] += d1;
                 A[5] = d2 * X_01;
                 A[6] = d2 * X_02;
 
+                // 3
                 A[7] = d2 * X_11;
                 A[7] += d1;
                 A[8] = d2 * X_12;
 
+                // 2
                 A[9] = d2 * X_22;
                 A[9] += d1;
 
+                // 13
                 A[10] = d3 * X_00 * X[0];
                 m2m_vector d2_X0 = d2 * X[0];
                 A[10] += 3.0 * d2_X0;
@@ -220,23 +227,29 @@ namespace fmm {
                 A[12] = d3 * X_00 * X[2];
                 A[12] += d2 * X[2];
 
+                // 6
                 A[13] = d3 * X[0] * X_11;
                 A[13] += d2 * X[0];
                 A[14] = d3 * X[0] * X_12;
 
+                // 3
                 A[15] = d3 * X[0] * X_22;
                 A[15] += d2_X0;
 
+                // 5
                 A[16] = d3 * X_11 * X[1];
                 m2m_vector d2_X1 = d2 * X[1];
                 A[16] += 3.0 * d2_X1;
 
+                // 4
                 A[17] = d3 * X_11 * X[2];
                 A[17] += d2 * X[2];
 
+                // 4
                 A[18] = d3 * X[1] * X_22;
                 A[18] += d2 * X[1];
 
+                // 5
                 A[19] = d3 * X_22 * X[2];
                 m2m_vector d2_X2 = d2 * X[2];
                 A[19] += 3.0 * d2_X2;

@@ -12,6 +12,14 @@
 namespace octotiger {
 namespace fmm {
     namespace multipole_interactions {
+    // Only counts in innermost loop!! Should be close enough though
+    // 1+1+13+55+4+8+8+8+12+12+12+12+12+12+30+6+12+12+12+10+20
+    constexpr size_t non_rho_vc_operations = 272;
+    constexpr size_t non_rho_flop = non_rho_vc_operations * m2m_vector::size();
+    // 1+4+12+9+6+11+3+11+2+11+2+11+12+8+11+2+11+1+11+7+11+3
+    constexpr size_t only_rho_vc_operations = 160;
+    constexpr size_t only_rho_flop = only_rho_vc_operations * m2m_vector::size();
+    constexpr size_t rho_flop = only_rho_flop + non_rho_flop;
 
         class m2m_kernel
         {
