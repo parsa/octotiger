@@ -209,22 +209,22 @@ int hpx_main(int argc, char* argv[]) {
     const size_t g_divisor = 1000 * 1000 * 1000;
 
     std::cout << "Multipole GFLOPs non rho: " << multipole_flops_non_rho << " -> "
-              << multipole_flops_non_rho / g_divisor << " GFLOP " << std::endl;
+              << static_cast<double>(multipole_flops_non_rho) / g_divisor << " GFLOP " << std::endl;
     std::cout << "Multipole GFLOPs rho: " << multipole_flops_rho << " -> "
-              << multipole_flops_rho / g_divisor << " GFLOP " << std::endl;
+              << static_cast<double>(multipole_flops_rho) / g_divisor << " GFLOP " << std::endl;
     std::cout << "Monopole Monopole GFLOPs : " << p2p_flops << " -> "
-              << p2p_flops / g_divisor << " GFLOP " << std::endl;
+              << static_cast<double>(p2p_flops) / g_divisor << " GFLOP " << std::endl;
     std::cout << "Monopole Multipole GFLOPs non rho : " << p2m_flops_non_rho << " -> "
-              << p2m_flops_non_rho / g_divisor << " GFLOP " << std::endl;
+              << static_cast<double>(p2m_flops_non_rho) / g_divisor << " GFLOP " << std::endl;
     std::cout << "Monopole Multipole GFLOPs rho : " << p2m_flops_rho << " -> "
-              << p2m_flops_rho / g_divisor << " GFLOP " << std::endl;
+              << static_cast<double>(p2m_flops_rho) / g_divisor << " GFLOP " << std::endl;
     std::cout << "----------------------------------------" << std::endl;
     const size_t overall_flops = multipole_flops_non_rho + multipole_flops_rho + p2p_flops +
-                          p2m_flops_rho + p2m_flops_non_rho;
-    std::cout << "Overall: " << overall_flops << " -> " << overall_flops / g_divisor << "GFLOPs"
-              << std::endl;
+        p2m_flops_rho + p2m_flops_non_rho;
+    std::cout << "Overall: " << overall_flops << " -> "
+              << static_cast<double>(overall_flops) / g_divisor << "GFLOPs" << std::endl;
 
-	return hpx::finalize();
+    return hpx::finalize();
 }
 
 int main(int argc, char* argv[]) {
