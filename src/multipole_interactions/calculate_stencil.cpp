@@ -112,6 +112,29 @@ namespace fmm {
                 << std::endl
                 << "}" << std::endl;
 
+            out << "\\newcommand{\\cube}[7]{" << std::endl
+                << "\\coordinate (O) at (#1,#2,#3);" << std::endl
+                << "\\coordinate (A) at (#1,#2+#4,#3);" << std::endl
+                << "\\coordinate (B) at (#1,#2+#4,#3+#4);" << std::endl
+                << "\\coordinate (C) at (#1,#2,#3+#4);" << std::endl
+                << "\\coordinate (D) at (#1+#4,#2,#3);" << std::endl
+                << "\\coordinate (E) at (#1+#4,#2+#4,#3);" << std::endl
+                << "\\coordinate (F) at (#1+#4,#2+#4,#3+#4);" << std::endl
+                << "\\coordinate (G) at (#1+#4,#2,#3+#4);" << std::endl
+                << "\\draw[blue,fill=#5,opacity=#6,draw=#7] (O) -- (C) -- (G) -- (D) -- cycle;"
+                << std::endl
+                << "\\draw[blue,fill=#5,opacity=#6,draw=#7] (O) -- (A) -- (E) -- (D) -- cycle;"
+                << std::endl
+                << "\\draw[blue,fill=#5,opacity=#6,draw=#7] (O) -- (A) -- (B) -- (C) -- cycle;"
+                << std::endl
+                << "\\draw[blue,fill=#5,opacity=#6,draw=#7] (D) -- (E) -- (F) -- (G) -- cycle;"
+                << std::endl
+                << "\\draw[blue,fill=#5,opacity=#6,draw=#7] (C) -- (B) -- (F) -- (G) -- cycle;"
+                << std::endl
+                << "\\draw[blue,fill=#5,opacity=#6,draw=#7] (A) -- (B) -- (F) -- (E) -- cycle;"
+                << std::endl
+                << "}" << std::endl;
+
             out << "\\begin{document}" << std::endl;
             auto draw_slice = [&out, &superimposed_stencil](int centerz) {
                 out << "\\begin{tikzpicture}" << std::endl;
@@ -124,7 +147,7 @@ namespace fmm {
                         int ydist = y - centery;
                         if (xdist == 0 && ydist == 0 && centerz == 0) {
                             out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
-                                << " }{green!80}{gray}" << std::endl;
+                                << " }{brown!80}{black}" << std::endl;
                             continue;
                         }
                         multiindex<> current_element(xdist, ydist, centerz);
@@ -137,28 +160,75 @@ namespace fmm {
                         }
                         if (found) {
                             out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
-                                << " }{green!30}{gray}" << std::endl;
+                                << " }{brown!35}{black}" << std::endl;
                         } else {
-                            if (x>3 && x<12 && y>3 && y<12) {
-                            out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
-                                << " }{white}{gray}" << std::endl;
+                            if (x > 3 && x < 12 && y > 3 && y < 12) {
+                                out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
+                                    << " }{white}{gray}" << std::endl;
                             } else {
-                            out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
-                                << " }{gray!30}{gray}" << std::endl;
-
+                                out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
+                                    << " }{gray!30}{gray}" << std::endl;
                             }
                         }
                     }
                 }
-                out << "\\draw[line width=2,draw=black] (3,3,-0) -- (3+8,3,-0) -- (3+8,3+8,-0) -- "
+                out << "\\draw[line width=2,draw=black!75] (3,3,-0) -- (3+8,3,-0) -- (3+8,3+8,-0) -- "
                        "(3,3+8,-0) -- (3,3,-0);"
                     << std::endl;
                 out << "\\end{tikzpicture}" << std::endl;
             };
+            auto draw_whole_stencil = [&out, &superimposed_stencil](void) {
+                out << "\\begin{tikzpicture}" << std::endl;
+                int z = 0;
+                int centerx = 4;
+                int centery = 4;
+                int centerz = 4;
+                for (int z = 0; z < 10; ++z) {
+                    for (int y = 0; y < 10; ++y) {
+                        for (int x = 0; x < 10; ++x) {
+                            int xdist = x - centerx;
+                            int ydist = y - centery;
+                            int zdist = z - centerz;
+                            multiindex<> current_element(xdist, ydist, zdist);
+                            bool found = false;
+                            for (multiindex<>& super_element :
+                                superimposed_stencil.stencil_elements) {
+                                if (current_element.compare(super_element)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found) {
+                                // out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
+                                //     << " }{green!30}{gray}" << std::endl;
+                                float transparency = 1.0;
+                                if (transparency < 0.0)
+                                    transparency = 0.0;
+                                if (zdist == 0)
+                                    out << "\\cube{" << x << "}{" << y << "}{" << z
+                                        << "}{1}{brown!20}{1.0}{black}" << std::endl;
+                                else
+                                    out << "\\cube{" << x << "}{" << y << "}{" << z
+                                        << "}{1}{brown!20}{" << transparency << "}{black}"
+                                        << std::endl;
+                            } else {
+                                //     float transparency = 1.0 - 1.0 / 9.0*z;
+                                // if (transparency < 0.0)
+                                //     transparency = 0.0;
+                                // out << "\\cube{" << x << "}{" << y << "}{" << z <<
+                                // "}{1}{gray!30}{0.2}{black!60}" << std::endl;
+                            }
+                        }
+                    }
+                }
+                out << "\\end{tikzpicture}" << std::endl;
+            };
 
-            for (int i = -6; i < 8; ++i) {
-                draw_slice(i);
-            }
+            // for (int i = -6; i < 8; ++i) {
+            //     draw_slice(i);
+            // }
+            draw_whole_stencil();
+            //draw_slice(0);
 
             out << "\\end{document}" << std::endl;
             out.close();
