@@ -208,6 +208,18 @@ int hpx_main(int argc, char* argv[]) {
 
     const size_t g_divisor = 1000 * 1000 * 1000;
 
+
+    constexpr size_t non_rho_vc_operations = 295;
+    constexpr size_t non_rho_flop = non_rho_vc_operations * m2m_vector::size();
+    // 1+4+12+9+6+11+3+11+2+11+2+11+12+8+11+2+11+1+11+7+11+3
+    constexpr size_t only_rho_vc_operations = 160;
+    constexpr size_t only_rho_flop = only_rho_vc_operations * m2m_vector::size();
+    std::cout << "m2m non-rho" << octotiger::fmm::multipole_interactions::non_rho_flop << std::endl;
+    std::cout << "m2m rho" << octotiger::fmm::multipole_interactions::rho_flop << std::endl;
+    std::cout << "p2m non-rho" << octotiger::fmm::monopole_interactions::non_rho_p2m_flop << std::endl;
+    std::cout << "p2m rho" << octotiger::fmm::monopole_interactions::rho_p2m_flop << std::endl;
+    std::cout << "p2p" << octotiger::fmm::monopole_interactions::p2p_flop << std::endl;
+
     std::cout << "Multipole GFLOPs non rho: " << multipole_flops_non_rho << " -> "
               << static_cast<double>(multipole_flops_non_rho) / g_divisor << " GFLOP " << std::endl;
     std::cout << "Multipole GFLOPs rho: " << multipole_flops_rho << " -> "

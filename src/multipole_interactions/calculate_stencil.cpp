@@ -5,6 +5,8 @@
 #include "../common_kernel/helper.hpp"
 #include "calculate_stencil.hpp"
 
+#include <fstream>
+
 extern options opts;
 
 namespace octotiger {
@@ -86,6 +88,81 @@ namespace fmm {
                 }
                 std::cout << "Stencil size: " << stencils[i].stencil_elements.size() << std::endl;
             }
+
+            std::ofstream out("stencil.tex");
+            // print latex header
+            out << "\\documentclass[tikz,convert={outfile=\\jobname.svg}]{standalone}" << std::endl
+                << "\\usepackage{tikz,tikz-3dplot}" << std::endl
+                << "\\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,positioning,fit,"
+                   "petri}"
+                << std::endl
+                << "\\usetikzlibrary{arrows, decorations.markings}" << std::endl
+                << "\\usetikzlibrary{shapes.geometric}" << std::endl
+                << "\\usetikzlibrary{shapes,calc}" << std::endl
+                << "\\usetikzlibrary{decorations.pathreplacing}" << std::endl
+                << std::endl;
+            out << "\\newcommand{\\squarex}[5]{" << std::endl
+                << "\\filldraw[fill=#4,draw=#5,opacity=1.0] (0+#1,0+#2,#3) -- (1+#1,0+#2,#3) -- "
+                   "(1+#1,1+#2,#3) -- (0+#1,1+#2,#3) -- (0+#1,0+#2,#3);"
+                << std::endl
+                << "}" << std::endl;
+            out << "\\newcommand{\\squarey}[5]{" << std::endl
+                << "\\filldraw[fill=#4,draw=#5,opacity=1.0] (#1,#2,#3) -- (#1,1+#2,#3) -- "
+                   "(#1,1+#2,1+#3) -- (#1,#2,1+#3) -- (#1,#2,#3);"
+                << std::endl
+                << "}" << std::endl;
+
+            out << "\\begin{document}" << std::endl;
+            auto draw_slice = [&out, &superimposed_stencil](int centerz) {
+                out << "\\begin{tikzpicture}" << std::endl;
+                int z = 0;
+                int centerx = 6;
+                int centery = 7;
+                for (int y = 0; y < 16; ++y) {
+                    for (int x = 0; x < 16; ++x) {
+                        int xdist = x - centerx;
+                        int ydist = y - centery;
+                        if (xdist == 0 && ydist == 0 && centerz == 0) {
+                            out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
+                                << " }{green!80}{gray}" << std::endl;
+                            continue;
+                        }
+                        multiindex<> current_element(xdist, ydist, centerz);
+                        bool found = false;
+                        for (multiindex<>& super_element : superimposed_stencil.stencil_elements) {
+                            if (current_element.compare(super_element)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) {
+                            out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
+                                << " }{green!30}{gray}" << std::endl;
+                        } else {
+                            if (x>3 && x<12 && y>3 && y<12) {
+                            out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
+                                << " }{white}{gray}" << std::endl;
+                            } else {
+                            out << "\\squarex{" << x << "-1}{" << y << "-1}{" << z
+                                << " }{gray!30}{gray}" << std::endl;
+
+                            }
+                        }
+                    }
+                }
+                out << "\\draw[line width=2,draw=black] (3,3,-0) -- (3+8,3,-0) -- (3+8,3+8,-0) -- "
+                       "(3,3+8,-0) -- (3,3,-0);"
+                    << std::endl;
+                out << "\\end{tikzpicture}" << std::endl;
+            };
+
+            for (int i = -6; i < 8; ++i) {
+                draw_slice(i);
+            }
+
+            out << "\\end{document}" << std::endl;
+            out.close();
+
             return superimposed_stencil;
         }
 
