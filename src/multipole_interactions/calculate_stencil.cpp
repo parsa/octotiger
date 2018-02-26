@@ -180,12 +180,12 @@ namespace fmm {
             auto draw_whole_stencil = [&out, &superimposed_stencil](void) {
                 out << "\\begin{tikzpicture}" << std::endl;
                 int z = 0;
-                int centerx = 4;
-                int centery = 4;
-                int centerz = 4;
-                for (int z = 0; z < 10; ++z) {
-                    for (int y = 0; y < 10; ++y) {
-                        for (int x = 0; x < 10; ++x) {
+                int centerx = 6;
+                int centery = 6;
+                int centerz = 6;
+                for (int z = 0; z < 14; ++z) {
+                    for (int y = 0; y < 14; ++y) {
+                        for (int x = 0; x < 14; ++x) {
                             int xdist = x - centerx;
                             int ydist = y - centery;
                             int zdist = z - centerz;
@@ -204,19 +204,21 @@ namespace fmm {
                                 float transparency = 1.0;
                                 if (transparency < 0.0)
                                     transparency = 0.0;
-                                if (zdist == 0)
+                                if (zdist > 0)
+                                    transparency = 0.1;
+                                if (zdist == 0 && ydist == 0 && xdist == 0)
                                     out << "\\cube{" << x << "}{" << y << "}{" << z
-                                        << "}{1}{brown!20}{1.0}{black}" << std::endl;
+                                        << "}{1}{black}{1.0}{black}" << std::endl;
                                 else
                                     out << "\\cube{" << x << "}{" << y << "}{" << z
-                                        << "}{1}{brown!20}{" << transparency << "}{black}"
+                                        << "}{1}{brown!20}{" << transparency << "}{brown!20}"
                                         << std::endl;
                             } else {
-                                //     float transparency = 1.0 - 1.0 / 9.0*z;
-                                // if (transparency < 0.0)
-                                //     transparency = 0.0;
-                                // out << "\\cube{" << x << "}{" << y << "}{" << z <<
-                                // "}{1}{gray!30}{0.2}{black!60}" << std::endl;
+                                 //     float transparency = 1.0 - 1.0 / 9.0*z;
+                                 // if (transparency < 0.0)
+                                 //     transparency = 0.0;
+                                 // out << "\\cube{" << x << "}{" << y << "}{" << z <<
+                                 // "}{1}{gray!10}{0.1}{gray!10}" << std::endl;
                             }
                         }
                     }
