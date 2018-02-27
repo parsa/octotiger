@@ -16,6 +16,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 option(OCTOTIGER_WITH_SILO "Enable support for Silo output" ON)
 option(OCTOTIGER_WITH_GRAV_PAR "Enable parallelism in gravitational solver" OFF)
 option(OCTOTIGER_WITH_RADIATION "Enable radiation transport solver" OFF)
+option(OCTOTIGER_WITH_CUDA "Enable CUDA based calculations on GPU" OFF)
 
 ################################################################################
 # Find required packages
@@ -27,6 +28,13 @@ endif()
 
 include_directories(${HPX_INCLUDE_DIRS})
 link_directories(${HPX_LIBRARY_DIR})
+
+if(OCTOTIGER_WITH_CUDA)
+  find_package(CUDA REQUIRED)
+  include_directories(${CUDA_TOOLKIT_INCLUDE})
+  add_definitions(-DOCTOTIGER_WITH_CUDA)
+endif()
+
 
 ################################################################################
 # Silo support
@@ -75,6 +83,8 @@ endif()
 if (OCTOTIGER_WITH_RADIATION)
   add_definitions(-DOCTOTIGER_HAVE_RADIATION)
 endif()
+
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -G -g" )
 
 set(source_files)
 set(dependencies)
@@ -126,6 +136,12 @@ set(source_files ${source_files}
     src/monopole_interactions/p2m_kernel_blocked_interaction.cpp
     src/common_kernel/interactions_iterators.cpp
 )
+
+if(OCTOTIGER_WITH_CUDA)
+  set(source_files ${source_files}
+    #src/m2m_kernel/m2m_cuda.cu
+    )
+endif()
 
 set(header_files
     src/channel.hpp
@@ -179,7 +195,18 @@ set(silo_cmp_source_files
 )
 set(silo_cmp_header_files)
 
-add_hpx_executable(
+if(OCTOTIGER_WITH_CUDA)
+  cuda_add_executable(
+    octotiger
+    # SOURCES
+    ${source_files}
+    # HEADERS
+    # ${header_files}
+    # FOLDER  "Octotiger"
+    )
+  hpx_setup_target(octotiger)
+else()
+  add_hpx_executable(
   octotiger
   DEPENDENCIES
     ${dependencies}
@@ -189,6 +216,7 @@ add_hpx_executable(
     ${header_files}
   FOLDER  "Octotiger"
 )
+endif()
 
 
 
