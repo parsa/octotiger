@@ -186,6 +186,9 @@ set(header_files
     src/monopole_interactions/p2p_kernel.hpp
     src/common_kernel/kernel_simd_types.hpp
     src/common_kernel/kernel_taylor_set_basis.hpp
+    src/cuda_util/cuda_helper.hpp
+    src/cuda_util/util_cuda.hpp
+    src/cuda_util/util.hpp
 )
 
 
