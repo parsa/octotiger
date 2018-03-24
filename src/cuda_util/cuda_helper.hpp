@@ -28,6 +28,8 @@ namespace util {
         cuda_helper(std::size_t device = 0)
           : target_(device) {
             stream_ = target_.native_handle().get_stream();
+            cuda_error(cudaSetDevice(target_.native_handle().get_device()));
+            cuda_error(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
         }
 
         ~cuda_helper() {}
