@@ -24,7 +24,7 @@ namespace fmm {
         __device__ constexpr size_t component_length_unpadded = INNER_CELLS + SOA_PADDING;
 
         __global__ void
-        __launch_bounds__(512, 3)
+        __launch_bounds__(512, blocks_count)
         cuda_multipole_interactions_kernel_rho(
             const double (&local_monopoles)[NUMBER_LOCAL_MONOPOLE_VALUES],
             const double (&center_of_masses)[NUMBER_MASS_VALUES],
@@ -74,8 +74,8 @@ namespace fmm {
             double Y[NDIM];
             const size_t block_offset = blockIdx.x * NUMBER_POT_EXPANSIONS;
             const size_t block_ang_offset = blockIdx.x * NUMBER_ANG_CORRECTIONS;
-            const size_t block_start = blockIdx.x * 358;
-            const size_t block_end = 358 + blockIdx.x * 358;
+            const size_t block_start = blockIdx.x * block_package;
+            const size_t block_end = block_package + blockIdx.x * block_package;
 
             // calculate interactions between this cell and each stencil element
             for (size_t stencil_index = block_start; stencil_index < block_end; stencil_index++) {
@@ -179,7 +179,7 @@ namespace fmm {
         }
 
         __global__ void
-        __launch_bounds__(512, 3)
+        __launch_bounds__(512, blocks_count)
         cuda_multipole_interactions_kernel_non_rho(
             const double (&local_monopoles)[NUMBER_LOCAL_MONOPOLE_VALUES],
             const double (&center_of_masses)[NUMBER_MASS_VALUES],
@@ -212,8 +212,8 @@ namespace fmm {
             double Y[NDIM];
 
             const size_t block_offset = blockIdx.x * NUMBER_POT_EXPANSIONS;
-            const size_t block_start = blockIdx.x * 358;
-            const size_t block_end = 358 + blockIdx.x * 358;
+            const size_t block_start = blockIdx.x * block_package;
+            const size_t block_end = block_package + blockIdx.x * block_package;
 
             // calculate interactions between this cell and each stencil element
             for (size_t stencil_index = block_start; stencil_index < block_end; stencil_index++) {
@@ -317,9 +317,9 @@ namespace fmm {
                 potential_expansions[i * component_length_unpadded + id] +=
                     potential_expansions[i * component_length_unpadded + NUMBER_POT_EXPANSIONS +
                         id];
-                potential_expansions[i * component_length_unpadded + id] +=
-                    potential_expansions[i * component_length_unpadded + 2 * NUMBER_POT_EXPANSIONS +
-                        id];
+                // potential_expansions[i * component_length_unpadded + id] +=
+                //     potential_expansions[i * component_length_unpadded + 2 * NUMBER_POT_EXPANSIONS +
+                //         id];
             }
         }
         __global__ void cuda_add_multipole_ang_blocks(
@@ -329,9 +329,9 @@ namespace fmm {
                 angular_corrections[i * component_length_unpadded + id] +=
                     angular_corrections[i * component_length_unpadded + NUMBER_ANG_CORRECTIONS +
                         id];
-                angular_corrections[i * component_length_unpadded + id] +=
-                    angular_corrections[i * component_length_unpadded + 2 * NUMBER_ANG_CORRECTIONS +
-                        id];
+                // angular_corrections[i * component_length_unpadded + id] +=
+                //     angular_corrections[i * component_length_unpadded + 2 * NUMBER_ANG_CORRECTIONS +
+                //         id];
             }
         }
     }    // namespace multipole_interactions

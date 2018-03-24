@@ -6,6 +6,9 @@
 namespace octotiger {
 namespace fmm {
     namespace multipole_interactions {
+        CUDA_CALLABLE_METHOD constexpr size_t blocks_count = 2;    // 1 2 or 3
+        CUDA_CALLABLE_METHOD constexpr size_t block_package = STENCIL_SIZE / blocks_count;
+
         __global__ void cuda_multipole_interactions_kernel_rho(
             const double (&local_monopoles)[NUMBER_LOCAL_MONOPOLE_VALUES],
             const double (&center_of_masses)[NUMBER_MASS_VALUES],
