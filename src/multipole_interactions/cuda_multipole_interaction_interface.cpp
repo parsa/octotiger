@@ -1,7 +1,7 @@
 #ifdef OCTOTIGER_CUDA_ENABLED
 #include "cuda_multipole_interaction_interface.hpp"
-#include "multipole_cuda_kernel.hpp"
 #include "calculate_stencil.hpp"
+#include "multipole_cuda_kernel.hpp"
 #include "options.hpp"
 
 extern options opts;
@@ -34,8 +34,10 @@ namespace fmm {
                     staging_area.center_of_masses_SoA);
 
                 // Queue moving of input data to device
-                util::cuda_helper& gpu_interface = kernel_scheduler::scheduler.get_launch_interface(slot);
-                kernel_device_enviroment& env = kernel_scheduler::scheduler.get_device_enviroment(slot);
+                util::cuda_helper& gpu_interface =
+                    kernel_scheduler::scheduler.get_launch_interface(slot);
+                kernel_device_enviroment& env =
+                    kernel_scheduler::scheduler.get_device_enviroment(slot);
                 gpu_interface.copy_async(env.device_local_monopoles,
                     staging_area.local_monopoles.data(), local_monopoles_size,
                     cudaMemcpyHostToDevice);
@@ -47,8 +49,10 @@ namespace fmm {
                     cudaMemcpyHostToDevice);
 
                 // Launch kernel and queue copying of results
-                const dim3 grid_spec(1, 1, 1);
+                const dim3 grid_spec(3);
                 const dim3 threads_per_block(8, 8, 8);
+                const dim3 sum_spec(1);
+                const dim3 threads(512);
                 if (type == RHO) {
                     void* args[] = {&(env.device_local_monopoles), &(env.device_center_of_masses),
                         &(env.device_local_expansions), &(env.device_potential_expansions),
@@ -56,6 +60,9 @@ namespace fmm {
                         &(env.device_phase_indicator), &theta};
                     gpu_interface.execute(&cuda_multipole_interactions_kernel_rho, grid_spec,
                         threads_per_block, args, 0);
+                    void* sum_args[] = {&(env.device_angular_corrections)};
+                    gpu_interface.execute(
+                        &cuda_add_multipole_ang_blocks, sum_spec, threads, sum_args, 0);
                     gpu_interface.copy_async(angular_corrections_SoA.get_pod(),
                         env.device_angular_corrections, angular_corrections_size,
                         cudaMemcpyDeviceToHost);
@@ -67,6 +74,9 @@ namespace fmm {
                     gpu_interface.execute(&cuda_multipole_interactions_kernel_non_rho, grid_spec,
                         threads_per_block, args, 0);
                 }
+                void* sum_args[] = {&(env.device_potential_expansions)};
+                gpu_interface.execute(
+                    &cuda_add_multipole_pot_blocks, sum_spec, threads, sum_args, 0);
                 gpu_interface.copy_async(potential_expansions_SoA.get_pod(),
                     env.device_potential_expansions, potential_expansions_size,
                     cudaMemcpyDeviceToHost);
