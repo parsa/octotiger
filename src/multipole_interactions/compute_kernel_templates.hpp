@@ -422,7 +422,7 @@ namespace fmm {
             const T (&m_cell)[11], const T (&dX)[NDIM], T (&tmp_corrections)[NDIM]) noexcept {
             T n0_constant = m_partner[0] / m_cell[0];
 
-            T D_upper[15];
+            T D_upper[6];
 
             D_upper[0] = dX[0] * dX[0] * d3 + 2.0 * d2;
             D_upper[0] += d2;
@@ -435,91 +435,91 @@ namespace fmm {
             tmp_corrections[1] -= n0_tmp * (D_upper[1] * factor_sixth[10]);
             tmp_corrections[2] -= n0_tmp * (D_upper[2] * factor_sixth[10]);
 
-            D_upper[3] = d2;
-            D_upper[3] += d3 * X_11;
-            D_upper[3] += d3 * X_00;
-            D_upper[4] = d3 * dX[1] * dX[2];
+            D_upper[0] = d2;
+            D_upper[0] += d3 * X_11;
+            D_upper[0] += d3 * X_00;
+            D_upper[3] = d3 * dX[1] * dX[2];
 
             n0_tmp = m_partner[11] - m_cell[2] * n0_constant;
 
             tmp_corrections[0] -= n0_tmp * (D_upper[1] * factor_sixth[11]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[3] * factor_sixth[11]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[4] * factor_sixth[11]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[0] * factor_sixth[11]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[3] * factor_sixth[11]);
 
-            D_upper[5] = d2;
-            D_upper[5] += d3 * X_22;
-            D_upper[5] += d3 * X_00;
+            D_upper[1] = d2;
+            D_upper[1] += d3 * X_22;
+            D_upper[1] += d3 * X_00;
 
             n0_tmp = m_partner[12] - m_cell[3] * n0_constant;
 
             tmp_corrections[0] -= n0_tmp * (D_upper[2] * factor_sixth[12]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[4] * factor_sixth[12]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[5] * factor_sixth[12]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[3] * factor_sixth[12]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[1] * factor_sixth[12]);
 
-            D_upper[6] = 3.0 * d3 * dX[0] * dX[1];
-            D_upper[7] = d3 * dX[0] * dX[2];
+            D_upper[2] = 3.0 * d3 * dX[0] * dX[1];
+            D_upper[4] = d3 * dX[0] * dX[2];
 
             n0_tmp = m_partner[13] - m_cell[4] * n0_constant;
 
-            tmp_corrections[0] -= n0_tmp * (D_upper[3] * factor_sixth[13]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[6] * factor_sixth[13]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[7] * factor_sixth[13]);
+            tmp_corrections[0] -= n0_tmp * (D_upper[0] * factor_sixth[13]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[2] * factor_sixth[13]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[4] * factor_sixth[13]);
 
-            D_upper[8] = d3 * dX[0] * dX[1];
+            D_upper[0] = d3 * dX[0] * dX[1];
 
             n0_tmp = m_partner[14] - m_cell[5] * n0_constant;
 
-            tmp_corrections[0] -= n0_tmp * (D_upper[4] * factor_sixth[14]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[7] * factor_sixth[14]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[8] * factor_sixth[14]);
+            tmp_corrections[0] -= n0_tmp * (D_upper[3] * factor_sixth[14]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[4] * factor_sixth[14]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[0] * factor_sixth[14]);
 
-            D_upper[9] = 3.0 * d3 * dX[0] * dX[2];
+            D_upper[3] = 3.0 * d3 * dX[0] * dX[2];
 
             n0_tmp = m_partner[15] - m_cell[6] * n0_constant;
 
-            tmp_corrections[0] -= n0_tmp * (D_upper[5] * factor_sixth[15]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[8] * factor_sixth[15]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[9] * factor_sixth[15]);
+            tmp_corrections[0] -= n0_tmp * (D_upper[1] * factor_sixth[15]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[0] * factor_sixth[15]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[3] * factor_sixth[15]);
 
-            D_upper[10] = dX[1] * dX[1] * d3 + 2.0 * d2;
-            D_upper[10] += d2;
-            D_upper[10] += 5.0 * d3 * X_11;
+            D_upper[1] = dX[1] * dX[1] * d3 + 2.0 * d2;
+            D_upper[1] += d2;
+            D_upper[1] += 5.0 * d3 * X_11;
 
-            D_upper[11] = 3.0 * d3 * dX[1] * dX[2];
+            D_upper[5] = 3.0 * d3 * dX[1] * dX[2];
 
             n0_tmp = m_partner[16] - m_cell[7] * n0_constant;
 
-            tmp_corrections[0] -= n0_tmp * (D_upper[6] * factor_sixth[16]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[10] * factor_sixth[16]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[11] * factor_sixth[16]);
+            tmp_corrections[0] -= n0_tmp * (D_upper[2] * factor_sixth[16]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[1] * factor_sixth[16]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[5] * factor_sixth[16]);
 
-            D_upper[12] = d2;
-            D_upper[12] += d3 * X_22;
-            D_upper[12] += d3 * X_11;
+            D_upper[2] = d2;
+            D_upper[2] += d3 * X_22;
+            D_upper[2] += d3 * X_11;
 
             n0_tmp = m_partner[17] - m_cell[8] * n0_constant;
 
-            tmp_corrections[0] -= n0_tmp * (D_upper[7] * factor_sixth[17]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[11] * factor_sixth[17]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[12] * factor_sixth[17]);
+            tmp_corrections[0] -= n0_tmp * (D_upper[4] * factor_sixth[17]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[5] * factor_sixth[17]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[2] * factor_sixth[17]);
 
-            D_upper[13] = 3.0 * d3 * dX[1] * dX[2];
+            D_upper[4] = 3.0 * d3 * dX[1] * dX[2];
 
             n0_tmp = m_partner[18] - m_cell[9] * n0_constant;
 
-            tmp_corrections[0] -= n0_tmp * (D_upper[8] * factor_sixth[18]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[12] * factor_sixth[18]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[13] * factor_sixth[18]);
+            tmp_corrections[0] -= n0_tmp * (D_upper[0] * factor_sixth[18]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[2] * factor_sixth[18]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[4] * factor_sixth[18]);
 
-            D_upper[14] = dX[2] * dX[2] * d3 + 2.0 * d2;
-            D_upper[14] += d2;
-            D_upper[14] += 5.0 * d3 * X_22;
+            D_upper[0] = dX[2] * dX[2] * d3 + 2.0 * d2;
+            D_upper[0] += d2;
+            D_upper[0] += 5.0 * d3 * X_22;
 
             n0_tmp = m_partner[19] - m_cell[10] * n0_constant;
 
-            tmp_corrections[0] -= n0_tmp * (D_upper[9] * factor_sixth[19]);
-            tmp_corrections[1] -= n0_tmp * (D_upper[13] * factor_sixth[19]);
-            tmp_corrections[2] -= n0_tmp * (D_upper[14] * factor_sixth[19]);
+            tmp_corrections[0] -= n0_tmp * (D_upper[3] * factor_sixth[19]);
+            tmp_corrections[1] -= n0_tmp * (D_upper[4] * factor_sixth[19]);
+            tmp_corrections[2] -= n0_tmp * (D_upper[0] * factor_sixth[19]);
         }
 
         template <typename T, typename func>
