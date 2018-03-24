@@ -575,17 +575,16 @@ namespace fmm {
             dX[2] = X[2] - Y[2];
 
             T X_00, X_11, X_22;
-            T d2, d3;
-
+            T d0, d2, d3;
             X_00 = dX[0] * dX[0];
             X_11 = dX[1] * dX[1];
             X_22 = dX[2] * dX[2];
 
-            T r2 = X_00 + X_11 + X_22;
-            T r2inv = T(1.0) / max(r2, T(1.0e-20));
+            T r2inv = T(1.0) / max(X_00 + X_11 + X_22, T(1.0e-20));
 
-            d2 = -3.0 * sqrt(r2inv) * r2inv * r2inv;
-            d3 = -5.0 * sqrt(r2inv) * r2inv * r2inv;
+            d0 = -sqrt(r2inv);
+            d2 = -3.0 * (-d0 * r2inv) * r2inv;
+            d3 = -5.0 * d2 * r2inv;
 
             compute_interaction_multipole_rho(
                 d2, d3, X_00, X_11, X_22, m_partner, m_cell, dX, tmp_corrections);
