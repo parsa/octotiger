@@ -76,6 +76,9 @@ namespace fmm {
                 fut.get();
 
                 // Copy results back into non-SoA array
+#ifdef USE_GRAV_PAR
+                std::lock_guard<hpx::lcos::local::spinlock> lock(*(grid_ptr->L_mtx));
+#endif
                 potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
                 if (type == RHO)
                     angular_corrections_SoA.to_non_SoA(grid_ptr->get_L_c());

@@ -49,6 +49,9 @@ namespace fmm {
                     kernel.apply_stencil(local_expansions_staging_area,
                         center_of_masses_staging_area, potential_expansions_SoA,
                         angular_corrections_SoA, stencil, type, x_skip, y_skip, z_skip);
+#ifdef USE_GRAV_PAR
+                std::lock_guard<hpx::lcos::local::spinlock> lock(*(grid_ptr->L_mtx));
+#endif
                     potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
                     if (type == RHO) {
                         angular_corrections_SoA.to_non_SoA(grid_ptr->get_L_c());

@@ -61,6 +61,9 @@ namespace fmm {
                     potential_expansions_SoA, angular_corrections_SoA, local_monopoles, stencil,
                     type);
 
+#ifdef USE_GRAV_PAR
+                std::lock_guard<hpx::lcos::local::spinlock> lock(*(grid_ptr->L_mtx));
+#endif
                 if (type == RHO) {
                     angular_corrections_SoA.to_non_SoA(grid_ptr->get_L_c());
                 }

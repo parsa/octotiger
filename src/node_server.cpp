@@ -560,7 +560,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account, bool aonly)
         parent.send_gravity_multipoles(std::move(m_out), my_location.get_child_index());
     }
 
-	if (!aonly) {
+	// if (!aonly) {
 		std::vector<hpx::future<void>> send_futs;
 		for (auto const& dir : geo::direction::full_set()) {
 			if (!neighbors[dir].empty()) {
@@ -578,24 +578,10 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account, bool aonly)
 				neighbors[dir].send_gravity_boundary(std::move(data), ndir, is_monopole, gcycle);
 			}
 		}
-	}
+	// }
 
     /****************************************************************************/
     // data managemenet for old and new version of interaction computation
-
-     // all neighbors and placeholder for yourself
-    bool contains_multipole = false;
-    std::vector<neighbor_gravity_type> all_neighbor_interaction_data;
-    for (geo::direction const& dir : geo::direction::full_set()) {
-        if (!neighbors[dir].empty()) {
-            all_neighbor_interaction_data.push_back(neighbor_gravity_channels[dir].get_future(gcycle).get());
-            if (!all_neighbor_interaction_data[dir].is_monopole)
-                contains_multipole = true;
-        } else {
-            all_neighbor_interaction_data.emplace_back();
-        }
-    }
-
     std::array<bool, geo::direction::count()> is_direction_empty;
     for (geo::direction const& dir : geo::direction::full_set()) {
         if (neighbors[dir].empty()) {
@@ -604,6 +590,60 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account, bool aonly)
             is_direction_empty[dir] = false;
         }
     }
+
+     // all neighbors and placeholder for yourself
+    bool contains_multipole = false;
+    std::vector<neighbor_gravity_type> all_neighbor_interaction_data;
+    std::vector<size_t> skipped_dirs;
+    std::vector<hpx::future<neighbor_gravity_type>> neighbor_futures;
+    std::array<bool, geo::direction::count()> is_direction_skipped;
+    for (geo::direction const& dir : geo::direction::full_set()) {
+      neighbor_futures.push_back(neighbor_gravity_channels[dir].get_future(gcycle));
+      is_direction_skipped[dir] = false;
+      is_direction_empty[dir] = true;
+    }
+
+    size_t eagerness = 10;
+    size_t non_skippable_neighbors = 26 - eagerness;
+    size_t index = 0;
+    for (geo::direction const& dir : geo::direction::full_set()) {
+        if (!neighbors[dir].empty()) {
+          if(index <= non_skippable_neighbors || neighbor_futures[dir].is_ready()) {
+            all_neighbor_interaction_data.push_back(neighbor_futures[dir].get());
+            if (!all_neighbor_interaction_data[dir].is_monopole)
+                contains_multipole = true;
+          } else {
+            is_direction_skipped[dir] = true;
+            all_neighbor_interaction_data.emplace_back();
+          }
+        } else {
+            all_neighbor_interaction_data.emplace_back();
+        }
+        index++;
+    }
+
+    std::array<hpx::future<void>, geo::direction::count()> boundary_futs;
+    index = 0;
+    for (auto const& dir : geo::direction::full_set()) {
+      if (is_direction_skipped[dir]) {
+            // auto f = neighbor_gravity_channels[dir].get_future(gcycle);
+            boundary_futs[index++] = neighbor_futures[dir].then(hpx::util::annotated_function(
+                [this, type](hpx::future<neighbor_gravity_type> fut) {
+                    auto&& tmp = fut.get();
+                    grid_ptr->compute_boundary_interactions(type,
+                        tmp.direction, tmp.is_monopole, tmp.data);
+                    auto signal = tmp.data.local_semaphore;
+                    if (signal != nullptr) {
+                        signal->signal();
+                    }
+                },
+                "node_server::compute_fmm::compute_boundary_interactions"));
+        }
+    }
+    while( index < geo::direction::count()) {
+    	boundary_futs[index++] = hpx::make_ready_future();
+    }
+
 
      bool new_style_enabled = true;
      /***************************************************************************/
@@ -666,7 +706,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account, bool aonly)
      // now that all boundary information has been processed, signal all non-empty neighbors
      // note that this was done before during boundary calculations
      for (auto const& dir : geo::direction::full_set()) {
-		if (!neighbors[dir].empty()) {
+	    if (!neighbors[dir].empty() && !is_direction_skipped[dir]) {
          neighbor_gravity_type &neighbor_data = all_neighbor_interaction_data[dir];
          if (neighbor_data.data.local_semaphore != nullptr) {
              neighbor_data.data.local_semaphore->signal();
@@ -674,6 +714,7 @@ void node_server::compute_fmm(gsolve_type type, bool energy_account, bool aonly)
         }
      }
      /***************************************************************************/
+    wait_all_and_propagate_exceptions(boundary_futs);
 
     expansion_pass_type l_in;
     if (my_location.level() != 0) {

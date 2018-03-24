@@ -17,12 +17,10 @@ namespace fmm {
             std::array<bool, geo::direction::count()>& is_direction_empty) {
             // Check where we want to run this:
             int slot = kernel_scheduler::scheduler.get_launch_slot();
-            if (slot == -1) {    // Run fkernel_scheduler::allback cpu implementation
-                // std::cout << "Running cpu fallback" << std::endl;
+            if (slot == -1) {    // Run fallback cpu implementation
                 p2p_interaction_interface::compute_p2p_interactions(
                     monopoles, neighbors, type, dx, is_direction_empty);
             } else {    // run on cuda device
-                // std::cerr << "Running cuda in slot " << slot << std::endl;
                 // Move data into staging arrays
                 auto staging_area = kernel_scheduler::scheduler.get_staging_area(slot);
                 update_input(monopoles, neighbors, type, staging_area.local_monopoles);
@@ -57,6 +55,9 @@ namespace fmm {
                 fut.get();
 
                 // Copy results back into non-SoA array
+#ifdef USE_GRAV_PAR
+                std::lock_guard<hpx::lcos::local::spinlock> lock(*(grid_ptr->L_mtx));
+#endif
                 potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
             }
         }

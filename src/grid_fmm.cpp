@@ -27,7 +27,8 @@ extern taylor<4, m2m_vector> factor_half_v;
 extern taylor<4, m2m_vector> factor_sixth_v;
 
 #ifdef USE_GRAV_PAR
-const auto for_loop_policy = hpx::parallel::execution::par;
+//const auto for_loop_policy = hpx::parallel::execution::par;
+const auto for_loop_policy = hpx::parallel::execution::seq;
 #else
 const auto for_loop_policy = hpx::parallel::execution::seq;
 #endif

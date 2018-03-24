@@ -177,9 +177,6 @@ private:
 	std::vector<expansion> L;
 	std::vector<space_vector> L_c;
 	std::vector<real> dphi_dt;
-#ifdef USE_GRAV_PAR
-    std::unique_ptr<hpx::lcos::local::spinlock> L_mtx;
-#endif
 
 //    std::shared_ptr<std::atomic<integer>> Muse_counter;
 
@@ -196,6 +193,9 @@ private:
 	void compute_boundary_interactions_monopole_multipole(gsolve_type type, const std::vector<boundary_interaction_type>&, const gravity_boundary_type&);
 	void compute_boundary_interactions_multipole_monopole(gsolve_type type, const std::vector<boundary_interaction_type>&, const gravity_boundary_type&);
 public:
+#ifdef USE_GRAV_PAR
+    std::unique_ptr<hpx::lcos::local::spinlock> L_mtx;
+#endif
     std::vector<multipole>& get_M() {
         return *M_ptr;
     }

@@ -37,6 +37,9 @@ namespace fmm {
                     potential_expansions_SoA;
                 kernel_monopoles.apply_stencil(
                     local_monopoles_staging_area, potential_expansions_SoA, stencil, four, dx);
+#ifdef USE_GRAV_PAR
+                std::lock_guard<hpx::lcos::local::spinlock> lock(*(grid_ptr->L_mtx));
+#endif
                 potential_expansions_SoA.to_non_SoA(grid_ptr->get_L());
             } else {
                 grid_ptr->compute_interactions(type);
