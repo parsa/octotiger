@@ -24,13 +24,13 @@ namespace fmm {
         __device__ constexpr size_t component_length_unpadded = INNER_CELLS + SOA_PADDING;
 
         __global__ void
-        __launch_bounds__(512, 1)
+        __launch_bounds__(512, 3)
         cuda_multipole_interactions_kernel_rho(
             const double (&local_monopoles)[NUMBER_LOCAL_MONOPOLE_VALUES],
             const double (&center_of_masses)[NUMBER_MASS_VALUES],
             const double (&multipoles)[NUMBER_LOCAL_EXPANSION_VALUES],
-            double (&potential_expansions)[NUMBER_POT_EXPANSIONS],
-            double (&angular_corrections)[NUMBER_ANG_CORRECTIONS],
+            double (&potential_expansions)[3 * NUMBER_POT_EXPANSIONS],
+            double (&angular_corrections)[3 * NUMBER_ANG_CORRECTIONS],
             const octotiger::fmm::multiindex<> (&stencil)[STENCIL_SIZE],
             const double (&stencil_phases)[STENCIL_SIZE], const double theta) {
             // Set cell indices
@@ -81,9 +81,13 @@ namespace fmm {
             const double theta_rec_squared = sqr(1.0 / theta);
             double m_partner[20];
             double Y[NDIM];
+            const size_t block_offset = blockIdx.x * NUMBER_POT_EXPANSIONS;
+            const size_t block_ang_offset = blockIdx.x * NUMBER_ANG_CORRECTIONS;
+            const size_t block_start = blockIdx.x * 358;
+            const size_t block_end = 358 + blockIdx.x * 358;
 
             // calculate interactions between this cell and each stencil element
-            for (size_t stencil_index = 0; stencil_index < STENCIL_SIZE; stencil_index++) {
+            for (size_t stencil_index = block_start; stencil_index < block_end; stencil_index++) {
                 // Get phase indicator (indicates whether multipole multipole interactions still
                 // needs to be done)
                 const double mask_phase_one = stencil_phases[stencil_index];
@@ -136,60 +140,60 @@ namespace fmm {
                     });
             }
             // Store results in output arrays
-            potential_expansions[cell_flat_index_unpadded] = tmpstore[0];
-            potential_expansions[1 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[1];
-            potential_expansions[2 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[2];
-            potential_expansions[3 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[3];
-            potential_expansions[4 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[4];
-            potential_expansions[5 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[5];
-            potential_expansions[6 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[6];
-            potential_expansions[7 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[7];
-            potential_expansions[8 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[8];
-            potential_expansions[9 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[9];
-            potential_expansions[10 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[10];
-            potential_expansions[11 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[11];
-            potential_expansions[12 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[12];
-            potential_expansions[13 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[13];
-            potential_expansions[14 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[14];
-            potential_expansions[15 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[15];
-            potential_expansions[16 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[16];
-            potential_expansions[17 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[17];
-            potential_expansions[18 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[18];
-            potential_expansions[19 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[19];
+            potential_expansions[block_offset + cell_flat_index_unpadded] = tmpstore[0];
+            potential_expansions[block_offset + 1 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[1];
+            potential_expansions[block_offset + 2 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[2];
+            potential_expansions[block_offset + 3 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[3];
+            potential_expansions[block_offset + 4 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[4];
+            potential_expansions[block_offset + 5 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[5];
+            potential_expansions[block_offset + 6 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[6];
+            potential_expansions[block_offset + 7 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[7];
+            potential_expansions[block_offset + 8 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[8];
+            potential_expansions[block_offset + 9 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[9];
+            potential_expansions[block_offset + 10 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[10];
+            potential_expansions[block_offset + 11 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[11];
+            potential_expansions[block_offset + 12 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[12];
+            potential_expansions[block_offset + 13 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[13];
+            potential_expansions[block_offset + 14 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[14];
+            potential_expansions[block_offset + 15 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[15];
+            potential_expansions[block_offset + 16 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[16];
+            potential_expansions[block_offset + 17 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[17];
+            potential_expansions[block_offset + 18 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[18];
+            potential_expansions[block_offset + 19 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[19];
 
-            angular_corrections[cell_flat_index_unpadded] = tmp_corrections[0];
-            angular_corrections[1 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmp_corrections[1];
-            angular_corrections[2 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmp_corrections[2];
+            angular_corrections[block_ang_offset + cell_flat_index_unpadded] = tmp_corrections[0];
+            angular_corrections[block_ang_offset + 1 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmp_corrections[1];
+            angular_corrections[block_ang_offset + 2 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmp_corrections[2];
         }
 
         __global__ void
-        __launch_bounds__(512, 1)
+        __launch_bounds__(512, 3)
         cuda_multipole_interactions_kernel_non_rho(
             const double (&local_monopoles)[NUMBER_LOCAL_MONOPOLE_VALUES],
             const double (&center_of_masses)[NUMBER_MASS_VALUES],
             const double (&multipoles)[NUMBER_LOCAL_EXPANSION_VALUES],
-            double (&potential_expansions)[NUMBER_POT_EXPANSIONS],
+            double (&potential_expansions)[3 * NUMBER_POT_EXPANSIONS],
             const octotiger::fmm::multiindex<> (&stencil)[STENCIL_SIZE],
             const double (&stencil_phases)[STENCIL_SIZE], const double theta) {
             // Set cell indices
@@ -216,8 +220,12 @@ namespace fmm {
             double m_partner[20];
             double Y[NDIM];
 
+            const size_t block_offset = blockIdx.x * NUMBER_POT_EXPANSIONS;
+            const size_t block_start = blockIdx.x * 358;
+            const size_t block_end = 358 + blockIdx.x * 358;
+
             // calculate interactions between this cell and each stencil element
-            for (size_t stencil_index = 0; stencil_index < STENCIL_SIZE; stencil_index++) {
+            for (size_t stencil_index = block_start; stencil_index < block_end; stencil_index++) {
                 // Get phase indicator (indicates whether multipole multipole interactions still
                 // needs to be done)
                 const double mask_phase_one = stencil_phases[stencil_index];
@@ -271,45 +279,69 @@ namespace fmm {
                     });
             }
             // Store results in output arrays
-            potential_expansions[cell_flat_index_unpadded] = tmpstore[0];
-            potential_expansions[1 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[1];
-            potential_expansions[2 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[2];
-            potential_expansions[3 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[3];
-            potential_expansions[4 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[4];
-            potential_expansions[5 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[5];
-            potential_expansions[6 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[6];
-            potential_expansions[7 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[7];
-            potential_expansions[8 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[8];
-            potential_expansions[9 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[9];
-            potential_expansions[10 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[10];
-            potential_expansions[11 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[11];
-            potential_expansions[12 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[12];
-            potential_expansions[13 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[13];
-            potential_expansions[14 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[14];
-            potential_expansions[15 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[15];
-            potential_expansions[16 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[16];
-            potential_expansions[17 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[17];
-            potential_expansions[18 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[18];
-            potential_expansions[19 * component_length_unpadded + cell_flat_index_unpadded] =
-                tmpstore[19];
+            potential_expansions[block_offset + cell_flat_index_unpadded] = tmpstore[0];
+            potential_expansions[block_offset + 1 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[1];
+            potential_expansions[block_offset + 2 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[2];
+            potential_expansions[block_offset + 3 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[3];
+            potential_expansions[block_offset + 4 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[4];
+            potential_expansions[block_offset + 5 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[5];
+            potential_expansions[block_offset + 6 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[6];
+            potential_expansions[block_offset + 7 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[7];
+            potential_expansions[block_offset + 8 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[8];
+            potential_expansions[block_offset + 9 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[9];
+            potential_expansions[block_offset + 10 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[10];
+            potential_expansions[block_offset + 11 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[11];
+            potential_expansions[block_offset + 12 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[12];
+            potential_expansions[block_offset + 13 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[13];
+            potential_expansions[block_offset + 14 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[14];
+            potential_expansions[block_offset + 15 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[15];
+            potential_expansions[block_offset + 16 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[16];
+            potential_expansions[block_offset + 17 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[17];
+            potential_expansions[block_offset + 18 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[18];
+            potential_expansions[block_offset + 19 * component_length_unpadded +
+                cell_flat_index_unpadded] = tmpstore[19];
+        }
+        __global__ void cuda_add_multipole_pot_blocks(
+            double (&potential_expansions)[3 * NUMBER_POT_EXPANSIONS]) {
+            size_t id = threadIdx.x;
+            for (int i = 0; i < 20; ++i) {
+                potential_expansions[i * component_length_unpadded + id] +=
+                    potential_expansions[i * component_length_unpadded + NUMBER_POT_EXPANSIONS +
+                        id];
+                potential_expansions[i * component_length_unpadded + id] +=
+                    potential_expansions[i * component_length_unpadded + 2 * NUMBER_POT_EXPANSIONS +
+                        id];
+            }
+        }
+        __global__ void cuda_add_multipole_ang_blocks(
+            double (&angular_corrections)[3 * NUMBER_ANG_CORRECTIONS]) {
+            size_t id = threadIdx.x;
+            for (int i = 0; i < 3; ++i) {
+                angular_corrections[i * component_length_unpadded + id] +=
+                    angular_corrections[i * component_length_unpadded + NUMBER_ANG_CORRECTIONS +
+                        id];
+                angular_corrections[i * component_length_unpadded + id] +=
+                    angular_corrections[i * component_length_unpadded + 2 * NUMBER_ANG_CORRECTIONS +
+                        id];
+            }
         }
     }    // namespace multipole_interactions
 }    // namespace fmm
