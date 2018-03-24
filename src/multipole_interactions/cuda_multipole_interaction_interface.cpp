@@ -60,6 +60,8 @@ namespace fmm {
                         &(env.device_phase_indicator), &theta};
                     gpu_interface.execute(&cuda_multipole_interactions_kernel_rho, grid_spec,
                         threads_per_block, args, 0);
+                    gpu_interface.execute(&cuda_multipole_angular_kernel, grid_spec,
+                        threads_per_block, args, 0);
                     void* sum_args[] = {&(env.device_angular_corrections)};
                     gpu_interface.execute(
                         &cuda_add_multipole_ang_blocks, sum_spec, threads, sum_args, 0);

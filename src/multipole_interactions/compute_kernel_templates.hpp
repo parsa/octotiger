@@ -546,6 +546,24 @@ namespace fmm {
             compute_interaction_multipole_rho(
                 d2, d3, X_00, X_11, X_22, m_partner, m_cell, dX, tmp_corrections);
         }
+        template <typename T, typename func>
+        CUDA_CALLABLE_METHOD inline void compute_angular_corrections(T (&X)[NDIM], T (&Y)[NDIM],
+            T (&m_partner)[20], T (&tmp_corrections)[3], T (&m_cell)[11],
+            func&& max) noexcept {
+            T dX[NDIM];
+            dX[0] = X[0] - Y[0];
+            dX[1] = X[1] - Y[1];
+            dX[2] = X[2] - Y[2];
+
+            T X_00, X_11, X_22;
+            T d2, d3;
+            T D_lower[20];
+
+            compute_d_factors(d2, d3, X_00, X_11, X_22, D_lower, dX, max);
+
+            compute_interaction_multipole_rho(
+                d2, d3, X_00, X_11, X_22, m_partner, m_cell, dX, tmp_corrections);
+        }
 
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_kernel_angular_corrections(T (&X)[NDIM], T (&Y)[NDIM],
@@ -602,6 +620,26 @@ namespace fmm {
             tmpstore[3] -= m_partner[3] * D_lower[6];
             tmpstore[3] -= m_partner[3] * D_lower[8];
             tmpstore[3] -= m_partner[3] * D_lower[9];
+            compute_interaction_multipole_non_rho(m_partner, tmpstore, D_lower);
+        }
+
+        template <typename T, typename func>
+        CUDA_CALLABLE_METHOD inline void compute_kernel_basic_non_rho(T (&X)[NDIM], T (&Y)[NDIM],
+            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T dX[NDIM];
+            dX[0] = X[0] - Y[0];
+            dX[1] = X[1] - Y[1];
+            dX[2] = X[2] - Y[2];
+
+            T X_00, X_11, X_22;
+            T d2, d3;
+            T D_lower[20];
+            compute_d_factors(d2, d3, X_00, X_11, X_22, D_lower, dX, max);
+
+            tmpstore[0] += m_partner[0] * D_lower[0];
+            tmpstore[1] += m_partner[0] * D_lower[1];
+            tmpstore[2] += m_partner[0] * D_lower[2];
+            tmpstore[3] += m_partner[0] * D_lower[3];
             compute_interaction_multipole_non_rho(m_partner, tmpstore, D_lower);
         }
     }    // namespace multipole_interactions
