@@ -101,27 +101,18 @@ namespace fmm {
             m2m_vector tmpstore[20];
             m2m_vector tmp_corrections[3];
 
-            m2m_vector m_cell[20];
+            m2m_vector m_cell[11];
             m_cell[0] = local_expansions_SoA.value<0>(cell_flat_index);
-            m_cell[1] = local_expansions_SoA.value<1>(cell_flat_index);
-            m_cell[2] = local_expansions_SoA.value<2>(cell_flat_index);
-            m_cell[3] = local_expansions_SoA.value<3>(cell_flat_index);
-            m_cell[4] = local_expansions_SoA.value<4>(cell_flat_index);
-            m_cell[5] = local_expansions_SoA.value<5>(cell_flat_index);
-            m_cell[6] = local_expansions_SoA.value<6>(cell_flat_index);
-            m_cell[7] = local_expansions_SoA.value<7>(cell_flat_index);
-            m_cell[8] = local_expansions_SoA.value<8>(cell_flat_index);
-            m_cell[9] = local_expansions_SoA.value<9>(cell_flat_index);
-            m_cell[10] = local_expansions_SoA.value<10>(cell_flat_index);
-            m_cell[11] = local_expansions_SoA.value<11>(cell_flat_index);
-            m_cell[12] = local_expansions_SoA.value<12>(cell_flat_index);
-            m_cell[13] = local_expansions_SoA.value<13>(cell_flat_index);
-            m_cell[14] = local_expansions_SoA.value<14>(cell_flat_index);
-            m_cell[15] = local_expansions_SoA.value<15>(cell_flat_index);
-            m_cell[16] = local_expansions_SoA.value<16>(cell_flat_index);
-            m_cell[17] = local_expansions_SoA.value<17>(cell_flat_index);
-            m_cell[18] = local_expansions_SoA.value<18>(cell_flat_index);
-            m_cell[19] = local_expansions_SoA.value<19>(cell_flat_index);
+            m_cell[1] = local_expansions_SoA.value<10>(cell_flat_index);
+            m_cell[2] = local_expansions_SoA.value<11>(cell_flat_index);
+            m_cell[3] = local_expansions_SoA.value<12>(cell_flat_index);
+            m_cell[4] = local_expansions_SoA.value<13>(cell_flat_index);
+            m_cell[5] = local_expansions_SoA.value<14>(cell_flat_index);
+            m_cell[6] = local_expansions_SoA.value<15>(cell_flat_index);
+            m_cell[7] = local_expansions_SoA.value<16>(cell_flat_index);
+            m_cell[8] = local_expansions_SoA.value<17>(cell_flat_index);
+            m_cell[9] = local_expansions_SoA.value<18>(cell_flat_index);
+            m_cell[10] = local_expansions_SoA.value<19>(cell_flat_index);
 
             m2m_vector Y[3];
 
