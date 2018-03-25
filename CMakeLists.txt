@@ -133,7 +133,6 @@ set(source_files ${source_files}
     src/monopole_interactions/calculate_stencil.cpp
     src/monopole_interactions/p2m_interaction_interface.cpp
     src/monopole_interactions/p2m_kernel.cpp
-    src/monopole_interactions/p2m_kernel_blocked_interaction.cpp
     src/common_kernel/interactions_iterators.cpp
     src/cuda_util/cuda_scheduler.cpp
 )
@@ -206,17 +205,6 @@ add_hpx_executable(
     ${header_files}
   FOLDER  "Octotiger"
 )
-
-if (OCTOTIGER_WITH_CUDA)
-  add_hpx_executable(
-    matmul
-    DEPENDENCIES
-      ${dependencies}
-    SOURCES
-      src/cublas_matmul.cpp
-    FOLDER  "Octotiger"
-)
-endif()
 
 if (OCTOTIGER_WITH_SILO)
 add_hpx_executable(
