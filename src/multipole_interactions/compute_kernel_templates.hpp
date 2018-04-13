@@ -84,23 +84,23 @@ namespace fmm {
         template <typename T>
         CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_non_rho0123(
             const T (&m_partner)[20], T (&tmpstore)[20], const T (&D_lower)[20]) noexcept {
-            tmpstore[0] += m_partner[0] * D_lower[0];
-            tmpstore[1] += m_partner[0] * D_lower[1];
-            tmpstore[2] += m_partner[0] * D_lower[2];
-            tmpstore[3] += m_partner[0] * D_lower[3];
+            // tmpstore[0] += m_partner[0] * D_lower[0];
+            // tmpstore[1] += m_partner[0] * D_lower[1];
+            // tmpstore[2] += m_partner[0] * D_lower[2];
+            // tmpstore[3] += m_partner[0] * D_lower[3];
 
-            tmpstore[0] -= m_partner[1] * D_lower[1];
-            tmpstore[1] -= m_partner[1] * D_lower[4];
-            tmpstore[1] -= m_partner[1] * D_lower[5];
-            tmpstore[1] -= m_partner[1] * D_lower[6];
-            tmpstore[0] -= m_partner[2] * D_lower[2];
-            tmpstore[2] -= m_partner[2] * D_lower[5];
-            tmpstore[2] -= m_partner[2] * D_lower[7];
-            tmpstore[2] -= m_partner[2] * D_lower[8];
-            tmpstore[0] -= m_partner[3] * D_lower[3];
-            tmpstore[3] -= m_partner[3] * D_lower[6];
-            tmpstore[3] -= m_partner[3] * D_lower[8];
-            tmpstore[3] -= m_partner[3] * D_lower[9];
+            // tmpstore[0] -= m_partner[1] * D_lower[1];
+            // tmpstore[1] -= m_partner[1] * D_lower[4];
+            // tmpstore[1] -= m_partner[1] * D_lower[5];
+            // tmpstore[1] -= m_partner[1] * D_lower[6];
+            // tmpstore[0] -= m_partner[2] * D_lower[2];
+            // tmpstore[2] -= m_partner[2] * D_lower[5];
+            // tmpstore[2] -= m_partner[2] * D_lower[7];
+            // tmpstore[2] -= m_partner[2] * D_lower[8];
+            // tmpstore[0] -= m_partner[3] * D_lower[3];
+            // tmpstore[3] -= m_partner[3] * D_lower[6];
+            // tmpstore[3] -= m_partner[3] * D_lower[8];
+            // tmpstore[3] -= m_partner[3] * D_lower[9];
 
             tmpstore[4] += m_partner[0] * D_lower[4];
             tmpstore[5] += m_partner[0] * D_lower[5];
@@ -404,6 +404,7 @@ namespace fmm {
             tmpstore[7] -= m_partner[3] * D_lower[17];
             tmpstore[8] -= m_partner[3] * D_lower[18];
             tmpstore[9] -= m_partner[3] * D_lower[19];
+
             tmpstore[10] += m_partner[0] * D_lower[10];
             tmpstore[11] += m_partner[0] * D_lower[11];
             tmpstore[12] += m_partner[0] * D_lower[12];
@@ -619,7 +620,11 @@ namespace fmm {
             tmpstore[3] -= m_partner[3] * D_lower[6];
             tmpstore[3] -= m_partner[3] * D_lower[8];
             tmpstore[3] -= m_partner[3] * D_lower[9];
-            compute_interaction_multipole_non_rho(m_partner, tmpstore, D_lower);
+            // compute_interaction_multipole_non_rho(m_partner, tmpstore, D_lower);
+
+            compute_interaction_multipole_non_rho0123(m_partner, tmpstore, D_lower);
+            compute_interaction_multipole_non_rho456789(m_partner, tmpstore, D_lower);
+            compute_interaction_multipole_non_rho_remainining(m_partner, tmpstore, D_lower);
         }
 
         template <typename T, typename func>
@@ -640,6 +645,10 @@ namespace fmm {
             tmpstore[2] += m_partner[0] * D_lower[2];
             tmpstore[3] += m_partner[0] * D_lower[3];
             compute_interaction_multipole_non_rho(m_partner, tmpstore, D_lower);
+
+            // compute_interaction_multipole_non_rho0123(m_partner, tmpstore, D_lower);
+            // compute_interaction_multipole_non_rho456789(m_partner, tmpstore, D_lower);
+            // compute_interaction_multipole_non_rho_remainining(m_partner, tmpstore, D_lower);
         }
     }    // namespace multipole_interactions
 }    // namespace fmm
