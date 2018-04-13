@@ -112,11 +112,11 @@ namespace fmm {
         kernel_scheduler(void);
 
         /// How many cuda streams does scheduler manage
-        const size_t number_cuda_streams_managed;
+        size_t number_cuda_streams_managed;
         /// How many slots are there per stram - basically the queue length per stream
         const size_t slots_per_cuda_stream;
         /// How many slots are there
-        const size_t number_slots;
+        size_t number_slots;
 
         /// Contains number_cuda_streams_managed cuda interfaces
         std::vector<util::cuda_helper> stream_interfaces;
