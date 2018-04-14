@@ -213,56 +213,11 @@ namespace fmm {
                     tmpstore[18] + potential_expansions_SoA.value<18>(cell_flat_index_unpadded);
                 tmpstore[19] =
                     tmpstore[19] + potential_expansions_SoA.value<19>(cell_flat_index_unpadded);
-                tmpstore[0].memstore(potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[1].memstore(potential_expansions_SoA.pointer<1>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[2].memstore(potential_expansions_SoA.pointer<2>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[3].memstore(potential_expansions_SoA.pointer<3>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[4].memstore(potential_expansions_SoA.pointer<4>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[5].memstore(potential_expansions_SoA.pointer<5>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[6].memstore(potential_expansions_SoA.pointer<6>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[7].memstore(potential_expansions_SoA.pointer<7>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[8].memstore(potential_expansions_SoA.pointer<8>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[9].memstore(potential_expansions_SoA.pointer<9>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[10].memstore(
-                    potential_expansions_SoA.pointer<10>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[11].memstore(
-                    potential_expansions_SoA.pointer<11>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[12].memstore(
-                    potential_expansions_SoA.pointer<12>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[13].memstore(
-                    potential_expansions_SoA.pointer<13>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[14].memstore(
-                    potential_expansions_SoA.pointer<14>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[15].memstore(
-                    potential_expansions_SoA.pointer<15>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[16].memstore(
-                    potential_expansions_SoA.pointer<16>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[17].memstore(
-                    potential_expansions_SoA.pointer<17>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[18].memstore(
-                    potential_expansions_SoA.pointer<18>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[19].memstore(
-                    potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
+
+
+                unrolled_SoA_write<0, 19, m2m_vector(&)[20],
+                    struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>>(
+                        tmpstore, potential_expansions_SoA, cell_flat_index_unpadded);
 
                 tmp_corrections[0] =
                     tmp_corrections[0] + angular_corrections_SoA.value<0>(cell_flat_index_unpadded);
@@ -400,56 +355,11 @@ namespace fmm {
                     tmpstore[18] + potential_expansions_SoA.value<18>(cell_flat_index_unpadded);
                 tmpstore[19] =
                     tmpstore[19] + potential_expansions_SoA.value<19>(cell_flat_index_unpadded);
-                tmpstore[0].memstore(potential_expansions_SoA.pointer<0>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[1].memstore(potential_expansions_SoA.pointer<1>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[2].memstore(potential_expansions_SoA.pointer<2>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[3].memstore(potential_expansions_SoA.pointer<3>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[4].memstore(potential_expansions_SoA.pointer<4>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[5].memstore(potential_expansions_SoA.pointer<5>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[6].memstore(potential_expansions_SoA.pointer<6>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[7].memstore(potential_expansions_SoA.pointer<7>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[8].memstore(potential_expansions_SoA.pointer<8>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[9].memstore(potential_expansions_SoA.pointer<9>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[10].memstore(
-                    potential_expansions_SoA.pointer<10>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[11].memstore(
-                    potential_expansions_SoA.pointer<11>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[12].memstore(
-                    potential_expansions_SoA.pointer<12>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[13].memstore(
-                    potential_expansions_SoA.pointer<13>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[14].memstore(
-                    potential_expansions_SoA.pointer<14>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[15].memstore(
-                    potential_expansions_SoA.pointer<15>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[16].memstore(
-                    potential_expansions_SoA.pointer<16>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[17].memstore(
-                    potential_expansions_SoA.pointer<17>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[18].memstore(
-                    potential_expansions_SoA.pointer<18>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
-                tmpstore[19].memstore(
-                    potential_expansions_SoA.pointer<19>(cell_flat_index_unpadded),
-                    Vc::flags::element_aligned);
+
+
+                unrolled_SoA_write<0, 19, m2m_vector(&)[20],
+                    struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>>(
+                        tmpstore, potential_expansions_SoA, cell_flat_index_unpadded);
             }
         }
     }    // namespace multipole_interactions
