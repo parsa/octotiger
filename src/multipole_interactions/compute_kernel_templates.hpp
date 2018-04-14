@@ -114,6 +114,18 @@ namespace fmm {
             d2 = -3.0 * (-d0 * r2inv) * r2inv;
             d3 = -5.0 * d2 * r2inv;
 
+            // D_lower[0]
+            tmpstore[0] += m_partner[0] * d0;
+
+            // D_lower[1]
+            tmpstore[1] += m_partner[0] * dX[0] * (-d0 * r2inv);
+
+            // D_lower[2]
+            tmpstore[2] += m_partner[0] * dX[1] * (-d0 * r2inv);
+
+            // D_lower[3]
+            tmpstore[3] += m_partner[0] * dX[2] * (-d0 * r2inv);
+
             // D_lower[4]
             current_D = d2 * X_00;
             current_D += (-d0 * r2inv);
@@ -773,10 +785,10 @@ namespace fmm {
             T D_lower[20];
             compute_d_factors(d2, d3, X_00, X_11, X_22, D_lower, dX, max);
 
-            tmpstore[0] += m_partner[0] * D_lower[0];
-            tmpstore[1] += m_partner[0] * D_lower[1];
-            tmpstore[2] += m_partner[0] * D_lower[2];
-            tmpstore[3] += m_partner[0] * D_lower[3];
+            // tmpstore[0] += m_partner[0] * D_lower[0];
+            // tmpstore[1] += m_partner[0] * D_lower[1];
+            // tmpstore[2] += m_partner[0] * D_lower[2];
+            // tmpstore[3] += m_partner[0] * D_lower[3];
             tmpstore[0] -= m_partner[1] * D_lower[1];
             tmpstore[1] -= m_partner[1] * D_lower[4];
             tmpstore[1] -= m_partner[1] * D_lower[5];
