@@ -115,7 +115,7 @@ namespace fmm {
         {
             unrolled_SoA_load(const in_t& local_expansions_SoA, out_t& m_partner,
                 const mask_t& mask, const size_t interaction_partner_flat_index) {
-                Vc::where(mask, m_partner[0]) =
+                Vc::where(mask, m_partner[0]) +=
                     local_expansions_SoA.template value<0>(interaction_partner_flat_index);
             }
         };
