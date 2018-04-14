@@ -120,6 +120,31 @@ namespace fmm {
             }
         };
 
+        template <size_t startindex, size_t endindex, typename in_t, typename out_t>
+        struct unrolled_SoA_write
+            : unrolled_SoA_write<startindex, endindex - 1, in_t, out_t>
+        {
+            unrolled_SoA_write(in_t& tmpstore, out_t& potential_expansions_SoA,
+                const size_t cell_flat_index_unpadded)
+              : unrolled_SoA_write<startindex, endindex - 1, in_t, out_t>(
+                    tmpstore, potential_expansions_SoA, cell_flat_index_unpadded) {
+                tmpstore[endindex].memstore(
+                    potential_expansions_SoA.template pointer<endindex>(cell_flat_index_unpadded),
+                    Vc::flags::element_aligned);
+            }
+        };
+
+        template <typename in_t, typename out_t>
+        struct unrolled_SoA_write<0, 0, in_t, out_t>
+        {
+            unrolled_SoA_write(in_t& tmpstore, out_t& potential_expansions_SoA,
+                                        const size_t cell_flat_index_unpadded) {
+                tmpstore[0].memstore(
+                    potential_expansions_SoA.template pointer<0>(cell_flat_index_unpadded),
+                    Vc::flags::element_aligned);
+            }
+        };
+
     }    // namespace multipole_interactions
 }    // namespace fmm
 }    // namespace octotiger
