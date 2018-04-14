@@ -103,42 +103,53 @@ namespace fmm {
             // tmpstore[3] -= m_partner[3] * D_lower[9];
 
             tmpstore[4] += m_partner[0] * D_lower[4];
+
             tmpstore[5] += m_partner[0] * D_lower[5];
+
             tmpstore[6] += m_partner[0] * D_lower[6];
+
             tmpstore[7] += m_partner[0] * D_lower[7];
+
             tmpstore[8] += m_partner[0] * D_lower[8];
+
             tmpstore[9] += m_partner[0] * D_lower[9];
 
             tmpstore[4] -= m_partner[1] * D_lower[10];
-            tmpstore[5] -= m_partner[1] * D_lower[11];
-            tmpstore[6] -= m_partner[1] * D_lower[12];
-            tmpstore[7] -= m_partner[1] * D_lower[13];
-            tmpstore[8] -= m_partner[1] * D_lower[14];
-            tmpstore[9] -= m_partner[1] * D_lower[15];
-
-            tmpstore[4] -= m_partner[2] * D_lower[11];
-            tmpstore[5] -= m_partner[2] * D_lower[13];
-            tmpstore[6] -= m_partner[2] * D_lower[14];
-            tmpstore[7] -= m_partner[2] * D_lower[16];
-            tmpstore[8] -= m_partner[2] * D_lower[17];
-            tmpstore[9] -= m_partner[2] * D_lower[18];
-
-            tmpstore[4] -= m_partner[3] * D_lower[12];
-            tmpstore[5] -= m_partner[3] * D_lower[14];
-            tmpstore[6] -= m_partner[3] * D_lower[15];
-            tmpstore[7] -= m_partner[3] * D_lower[17];
-            tmpstore[8] -= m_partner[3] * D_lower[18];
-            tmpstore[9] -= m_partner[3] * D_lower[19];
-
             tmpstore[10] += m_partner[0] * D_lower[10];
+
             tmpstore[11] += m_partner[0] * D_lower[11];
+            tmpstore[4] -= m_partner[2] * D_lower[11];
+            tmpstore[5] -= m_partner[1] * D_lower[11];
+
+            tmpstore[6] -= m_partner[1] * D_lower[12];
+            tmpstore[4] -= m_partner[3] * D_lower[12];
             tmpstore[12] += m_partner[0] * D_lower[12];
+
+            tmpstore[7] -= m_partner[1] * D_lower[13];
+            tmpstore[5] -= m_partner[2] * D_lower[13];
             tmpstore[13] += m_partner[0] * D_lower[13];
+
+            tmpstore[8] -= m_partner[1] * D_lower[14];
+            tmpstore[6] -= m_partner[2] * D_lower[14];
+            tmpstore[5] -= m_partner[3] * D_lower[14];
             tmpstore[14] += m_partner[0] * D_lower[14];
+
+            tmpstore[9] -= m_partner[1] * D_lower[15];
+            tmpstore[6] -= m_partner[3] * D_lower[15];
             tmpstore[15] += m_partner[0] * D_lower[15];
+
             tmpstore[16] += m_partner[0] * D_lower[16];
+            tmpstore[7] -= m_partner[2] * D_lower[16];
+
+            tmpstore[8] -= m_partner[2] * D_lower[17];
+            tmpstore[7] -= m_partner[3] * D_lower[17];
             tmpstore[17] += m_partner[0] * D_lower[17];
+
+            tmpstore[9] -= m_partner[2] * D_lower[18];
+            tmpstore[8] -= m_partner[3] * D_lower[18];
             tmpstore[18] += m_partner[0] * D_lower[18];
+
+            tmpstore[9] -= m_partner[3] * D_lower[19];
             tmpstore[19] += m_partner[0] * D_lower[19];
         }
 
@@ -146,47 +157,66 @@ namespace fmm {
         CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_non_rho456789(
             const T (&m_partner)[20], T (&tmpstore)[20], const T (&D_lower)[20]) noexcept {
             tmpstore[0] += m_partner[4] * (D_lower[4] * factor_half[4]);
-            tmpstore[1] += m_partner[4] * (D_lower[10] * factor_half[4]);
-            tmpstore[2] += m_partner[4] * (D_lower[11] * factor_half[4]);
-            tmpstore[3] += m_partner[4] * (D_lower[12] * factor_half[4]);
 
             tmpstore[0] += m_partner[5] * (D_lower[5] * factor_half[5]);
-            tmpstore[1] += m_partner[5] * (D_lower[11] * factor_half[5]);
-            tmpstore[2] += m_partner[5] * (D_lower[13] * factor_half[5]);
-            tmpstore[3] += m_partner[5] * (D_lower[14] * factor_half[5]);
 
             tmpstore[0] += m_partner[6] * (D_lower[6] * factor_half[6]);
-            tmpstore[1] += m_partner[6] * (D_lower[12] * factor_half[6]);
-            tmpstore[2] += m_partner[6] * (D_lower[14] * factor_half[6]);
-            tmpstore[3] += m_partner[6] * (D_lower[15] * factor_half[6]);
 
             tmpstore[0] += m_partner[7] * (D_lower[7] * factor_half[7]);
-            tmpstore[1] += m_partner[7] * (D_lower[13] * factor_half[7]);
-            tmpstore[2] += m_partner[7] * (D_lower[16] * factor_half[7]);
-            tmpstore[3] += m_partner[7] * (D_lower[17] * factor_half[7]);
 
             tmpstore[0] += m_partner[8] * (D_lower[8] * factor_half[8]);
-            tmpstore[1] += m_partner[8] * (D_lower[14] * factor_half[8]);
-            tmpstore[2] += m_partner[8] * (D_lower[17] * factor_half[8]);
-            tmpstore[3] += m_partner[8] * (D_lower[18] * factor_half[8]);
 
             tmpstore[0] += m_partner[9] * (D_lower[9] * factor_half[9]);
+
+            tmpstore[1] += m_partner[4] * (D_lower[10] * factor_half[4]);
+
+            tmpstore[2] += m_partner[4] * (D_lower[11] * factor_half[4]);
+            tmpstore[1] += m_partner[5] * (D_lower[11] * factor_half[5]);
+
+            tmpstore[3] += m_partner[4] * (D_lower[12] * factor_half[4]);
+            tmpstore[1] += m_partner[6] * (D_lower[12] * factor_half[6]);
+
+            tmpstore[2] += m_partner[5] * (D_lower[13] * factor_half[5]);
+            tmpstore[1] += m_partner[7] * (D_lower[13] * factor_half[7]);
+
+            tmpstore[3] += m_partner[5] * (D_lower[14] * factor_half[5]);
+            tmpstore[2] += m_partner[6] * (D_lower[14] * factor_half[6]);
+            tmpstore[1] += m_partner[8] * (D_lower[14] * factor_half[8]);
+
+            tmpstore[3] += m_partner[6] * (D_lower[15] * factor_half[6]);
             tmpstore[1] += m_partner[9] * (D_lower[15] * factor_half[9]);
+
+            tmpstore[2] += m_partner[7] * (D_lower[16] * factor_half[7]);
+
+            tmpstore[3] += m_partner[7] * (D_lower[17] * factor_half[7]);
+            tmpstore[2] += m_partner[8] * (D_lower[17] * factor_half[8]);
+
+            tmpstore[3] += m_partner[8] * (D_lower[18] * factor_half[8]);
             tmpstore[2] += m_partner[9] * (D_lower[18] * factor_half[9]);
+
             tmpstore[3] += m_partner[9] * (D_lower[19] * factor_half[9]);
         }
         template <typename T>
         CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_non_rho_remainining(
             const T (&m_partner)[20], T (&tmpstore)[20], const T (&D_lower)[20]) noexcept {
             tmpstore[0] -= m_partner[10] * (D_lower[10] * factor_sixth[10]);
+
             tmpstore[0] -= m_partner[11] * (D_lower[11] * factor_sixth[11]);
+
             tmpstore[0] -= m_partner[12] * (D_lower[12] * factor_sixth[12]);
+
             tmpstore[0] -= m_partner[13] * (D_lower[13] * factor_sixth[13]);
+
             tmpstore[0] -= m_partner[14] * (D_lower[14] * factor_sixth[14]);
+
             tmpstore[0] -= m_partner[15] * (D_lower[15] * factor_sixth[15]);
+
             tmpstore[0] -= m_partner[16] * (D_lower[16] * factor_sixth[16]);
+
             tmpstore[0] -= m_partner[17] * (D_lower[17] * factor_sixth[17]);
+
             tmpstore[0] -= m_partner[18] * (D_lower[18] * factor_sixth[18]);
+
             tmpstore[0] -= m_partner[19] * (D_lower[19] * factor_sixth[19]);
         }
         template <typename T>
