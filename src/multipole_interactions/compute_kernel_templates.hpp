@@ -311,27 +311,69 @@ namespace fmm {
         }
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_non_rho_remaining(
-            const T (&m_partner)[20], T (&tmpstore)[20], const T (&D_lower)[20],
+            const T (&m_partner)[20], T (&tmpstore)[20],
             const T (&dX)[NDIM], func&& max) noexcept {
-            tmpstore[0] -= m_partner[10] * (D_lower[10] * factor_sixth[10]);
+            T X_00, X_11, X_22;
+            X_00 = dX[0] * dX[0];
+            X_11 = dX[1] * dX[1];
+            X_22 = dX[2] * dX[2];
 
-            tmpstore[0] -= m_partner[11] * (D_lower[11] * factor_sixth[11]);
+            T d0, d2, d3;
+            T current_D;
+            T r2inv = T(1.0) / max(X_00 + X_11 + X_22, T(1.0e-20));
 
-            tmpstore[0] -= m_partner[12] * (D_lower[12] * factor_sixth[12]);
+            d0 = -sqrt(r2inv);
+            d2 = -3.0 * (-d0 * r2inv) * r2inv;
+            d3 = -5.0 * d2 * r2inv;
 
-            tmpstore[0] -= m_partner[13] * (D_lower[13] * factor_sixth[13]);
+            // D_lower[10]
+            current_D = d3 * X_00 * dX[0];
+            current_D += 3.0 * d2 * dX[0];
+            tmpstore[0] -= m_partner[10] * (current_D * factor_sixth[10]);
 
-            tmpstore[0] -= m_partner[14] * (D_lower[14] * factor_sixth[14]);
+            // D_lower[11]
+            current_D = d3 * X_00 * dX[1];
+            current_D += d2 * dX[1];
+            tmpstore[0] -= m_partner[11] * (current_D * factor_sixth[11]);
 
-            tmpstore[0] -= m_partner[15] * (D_lower[15] * factor_sixth[15]);
+            // D_lower[12]
+            current_D = d3 * X_00 * dX[2];
+            current_D += d2 * dX[2];
+            tmpstore[0] -= m_partner[12] * (current_D * factor_sixth[12]);
 
-            tmpstore[0] -= m_partner[16] * (D_lower[16] * factor_sixth[16]);
+            // D_lower[13]
+            current_D = d3 * dX[0] * X_11;
+            current_D += d2 * dX[0];
+            tmpstore[0] -= m_partner[13] * (current_D * factor_sixth[13]);
 
-            tmpstore[0] -= m_partner[17] * (D_lower[17] * factor_sixth[17]);
+            // D_lower[14]
+            current_D = d3 * dX[0] * dX[1] * dX[2];
+            tmpstore[0] -= m_partner[14] * (current_D * factor_sixth[14]);
 
-            tmpstore[0] -= m_partner[18] * (D_lower[18] * factor_sixth[18]);
+            // D_lower[15]
+            current_D = d3 * dX[0] * X_22;
+            current_D += d2 * dX[0];
+            tmpstore[0] -= m_partner[15] * (current_D * factor_sixth[15]);
 
-            tmpstore[0] -= m_partner[19] * (D_lower[19] * factor_sixth[19]);
+            // D_lower[16]
+            current_D = d3 * X_11 * dX[1];
+            current_D += 3.0 * d2 * dX[1];
+            tmpstore[0] -= m_partner[16] * (current_D * factor_sixth[16]);
+
+            // D_lower[17]
+            current_D = d3 * X_11 * dX[2];
+            current_D += d2 * dX[2];
+            tmpstore[0] -= m_partner[17] * (current_D * factor_sixth[17]);
+
+            // D_lower[18]
+            current_D = d3 * dX[1] * X_22;
+            current_D += d2 * dX[1];
+            tmpstore[0] -= m_partner[18] * (current_D * factor_sixth[18]);
+
+            // D_lower[19]
+            current_D = d3 * X_22 * dX[2];
+            current_D += 3.0 * d2 * dX[2];
+            tmpstore[0] -= m_partner[19] * (current_D * factor_sixth[19]);
         }
         template <typename T>
         CUDA_CALLABLE_METHOD inline void compute_interaction_sorted_non_rho(
@@ -751,7 +793,7 @@ namespace fmm {
 
             compute_interaction_multipole_non_rho0123(m_partner, tmpstore, dX, max);
             compute_interaction_multipole_non_rho456789(m_partner, tmpstore, dX, max);
-            compute_interaction_multipole_non_rho_remaining(m_partner, tmpstore, D_lower, dX, max);
+            compute_interaction_multipole_non_rho_remaining(m_partner, tmpstore, dX, max);
         }
 
         template <typename T, typename func>
