@@ -1,4 +1,5 @@
-#include "multipole_cpu_kernel.hpp"
+#include <array>
+#include <functional>
 
 #include "../common_kernel/helper.hpp"
 #include "../common_kernel/interaction_constants.hpp"
@@ -8,8 +9,7 @@
 #include "interaction_types.hpp"
 #include "options.hpp"
 
-#include <array>
-#include <functional>
+#include "multipole_cpu_kernel.hpp"
 
 extern options opts;
 
@@ -24,8 +24,8 @@ namespace fmm {
             }
         }
 
-        void multipole_cpu_kernel::apply_stencil(const struct_of_array_data<expansion, real, 20, ENTRIES,
-                                           SOA_PADDING>& local_expansions_SoA,
+        void multipole_cpu_kernel::apply_stencil(const struct_of_array_data<expansion, real, 20,
+                                                     ENTRIES, SOA_PADDING>& local_expansions_SoA,
             const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                 center_of_masses_SoA,
             struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
@@ -159,49 +159,13 @@ namespace fmm {
 
                 m2m_vector::mask_type mask_phase_one(phase_one);
 
-                Vc::where(mask, m_partner[0]) = m2m_vector(
-                    mons.data() + interaction_partner_flat_index, Vc::flags::element_aligned);
-                mask = mask & mask_phase_one;    // do not load multipoles outside the inner stencil
-                Vc::where(mask, m_partner[0]) =
-                    m_partner[0] + local_expansions_SoA.value<0>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[1]) =
-                    local_expansions_SoA.value<1>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[2]) =
-                    local_expansions_SoA.value<2>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[3]) =
-                    local_expansions_SoA.value<3>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[4]) =
-                    local_expansions_SoA.value<4>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[5]) =
-                    local_expansions_SoA.value<5>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[6]) =
-                    local_expansions_SoA.value<6>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[7]) =
-                    local_expansions_SoA.value<7>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[8]) =
-                    local_expansions_SoA.value<8>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[9]) =
-                    local_expansions_SoA.value<9>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[10]) =
-                    local_expansions_SoA.value<10>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[11]) =
-                    local_expansions_SoA.value<11>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[12]) =
-                    local_expansions_SoA.value<12>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[13]) =
-                    local_expansions_SoA.value<13>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[14]) =
-                    local_expansions_SoA.value<14>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[15]) =
-                    local_expansions_SoA.value<15>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[16]) =
-                    local_expansions_SoA.value<16>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[17]) =
-                    local_expansions_SoA.value<17>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[18]) =
-                    local_expansions_SoA.value<18>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[19]) =
-                    local_expansions_SoA.value<19>(interaction_partner_flat_index);
+                update_mask<0, m2m_vector::mask_type, std::vector<real>,
+                            m2m_vector(&)[20]>(mask, mask_phase_one, mons, m_partner, interaction_partner_flat_index);
+
+                unrolled_SoA_load<0, 19,
+                    struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>,
+                    m2m_vector(&)[20], m2m_vector::mask_type>(
+                    local_expansions_SoA, m_partner, mask, interaction_partner_flat_index);
 
                 compute_kernel_rho(X, Y, m_partner, tmpstore, tmp_corrections, m_cell,
                     [](const m2m_vector& one, const m2m_vector& two) -> m2m_vector {
@@ -382,49 +346,13 @@ namespace fmm {
 
                 m2m_vector::mask_type mask_phase_one(phase_one);
 
-                Vc::where(mask, m_partner[0]) = m2m_vector(
-                    mons.data() + interaction_partner_flat_index, Vc::flags::element_aligned);
-                mask = mask & mask_phase_one;    // do not load multipoles outside the inner stencil
-                Vc::where(mask, m_partner[0]) =
-                    m_partner[0] + local_expansions_SoA.value<0>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[1]) =
-                    local_expansions_SoA.value<1>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[2]) =
-                    local_expansions_SoA.value<2>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[3]) =
-                    local_expansions_SoA.value<3>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[4]) =
-                    local_expansions_SoA.value<4>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[5]) =
-                    local_expansions_SoA.value<5>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[6]) =
-                    local_expansions_SoA.value<6>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[7]) =
-                    local_expansions_SoA.value<7>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[8]) =
-                    local_expansions_SoA.value<8>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[9]) =
-                    local_expansions_SoA.value<9>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[10]) =
-                    local_expansions_SoA.value<10>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[11]) =
-                    local_expansions_SoA.value<11>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[12]) =
-                    local_expansions_SoA.value<12>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[13]) =
-                    local_expansions_SoA.value<13>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[14]) =
-                    local_expansions_SoA.value<14>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[15]) =
-                    local_expansions_SoA.value<15>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[16]) =
-                    local_expansions_SoA.value<16>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[17]) =
-                    local_expansions_SoA.value<17>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[18]) =
-                    local_expansions_SoA.value<18>(interaction_partner_flat_index);
-                Vc::where(mask, m_partner[19]) =
-                    local_expansions_SoA.value<19>(interaction_partner_flat_index);
+                update_mask<0, m2m_vector::mask_type, std::vector<real>,
+                            m2m_vector(&)[20]>(mask, mask_phase_one, mons, m_partner, interaction_partner_flat_index);
+
+                unrolled_SoA_load<0, 19,
+                    struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>,
+                    m2m_vector(&)[20], m2m_vector::mask_type>(
+                    local_expansions_SoA, m_partner, mask, interaction_partner_flat_index);
 
                 compute_kernel_non_rho(X, Y, m_partner, tmpstore,
                     [](const m2m_vector& one, const m2m_vector& two) -> m2m_vector {
