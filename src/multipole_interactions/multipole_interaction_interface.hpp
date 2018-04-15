@@ -11,9 +11,9 @@
 #include "taylor.hpp"
 
 #include "../common_kernel/interaction_constants.hpp"
+#include "../common_kernel/interactions_iterators.hpp"
 #include "../common_kernel/multiindex.hpp"
 #include "../common_kernel/struct_of_array_data.hpp"
-#include "../common_kernel/interactions_iterators.hpp"
 
 namespace octotiger {
 namespace fmm {
@@ -54,6 +54,13 @@ namespace fmm {
                     local_expansions_SoA,
                 const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                     center_of_masses_SoA);
+
+            void compute_interactions_compute_block(const std::vector<real>& local_monopoles,
+                const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                    local_expansions_SoA,
+                const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+                    center_of_masses_SoA,
+                size_t x, size_t y, size_t z);
 
         protected:
             gsolve_type type;
@@ -136,8 +143,7 @@ namespace fmm {
                         const bool fullsizes = neighbor_M_ptr.size() == INNER_CELLS &&
                             neighbor_com0.size() == INNER_CELLS;
                         if (fullsizes) {
-                            iterate_inner_cells_padding(
-                                dir,
+                            iterate_inner_cells_padding(dir,
                                 [&local_expansions_SoA, &center_of_masses_SoA, &local_monopoles,
                                     neighbor_M_ptr, neighbor_com0](const multiindex<>& i,
                                     const size_t flat_index, const multiindex<>& i_unpadded,
@@ -200,8 +206,7 @@ namespace fmm {
                         std::vector<real>& neighbor_mons = *(neighbor.data.m);
                         const bool fullsizes = neighbor_mons.size() == INNER_CELLS;
                         if (fullsizes) {
-                            iterate_inner_cells_padding(
-                                dir,
+                            iterate_inner_cells_padding(dir,
                                 [&local_expansions_SoA, &center_of_masses_SoA, &local_monopoles,
                                     neighbor_mons, xbase, dx](const multiindex<>& i,
                                     const size_t flat_index, const multiindex<>& i_unpadded,
@@ -241,8 +246,7 @@ namespace fmm {
                                 local_monopoles.at(flat_index) = neighbor_mons.at(counter);
                                 counter++;
                             }
-                            iterate_inner_cells_padding(
-                                dir,
+                            iterate_inner_cells_padding(dir,
                                 [&local_expansions_SoA, &center_of_masses_SoA, &local_monopoles,
                                     neighbor_mons, xbase, dx](const multiindex<>& i,
                                     const size_t flat_index, const multiindex<>& i_unpadded,

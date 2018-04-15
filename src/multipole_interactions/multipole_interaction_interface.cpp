@@ -42,6 +42,54 @@ namespace fmm {
                 local_expansions_staging_area, center_of_masses_staging_area);
         }
 
+        void multipole_interaction_interface::compute_interactions_compute_block(
+            const std::vector<real>& local_monopoles,
+            const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                local_expansions_SoA,
+            const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+                center_of_masses_SoA,
+            size_t x, size_t y, size_t z) {
+            struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK, SOA_PADDING>
+                potential_expansions_SoA;
+            struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>
+                angular_corrections_SoA;
+
+            multipole_cpu_kernel kernel;
+            kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
+                potential_expansions_SoA, angular_corrections_SoA, local_monopoles, stencil, type,
+                x, y, z);
+
+            std::vector<expansion>& L = grid_ptr->get_L();
+            std::vector<space_vector>& L_c = grid_ptr->get_L_c();
+            auto data_c = angular_corrections_SoA.get_pod();
+            auto data = potential_expansions_SoA.get_pod();
+
+            for (auto i0 = 0; i0 < COMPUTE_BLOCK_LENGTH; ++i0) {
+                for (auto i1 = 0; i1 < COMPUTE_BLOCK_LENGTH; ++i1) {
+                    for (auto i2 = 0; i2 < COMPUTE_BLOCK_LENGTH; ++i2) {
+                        const multiindex<> cell_index_unpadded(i0, i1, i2);
+                        const int64_t cell_flat_index_unpadded =
+                            i0 * COMPUTE_BLOCK_LENGTH * COMPUTE_BLOCK_LENGTH +
+                            i1 * COMPUTE_BLOCK_LENGTH + i2;
+                        const multiindex<> cell_index(i0 + x * COMPUTE_BLOCK_LENGTH,
+                            i1 + y * COMPUTE_BLOCK_LENGTH, i2 + z * COMPUTE_BLOCK_LENGTH);
+                        const int64_t cell_flat_index = to_inner_flat_index_not_padded(cell_index);
+
+                        for (size_t component = 0; component < 20; component++) {
+                            L[cell_flat_index][component] +=
+                                data[component * (COMPUTE_BLOCK + SOA_PADDING) +
+                                    cell_flat_index_unpadded];
+                        }
+                        for (size_t component = 0; component < 3 && type == RHO; component++) {
+                            L_c[cell_flat_index][component] +=
+                                data_c[component * (COMPUTE_BLOCK + SOA_PADDING) +
+                                    cell_flat_index_unpadded];
+                        }
+                    }
+                }
+            }
+        }
+
         void multipole_interaction_interface::compute_interactions(
             std::array<bool, geo::direction::count()>& is_direction_empty,
             std::vector<neighbor_gravity_type>& all_neighbor_interaction_data,
@@ -51,63 +99,14 @@ namespace fmm {
             const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                 center_of_masses_SoA) {
             if (m2m_type == interaction_kernel_type::SOA_CPU) {
-                // struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>
-                //     potential_expansions_SoA;
-                // struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>
-                //     angular_corrections_SoA;
-
-                multipole_cpu_kernel kernel;
                 for (auto x = 0; x < 2; ++x) {
                     for (auto y = 0; y < 2; ++y) {
                         for (auto z = 0; z < 2; ++z) {
-                            struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK, SOA_PADDING>
-                                potential_expansions_SoA;
-                            struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>
-                                angular_corrections_SoA;
-                            kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
-                                potential_expansions_SoA, angular_corrections_SoA, local_monopoles,
-                                stencil, type, x, y, z);
-
-                            std::vector<expansion>& L = grid_ptr->get_L();
-                            std::vector<space_vector>& L_c = grid_ptr->get_L_c();
-                            auto data_c = angular_corrections_SoA.get_pod();
-                            auto data = potential_expansions_SoA.get_pod();
-
-                            for (auto i0 = 0; i0 < COMPUTE_BLOCK_LENGTH; ++i0) {
-                                for (auto i1 = 0; i1 < COMPUTE_BLOCK_LENGTH; ++i1) {
-                                    for (auto i2 = 0; i2 < COMPUTE_BLOCK_LENGTH; ++i2) {
-                                        const multiindex<> cell_index_unpadded(i0, i1, i2);
-                                        const int64_t cell_flat_index_unpadded =
-                                            i0 * COMPUTE_BLOCK_LENGTH * COMPUTE_BLOCK_LENGTH +
-                                            i1 * COMPUTE_BLOCK_LENGTH + i2;
-                                        const multiindex<> cell_index(i0 + x * COMPUTE_BLOCK_LENGTH,
-                                            i1 + y * COMPUTE_BLOCK_LENGTH,
-                                            i2 + z * COMPUTE_BLOCK_LENGTH);
-                                        const int64_t cell_flat_index =
-                                            to_inner_flat_index_not_padded(cell_index);
-
-                                        for (size_t component = 0; component < 20; component++) {
-                                            L[cell_flat_index][component] +=
-                                                data[component * (COMPUTE_BLOCK + SOA_PADDING) +
-                                                    cell_flat_index_unpadded];
-                                        }
-                                        for (size_t component = 0; component < 3 && type == RHO;
-                                             component++) {
-                                            L_c[cell_flat_index][component] +=
-                                                data_c[component * (COMPUTE_BLOCK + SOA_PADDING) +
-                                                    cell_flat_index_unpadded];
-                                        }
-                                    }
-                                }
-                            }
+                            compute_interactions_compute_block(local_monopoles,
+                                local_expansions_SoA, center_of_masses_SoA, x, y, z);
                         }
                     }
                 }
-
-                // if (type == RHO) {
-                //     angular_corrections_SoA.to_non_SoA(grid_ptr->get_L_c());
-                // }
-                // potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
             } else {
                 // old-style interaction calculation
                 // computes inner interactions
