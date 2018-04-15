@@ -33,6 +33,75 @@ namespace fmm {
             struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
                 angular_corrections_SoA,
             const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type) {
+            if (type == RHO) {
+                auto func = [](const m2m_vector(&X)[NDIM], const m2m_vector(&Y)[NDIM],
+                    const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                        local_expansions_SoA,
+                    const std::vector<real>& mons, m2m_vector::mask_type& mask,
+                    m2m_vector::mask_type& mask_phase_one, size_t interaction_partner_flat_index,
+                    m2m_vector(&tmpstore)[20]) {
+                    m2m_vector m_partner[20];
+                    update_mask<0, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[20]>(
+                        mask, mask_phase_one, mons, m_partner, interaction_partner_flat_index);
+
+                    unrolled_SoA_load<0, 19,
+                        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>,
+                        m2m_vector(&)[20], m2m_vector::mask_type>(
+                        local_expansions_SoA, m_partner, mask, interaction_partner_flat_index);
+
+                    compute_kernel_basic_non_rho(X, Y, m_partner, tmpstore,
+                        [](const m2m_vector& one, const m2m_vector& two) -> m2m_vector {
+                            return Vc::max(one, two);
+                        });
+                };
+                auto out_func = [](m2m_vector(&tmpstore)[20],
+                    struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+                        potential_expansions_SoA,
+                    size_t cell_flat_index_unpadded) {
+                    unrolled_SoA_write<0, 19, m2m_vector(&)[20],
+                        struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>>(
+                        tmpstore, potential_expansions_SoA, cell_flat_index_unpadded);
+                };
+                apply_stencil_function(local_expansions_SoA, center_of_masses_SoA,
+                    potential_expansions_SoA, angular_corrections_SoA, mons, stencil, type, func,
+                    out_func);
+            } else {
+                auto func = [](const m2m_vector(&X)[NDIM], const m2m_vector(&Y)[NDIM],
+                    const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                        local_expansions_SoA,
+                    const std::vector<real>& mons, m2m_vector::mask_type& mask,
+                    m2m_vector::mask_type& mask_phase_one, size_t interaction_partner_flat_index,
+                    m2m_vector(&tmpstore)[20]) {
+
+                    m2m_vector m_partner[20];
+
+                    update_mask<0, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[20]>(
+                        mask, mask_phase_one, mons, m_partner, interaction_partner_flat_index);
+
+                    unrolled_SoA_load<0, 19,
+                        struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>,
+                        m2m_vector(&)[20], m2m_vector::mask_type>(
+                        local_expansions_SoA, m_partner, mask, interaction_partner_flat_index);
+
+                    compute_kernel_non_rho(X, Y, m_partner, tmpstore,
+                        [](const m2m_vector& one, const m2m_vector& two) -> m2m_vector {
+                            return Vc::max(one, two);
+                        });
+                };
+                auto out_func = [](m2m_vector(&tmpstore)[20],
+                    struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+                        potential_expansions_SoA,
+                    size_t cell_flat_index_unpadded) {
+                    unrolled_SoA_write<0, 19, m2m_vector(&)[20],
+                        struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>>(
+                        tmpstore, potential_expansions_SoA, cell_flat_index_unpadded);
+                };
+                apply_stencil_function(local_expansions_SoA, center_of_masses_SoA,
+                    potential_expansions_SoA, angular_corrections_SoA, mons, stencil, type, func,
+                    out_func);
+            }
+
+            // legacy angular corrections call
             for (size_t outer_stencil_index = 0;
                  outer_stencil_index < stencil.stencil_elements.size();
                  outer_stencil_index += STENCIL_BLOCKING) {
@@ -43,7 +112,8 @@ namespace fmm {
                              i2 += m2m_vector::size()) {
                             const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
                                 i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
-                            // BUG: indexing has to be done with uint32_t because of Vc limitation
+                            // BUG: indexing has to be done with uint32_t because of Vc
+                            // limitation
                             const int64_t cell_flat_index =
                                 to_flat_index_padded(cell_index);    // iii0...
                             const multiindex<> cell_index_unpadded(i0, i1, i2);
@@ -61,88 +131,11 @@ namespace fmm {
                             cell_index_coarse.transform_coarse();
 
                             if (type == RHO) {
-                                auto func = [](const m2m_vector(&X)[NDIM],
-                                    const m2m_vector(&Y)[NDIM],
-                                    const struct_of_array_data<expansion, real, 20, ENTRIES,
-                                                   SOA_PADDING>& local_expansions_SoA,
-                                    const std::vector<real>& mons, m2m_vector::mask_type& mask,
-                                    m2m_vector::mask_type& mask_phase_one,
-                                    size_t interaction_partner_flat_index,
-                                    m2m_vector(&tmpstore)[20]) {
-                                    m2m_vector m_partner[20];
-                                    update_mask<0, m2m_vector::mask_type, std::vector<real>,
-                                        m2m_vector(&)[20]>(mask, mask_phase_one, mons, m_partner,
-                                        interaction_partner_flat_index);
-
-                                    unrolled_SoA_load<0, 19, struct_of_array_data<expansion, real,
-                                                                 20, ENTRIES, SOA_PADDING>,
-                                        m2m_vector(&)[20], m2m_vector::mask_type>(
-                                        local_expansions_SoA, m_partner, mask,
-                                        interaction_partner_flat_index);
-
-                                    compute_kernel_basic_non_rho(X, Y, m_partner, tmpstore,
-                                        [](const m2m_vector& one, const m2m_vector& two)
-                                            -> m2m_vector { return Vc::max(one, two); });
-                                };
-                                auto out_func = [](m2m_vector(&tmpstore)[20],
-                                    struct_of_array_data<expansion, real, 20, INNER_CELLS,
-                                                       SOA_PADDING>& potential_expansions_SoA,
-                                    size_t cell_flat_index_unpadded) {
-                                    unrolled_SoA_write<0, 19, m2m_vector(&)[20],
-                                        struct_of_array_data<expansion, real, 20, INNER_CELLS,
-                                                           SOA_PADDING>>(tmpstore,
-                                        potential_expansions_SoA, cell_flat_index_unpadded);
-                                };
-                                this->blocked_interaction_rho(local_expansions_SoA,
-                                    center_of_masses_SoA, potential_expansions_SoA, mons,
-                                    cell_index, cell_flat_index, cell_index_coarse,
-                                    cell_index_unpadded, cell_flat_index_unpadded, stencil,
-                                    outer_stencil_index, func, out_func);
                                 this->blocked_angular_corrections(local_expansions_SoA,
                                     center_of_masses_SoA, potential_expansions_SoA,
                                     angular_corrections_SoA, mons, cell_index, cell_flat_index,
                                     cell_index_coarse, cell_index_unpadded,
                                     cell_flat_index_unpadded, stencil, outer_stencil_index);
-                            } else {
-                                auto func = [](const m2m_vector(&X)[NDIM],
-                                    const m2m_vector(&Y)[NDIM],
-                                    const struct_of_array_data<expansion, real, 20, ENTRIES,
-                                                   SOA_PADDING>& local_expansions_SoA,
-                                    const std::vector<real>& mons, m2m_vector::mask_type& mask,
-                                    m2m_vector::mask_type& mask_phase_one,
-                                    size_t interaction_partner_flat_index,
-                                    m2m_vector(&tmpstore)[20]) {
-
-                                    m2m_vector m_partner[20];
-
-                                    update_mask<0, m2m_vector::mask_type, std::vector<real>,
-                                        m2m_vector(&)[20]>(mask, mask_phase_one, mons, m_partner,
-                                        interaction_partner_flat_index);
-
-                                    unrolled_SoA_load<0, 19, struct_of_array_data<expansion, real,
-                                                                 20, ENTRIES, SOA_PADDING>,
-                                        m2m_vector(&)[20], m2m_vector::mask_type>(
-                                        local_expansions_SoA, m_partner, mask,
-                                        interaction_partner_flat_index);
-
-                                    compute_kernel_non_rho(X, Y, m_partner, tmpstore,
-                                        [](const m2m_vector& one, const m2m_vector& two)
-                                            -> m2m_vector { return Vc::max(one, two); });
-                                };
-                                auto out_func = [](m2m_vector(&tmpstore)[20],
-                                    struct_of_array_data<expansion, real, 20, INNER_CELLS,
-                                                       SOA_PADDING>& potential_expansions_SoA,
-                                    size_t cell_flat_index_unpadded) {
-                                    unrolled_SoA_write<0, 19, m2m_vector(&)[20],
-                                        struct_of_array_data<expansion, real, 20, INNER_CELLS,
-                                                           SOA_PADDING>>(tmpstore,
-                                        potential_expansions_SoA, cell_flat_index_unpadded);
-                                };
-                                this->blocked_interaction_rho(local_expansions_SoA,
-                                    center_of_masses_SoA, potential_expansions_SoA, mons,
-                                    cell_index, cell_flat_index, cell_index_coarse,
-                                    cell_index_unpadded, cell_flat_index_unpadded, stencil,
-                                                              outer_stencil_index, func, out_func);
                             }
                         }
                     }
@@ -150,7 +143,49 @@ namespace fmm {
             }
         }
 
-    template <typename Func, typename Func2>
+        template <typename Func, typename Func2>
+        void multipole_cpu_kernel::apply_stencil_function(
+            const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                local_expansions_SoA,
+            const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+                center_of_masses_SoA,
+            struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+                potential_expansions_SoA,
+            struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
+                angular_corrections_SoA,
+            const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type,
+            Func&& func, Func2&& out_func) {
+            for (size_t outer_stencil_index = 0;
+                 outer_stencil_index < stencil.stencil_elements.size();
+                 outer_stencil_index += STENCIL_BLOCKING) {
+                for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
+                    for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
+                        for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION;
+                             i2 += m2m_vector::size()) {
+                            const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
+                                i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
+                            const int64_t cell_flat_index =
+                                to_flat_index_padded(cell_index);    // iii0...
+                            const multiindex<> cell_index_unpadded(i0, i1, i2);
+                            const int64_t cell_flat_index_unpadded =
+                                to_inner_flat_index_not_padded(cell_index_unpadded);
+                            multiindex<m2m_int_vector> cell_index_coarse(cell_index);
+                            for (size_t j = 0; j < m2m_int_vector::size(); j++) {
+                                cell_index_coarse.z[j] += j;
+                            }
+                            cell_index_coarse.transform_coarse();
+                            this->blocked_interaction_rho(local_expansions_SoA,
+                                center_of_masses_SoA, potential_expansions_SoA, mons, cell_index,
+                                cell_flat_index, cell_index_coarse, cell_index_unpadded,
+                                cell_flat_index_unpadded, stencil, outer_stencil_index, func,
+                                out_func);
+                        }
+                    }
+                }
+            }
+        }
+
+        template <typename Func, typename Func2>
         void multipole_cpu_kernel::blocked_interaction_rho(
             const struct_of_array_data<expansion, real, 20, ENTRIES,
                 SOA_PADDING>& __restrict__ local_expansions_SoA,
@@ -163,7 +198,7 @@ namespace fmm {
             const multiindex<m2m_int_vector>& __restrict__ cell_index_coarse,
             const multiindex<>& __restrict__ cell_index_unpadded,
             const size_t cell_flat_index_unpadded, const two_phase_stencil& __restrict__ stencil,
-            const size_t outer_stencil_index, Func&& func, Func2 && out_func) {
+            const size_t outer_stencil_index, Func&& func, Func2&& out_func) {
             m2m_vector X[3];
             X[0] = center_of_masses_SoA.value<0>(cell_flat_index);
             X[1] = center_of_masses_SoA.value<1>(cell_flat_index);

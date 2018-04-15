@@ -53,6 +53,18 @@ namespace fmm {
                 const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
                 const two_phase_stencil& stencil, const size_t outer_stencil_index);
 
+            template <typename Func, typename Func2>
+            void apply_stencil_function(const struct_of_array_data<expansion, real, 20, ENTRIES,
+                                            SOA_PADDING>& local_expansions_SoA,
+                const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
+                    center_of_masses_SoA,
+                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+                    potential_expansions_SoA,
+                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
+                    angular_corrections_SoA,
+                const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type,
+                Func&& func, Func2&& out_func);
+
         public:
             multipole_cpu_kernel(void);
 
