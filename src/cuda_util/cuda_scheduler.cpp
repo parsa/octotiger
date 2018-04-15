@@ -89,9 +89,9 @@ namespace fmm {
                 util::cuda_helper::cuda_error(
                     cudaMalloc((void**) &(env.device_center_of_masses), center_of_masses_size));
                 util::cuda_helper::cuda_error(cudaMalloc(
-                    (void**) &(env.device_potential_expansions), potential_expansions_size));
+                    (void**) &(env.device_potential_expansions), 3 * potential_expansions_size));
                 util::cuda_helper::cuda_error(cudaMalloc(
-                    (void**) &(env.device_angular_corrections), angular_corrections_size));
+                    (void**) &(env.device_angular_corrections), 3 * angular_corrections_size));
                 util::cuda_helper::cuda_error(
                     cudaMalloc((void**) &(env.device_stencil), stencil_size));
                 util::cuda_helper::cuda_error(
