@@ -869,6 +869,45 @@ namespace fmm {
             compute_interaction_multipole_non_rho456789(m_partner, tmpstore, dX, max);
             compute_interaction_multipole_non_rho_remaining(m_partner, tmpstore, dX, max);
         }
+
+        template <typename T, typename func>
+        CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho0123_extra(const T (&X)[NDIM], const T (&Y)[NDIM],
+            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T dX[NDIM];
+            dX[0] = X[0] - Y[0];
+            dX[1] = X[1] - Y[1];
+            dX[2] = X[2] - Y[2];
+            compute_interaction_multipole_non_rho0123_extra(m_partner, tmpstore, dX, max);
+        }
+
+        template <typename T, typename func>
+        CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho0123(const T (&X)[NDIM], const T (&Y)[NDIM],
+            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T dX[NDIM];
+            dX[0] = X[0] - Y[0];
+            dX[1] = X[1] - Y[1];
+            dX[2] = X[2] - Y[2];
+            compute_interaction_multipole_non_rho0123(m_partner, tmpstore, dX, max);
+        }
+
+        template <typename T, typename func>
+        CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho45678(const T (&X)[NDIM], const T (&Y)[NDIM],
+            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T dX[NDIM];
+            dX[0] = X[0] - Y[0];
+            dX[1] = X[1] - Y[1];
+            dX[2] = X[2] - Y[2];
+            compute_interaction_multipole_non_rho456789(m_partner, tmpstore, dX, max);
+        }
+        template <typename T, typename func>
+        CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho_remaining(const T (&X)[NDIM], const T (&Y)[NDIM],
+            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T dX[NDIM];
+            dX[0] = X[0] - Y[0];
+            dX[1] = X[1] - Y[1];
+            dX[2] = X[2] - Y[2];
+            compute_interaction_multipole_non_rho_remaining(m_partner, tmpstore, dX, max);
+        }
     }    // namespace multipole_interactions
 }    // namespace fmm
 }    // namespace octotiger
