@@ -48,7 +48,7 @@ namespace fmm {
                 local_expansions_SoA,
             const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                 center_of_masses_SoA,
-            size_t x, size_t y, size_t z) {
+            size_t x, size_t y) {
             struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK, SOA_PADDING>
                 potential_expansions_SoA;
             struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>
@@ -57,7 +57,7 @@ namespace fmm {
             multipole_cpu_kernel kernel;
             kernel.apply_stencil(local_expansions_SoA, center_of_masses_SoA,
                 potential_expansions_SoA, angular_corrections_SoA, local_monopoles, stencil, type,
-                x, y, z);
+                x, y);
 
             std::vector<expansion>& L = grid_ptr->get_L();
             std::vector<space_vector>& L_c = grid_ptr->get_L_c();
@@ -66,13 +66,13 @@ namespace fmm {
 
             for (auto i0 = 0; i0 < COMPUTE_BLOCK_LENGTH; ++i0) {
                 for (auto i1 = 0; i1 < COMPUTE_BLOCK_LENGTH; ++i1) {
-                    for (auto i2 = 0; i2 < COMPUTE_BLOCK_LENGTH; ++i2) {
+                    for (auto i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; ++i2) {
                         const multiindex<> cell_index_unpadded(i0, i1, i2);
                         const int64_t cell_flat_index_unpadded =
-                            i0 * COMPUTE_BLOCK_LENGTH * COMPUTE_BLOCK_LENGTH +
-                            i1 * COMPUTE_BLOCK_LENGTH + i2;
+                            i0 * COMPUTE_BLOCK_LENGTH * INNER_CELLS_PER_DIRECTION +
+                            i1 * INNER_CELLS_PER_DIRECTION + i2;
                         const multiindex<> cell_index(i0 + x * COMPUTE_BLOCK_LENGTH,
-                            i1 + y * COMPUTE_BLOCK_LENGTH, i2 + z * COMPUTE_BLOCK_LENGTH);
+                            i1 + y * COMPUTE_BLOCK_LENGTH, i2);
                         const int64_t cell_flat_index = to_inner_flat_index_not_padded(cell_index);
 
                         for (size_t component = 0; component < 20; component++) {
@@ -101,10 +101,8 @@ namespace fmm {
             if (m2m_type == interaction_kernel_type::SOA_CPU) {
                 for (auto x = 0; x < 2; ++x) {
                     for (auto y = 0; y < 2; ++y) {
-                        for (auto z = 0; z < 2; ++z) {
                             compute_interactions_compute_block(local_monopoles,
-                                local_expansions_SoA, center_of_masses_SoA, x, y, z);
-                        }
+                                local_expansions_SoA, center_of_masses_SoA, x, y);
                     }
                 }
             } else {

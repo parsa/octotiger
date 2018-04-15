@@ -34,25 +34,26 @@ namespace fmm {
             struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>&
                 angular_corrections_SoA,
             const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type,
-            size_t id_x, size_t id_y, size_t id_z) {
+            size_t id_x, size_t id_y) {
             for (size_t outer_stencil_index = 0;
                  outer_stencil_index < stencil.stencil_elements.size();
                  outer_stencil_index += STENCIL_BLOCKING) {
                 for (size_t i0 = 0; i0 < COMPUTE_BLOCK_LENGTH; i0++) {
                     for (size_t i1 = 0; i1 < COMPUTE_BLOCK_LENGTH; i1++) {
                         // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
-                        for (size_t i2 = 0; i2 < COMPUTE_BLOCK_LENGTH; i2 += m2m_vector::size()) {
+                        for (size_t i2 = 0; i2 < INNER_CELLS_PADDING_DEPTH;
+                             i2 += m2m_vector::size()) {
                             const multiindex<> cell_index(
                                 i0 + id_x * COMPUTE_BLOCK_LENGTH + INNER_CELLS_PADDING_DEPTH,
                                 i1 + id_y * COMPUTE_BLOCK_LENGTH + INNER_CELLS_PADDING_DEPTH,
-                                i2 + id_z * COMPUTE_BLOCK_LENGTH + INNER_CELLS_PADDING_DEPTH);
+                                i2 + INNER_CELLS_PADDING_DEPTH);
                             // BUG: indexing has to be done with uint32_t because of Vc limitation
                             const int64_t cell_flat_index =
                                 to_flat_index_padded(cell_index);    // iii0...
                             const multiindex<> cell_index_unpadded(i0, i1, i2);
                             const int64_t cell_flat_index_unpadded =
-                                i0 * COMPUTE_BLOCK_LENGTH * COMPUTE_BLOCK_LENGTH +
-                                i1 * COMPUTE_BLOCK_LENGTH + i2;
+                                i0 * COMPUTE_BLOCK_LENGTH * INNER_CELLS_PER_DIRECTION +
+                                i1 * INNER_CELLS_PER_DIRECTION + i2;
 
                             // indices on coarser level (for outer stencil boundary)
                             // implicitly broadcasts to vector

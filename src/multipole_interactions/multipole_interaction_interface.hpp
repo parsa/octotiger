@@ -60,7 +60,7 @@ namespace fmm {
                     local_expansions_SoA,
                 const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                     center_of_masses_SoA,
-                size_t x, size_t y, size_t z);
+                size_t x, size_t y);
 
         protected:
             gsolve_type type;

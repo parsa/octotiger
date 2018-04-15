@@ -25,7 +25,7 @@ namespace fmm {
     // number of expansions in each cell per direction
     constexpr int64_t INNER_CELLS_PER_DIRECTION = INX;    // 8
     constexpr int64_t COMPUTE_BLOCK_LENGTH = 4;
-    constexpr int64_t COMPUTE_BLOCK = detail::const_pow(COMPUTE_BLOCK_LENGTH, DIMENSION);
+    constexpr int64_t COMPUTE_BLOCK = COMPUTE_BLOCK_LENGTH * COMPUTE_BLOCK_LENGTH * INNER_CELLS_PER_DIRECTION;
 
     // number of expansions in each cell (inner cells)
     constexpr uint64_t INNER_CELLS = detail::const_pow(INNER_CELLS_PER_DIRECTION, DIMENSION);

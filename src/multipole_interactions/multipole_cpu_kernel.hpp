@@ -75,7 +75,7 @@ namespace fmm {
                 struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>&
                     angular_corrections_SoA,
                 const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type,
-                size_t id_x, size_t id_y, size_t id_z);
+                size_t id_x, size_t id_y);
         };
 
     }    // namespace multipole_interactions
