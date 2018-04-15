@@ -24,31 +24,35 @@ namespace fmm {
             }
         }
 
-        void multipole_cpu_kernel::apply_stencil(const struct_of_array_data<expansion, real, 20, ENTRIES,
-                                           SOA_PADDING>& local_expansions_SoA,
+        void multipole_cpu_kernel::apply_stencil(
+            const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                local_expansions_SoA,
             const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                 center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+            struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK, SOA_PADDING>&
                 potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
+            struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>&
                 angular_corrections_SoA,
-            const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type) {
+            const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type,
+            size_t id_x, size_t id_y, size_t id_z) {
             for (size_t outer_stencil_index = 0;
                  outer_stencil_index < stencil.stencil_elements.size();
                  outer_stencil_index += STENCIL_BLOCKING) {
-                for (size_t i0 = 0; i0 < INNER_CELLS_PER_DIRECTION; i0++) {
-                    for (size_t i1 = 0; i1 < INNER_CELLS_PER_DIRECTION; i1++) {
+                for (size_t i0 = 0; i0 < COMPUTE_BLOCK_LENGTH; i0++) {
+                    for (size_t i1 = 0; i1 < COMPUTE_BLOCK_LENGTH; i1++) {
                         // for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; i2++) {
-                        for (size_t i2 = 0; i2 < INNER_CELLS_PER_DIRECTION;
-                             i2 += m2m_vector::size()) {
-                            const multiindex<> cell_index(i0 + INNER_CELLS_PADDING_DEPTH,
-                                i1 + INNER_CELLS_PADDING_DEPTH, i2 + INNER_CELLS_PADDING_DEPTH);
+                        for (size_t i2 = 0; i2 < COMPUTE_BLOCK_LENGTH; i2 += m2m_vector::size()) {
+                            const multiindex<> cell_index(
+                                i0 + id_x * COMPUTE_BLOCK_LENGTH + INNER_CELLS_PADDING_DEPTH,
+                                i1 + id_y * COMPUTE_BLOCK_LENGTH + INNER_CELLS_PADDING_DEPTH,
+                                i2 + id_z * COMPUTE_BLOCK_LENGTH + INNER_CELLS_PADDING_DEPTH);
                             // BUG: indexing has to be done with uint32_t because of Vc limitation
                             const int64_t cell_flat_index =
                                 to_flat_index_padded(cell_index);    // iii0...
                             const multiindex<> cell_index_unpadded(i0, i1, i2);
                             const int64_t cell_flat_index_unpadded =
-                                to_inner_flat_index_not_padded(cell_index_unpadded);
+                                i0 * COMPUTE_BLOCK_LENGTH * COMPUTE_BLOCK_LENGTH +
+                                i1 * COMPUTE_BLOCK_LENGTH + i2;
 
                             // indices on coarser level (for outer stencil boundary)
                             // implicitly broadcasts to vector
@@ -84,9 +88,9 @@ namespace fmm {
                 SOA_PADDING>& __restrict__ local_expansions_SoA,
             const struct_of_array_data<space_vector, real, 3, ENTRIES,
                 SOA_PADDING>& __restrict__ center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, INNER_CELLS,
+            struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK,
                 SOA_PADDING>& __restrict__ potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, INNER_CELLS,
+            struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK,
                 SOA_PADDING>& __restrict__ angular_corrections_SoA,
             const std::vector<real>& mons, const multiindex<>& __restrict__ cell_index,
             const size_t cell_flat_index,
@@ -332,9 +336,9 @@ namespace fmm {
                 local_expansions_SoA,
             const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                 center_of_masses_SoA,
-            struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+            struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK, SOA_PADDING>&
                 potential_expansions_SoA,
-            struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
+            struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>&
                 angular_corrections_SoA,
             const std::vector<real>& mons, const multiindex<>& cell_index,
             const size_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,

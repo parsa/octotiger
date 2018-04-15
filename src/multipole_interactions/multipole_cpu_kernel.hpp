@@ -25,13 +25,14 @@ namespace fmm {
             m2m_int_vector offset_vector;
 
             /// Executes a small block of RHO interactions (size is controlled by STENCIL_BLOCKING)
-            void blocked_interaction_rho(const struct_of_array_data<expansion, real, 20, ENTRIES,
-                                             SOA_PADDING>& local_expansions_SoA,
+            void blocked_interaction_rho(
+                const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                    local_expansions_SoA,
                 const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                     center_of_masses_SoA,
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+                struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK, SOA_PADDING>&
                     potential_expansions_SoA,
-                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
+                struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>&
                     angular_corrections_SoA,
                 const std::vector<real>& mons, const multiindex<>& cell_index,
                 const size_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
@@ -40,13 +41,14 @@ namespace fmm {
 
             /// Executes a small block of non-RHO interactions (size is controlled by
             /// STENCIL_BLOCKING)
-            void blocked_interaction_non_rho(const struct_of_array_data<expansion, real, 20,
-                                                 ENTRIES, SOA_PADDING>& local_expansions_SoA,
+            void blocked_interaction_non_rho(
+                const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                    local_expansions_SoA,
                 const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                     center_of_masses_SoA,
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+                struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK, SOA_PADDING>&
                     potential_expansions_SoA,
-                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
+                struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>&
                     angular_corrections_SoA,
                 const std::vector<real>& mons, const multiindex<>& cell_index,
                 const size_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
@@ -63,15 +65,17 @@ namespace fmm {
             multipole_cpu_kernel operator=(const multipole_cpu_kernel& other) = delete;
 
             /// Calculate all multipole interactions for this kernel (runs the kernel)
-            void apply_stencil(const struct_of_array_data<expansion, real, 20, ENTRIES,
-                                   SOA_PADDING>& local_expansions_SoA,
+            void apply_stencil(
+                const struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>&
+                    local_expansions_SoA,
                 const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                     center_of_masses_SoA,
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
+                struct_of_array_data<expansion, real, 20, COMPUTE_BLOCK, SOA_PADDING>&
                     potential_expansions_SoA,
-                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
+                struct_of_array_data<space_vector, real, 3, COMPUTE_BLOCK, SOA_PADDING>&
                     angular_corrections_SoA,
-                const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type);
+                const std::vector<real>& mons, const two_phase_stencil& stencil, gsolve_type type,
+                size_t id_x, size_t id_y, size_t id_z);
         };
 
     }    // namespace multipole_interactions
