@@ -27,35 +27,20 @@ namespace fmm {
 
             /// Executes a small block of RHO interactions (size is controlled by
             /// STENCIL_BLOCKING)
+            template <typename Func, typename Func2>
             void blocked_interaction_rho(const struct_of_array_data<expansion, real, 20, ENTRIES,
                                              SOA_PADDING>& local_expansions_SoA,
                 const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                     center_of_masses_SoA,
                 struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
                     potential_expansions_SoA,
-                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
-                    angular_corrections_SoA,
                 const std::vector<real>& mons, const multiindex<>& cell_index,
                 const size_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
                 const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
-                const two_phase_stencil& stencil, const size_t outer_stencil_index);
+                const two_phase_stencil& stencil, const size_t outer_stencil_index, Func&& func,
+                Func2&& out_func);
 
-            void blocked_angular_corrections(const struct_of_array_data<expansion, real, 20, ENTRIES,
-                                             SOA_PADDING>& local_expansions_SoA,
-                const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
-                    center_of_masses_SoA,
-                struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
-                    potential_expansions_SoA,
-                struct_of_array_data<space_vector, real, 3, INNER_CELLS, SOA_PADDING>&
-                    angular_corrections_SoA,
-                const std::vector<real>& mons, const multiindex<>& cell_index,
-                const size_t cell_flat_index, const multiindex<m2m_int_vector>& cell_index_coarse,
-                const multiindex<>& cell_index_unpadded, const size_t cell_flat_index_unpadded,
-                const two_phase_stencil& stencil, const size_t outer_stencil_index);
-
-            /// Executes a small block of non-RHO interactions (size is controlled by
-            /// STENCIL_BLOCKING)
-            void blocked_interaction_non_rho(const struct_of_array_data<expansion, real, 20,
+            void blocked_angular_corrections(const struct_of_array_data<expansion, real, 20,
                                                  ENTRIES, SOA_PADDING>& local_expansions_SoA,
                 const struct_of_array_data<space_vector, real, 3, ENTRIES, SOA_PADDING>&
                     center_of_masses_SoA,
@@ -134,15 +119,14 @@ namespace fmm {
         };
 
         template <size_t startindex, size_t endindex, typename in_t, typename out_t>
-        struct unrolled_SoA_write
-            : unrolled_SoA_write<startindex, endindex - 1, in_t, out_t>
+        struct unrolled_SoA_write : unrolled_SoA_write<startindex, endindex - 1, in_t, out_t>
         {
             unrolled_SoA_write(in_t& tmpstore, out_t& potential_expansions_SoA,
                 const size_t cell_flat_index_unpadded)
               : unrolled_SoA_write<startindex, endindex - 1, in_t, out_t>(
                     tmpstore, potential_expansions_SoA, cell_flat_index_unpadded) {
-                tmpstore[endindex] =
-                    tmpstore[endindex] + potential_expansions_SoA.template value<endindex>(cell_flat_index_unpadded);
+                tmpstore[endindex] = tmpstore[endindex] +
+                    potential_expansions_SoA.template value<endindex>(cell_flat_index_unpadded);
                 tmpstore[endindex].memstore(
                     potential_expansions_SoA.template pointer<endindex>(cell_flat_index_unpadded),
                     Vc::flags::element_aligned);
@@ -153,9 +137,9 @@ namespace fmm {
         struct unrolled_SoA_write<0, 0, in_t, out_t>
         {
             unrolled_SoA_write(in_t& tmpstore, out_t& potential_expansions_SoA,
-                                        const size_t cell_flat_index_unpadded) {
-                tmpstore[0] =
-                    tmpstore[0] + potential_expansions_SoA.template value<0>(cell_flat_index_unpadded);
+                const size_t cell_flat_index_unpadded) {
+                tmpstore[0] = tmpstore[0] +
+                    potential_expansions_SoA.template value<0>(cell_flat_index_unpadded);
                 tmpstore[0].memstore(
                     potential_expansions_SoA.template pointer<0>(cell_flat_index_unpadded),
                     Vc::flags::element_aligned);

@@ -810,7 +810,7 @@ namespace fmm {
         }
 
         template <typename T, typename func>
-        CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho(T (&X)[NDIM], T (&Y)[NDIM],
+        CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho(const T (&X)[NDIM], const T (&Y)[NDIM],
             T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
             T dX[NDIM];
             dX[0] = X[0] - Y[0];
@@ -847,7 +847,7 @@ namespace fmm {
         }
 
         template <typename T, typename func>
-        CUDA_CALLABLE_METHOD inline void compute_kernel_basic_non_rho(T (&X)[NDIM], T (&Y)[NDIM],
+        CUDA_CALLABLE_METHOD inline void compute_kernel_basic_non_rho(const T (&X)[NDIM], const T (&Y)[NDIM],
             T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
             T dX[NDIM];
             dX[0] = X[0] - Y[0];
