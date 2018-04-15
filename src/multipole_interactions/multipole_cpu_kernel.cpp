@@ -58,7 +58,7 @@ namespace fmm {
                     struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
                         potential_expansions_SoA,
                     size_t cell_flat_index_unpadded) {
-                    unrolled_SoA_write<0, 19, m2m_vector(&)[20],
+                    unrolled_SoA_write<0, 3, m2m_vector(&)[20],
                         struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>>(
                         tmpstore, potential_expansions_SoA, cell_flat_index_unpadded);
                 };
@@ -122,7 +122,7 @@ namespace fmm {
                 struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
                     potential_expansions_SoA,
                 size_t cell_flat_index_unpadded) {
-                unrolled_SoA_write<0, 19, m2m_vector(&)[20],
+                unrolled_SoA_write<0, 3, m2m_vector(&)[20],
                     struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>>(
                     tmpstore, potential_expansions_SoA, cell_flat_index_unpadded);
             };
@@ -154,7 +154,7 @@ namespace fmm {
                 struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>&
                     potential_expansions_SoA,
                 size_t cell_flat_index_unpadded) {
-                unrolled_SoA_write<0, 19, m2m_vector(&)[20],
+                unrolled_SoA_write<0, 3, m2m_vector(&)[20],
                     struct_of_array_data<expansion, real, 20, INNER_CELLS, SOA_PADDING>>(
                     tmpstore, potential_expansions_SoA, cell_flat_index_unpadded);
             };
