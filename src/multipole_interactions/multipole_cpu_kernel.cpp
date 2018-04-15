@@ -40,13 +40,13 @@ namespace fmm {
                     const std::vector<real>& mons, m2m_vector::mask_type& mask,
                     m2m_vector::mask_type& mask_phase_one, size_t interaction_partner_flat_index,
                     m2m_vector(&tmpstore)[20]) {
-                    m2m_vector m_partner[20];
-                    update_mask<0, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[20]>(
+                    m2m_vector m_partner[4];
+                    update_mask<0, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[4]>(
                         mask, mask_phase_one, mons, m_partner, interaction_partner_flat_index);
 
-                    unrolled_SoA_load<0, 19,
+                    unrolled_SoA_load<0, 3,
                         struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>,
-                        m2m_vector(&)[20], m2m_vector::mask_type>(
+                        m2m_vector(&)[4], m2m_vector::mask_type>(
                         local_expansions_SoA, m_partner, mask, interaction_partner_flat_index);
 
                     compute_kernel_non_rho0123_extra(X, Y, m_partner, tmpstore,
@@ -72,13 +72,13 @@ namespace fmm {
                 const std::vector<real>& mons, m2m_vector::mask_type& mask,
                 m2m_vector::mask_type& mask_phase_one, size_t interaction_partner_flat_index,
                 m2m_vector(&tmpstore)[20]) {
-                m2m_vector m_partner[20];
-                update_mask<0, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[20]>(
+                m2m_vector m_partner[4];
+                update_mask<0, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[4]>(
                     mask, mask_phase_one, mons, m_partner, interaction_partner_flat_index);
 
-                unrolled_SoA_load<0, 19,
+                unrolled_SoA_load<0, 3,
                     struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>,
-                    m2m_vector(&)[20], m2m_vector::mask_type>(
+                    m2m_vector(&)[4], m2m_vector::mask_type>(
                     local_expansions_SoA, m_partner, mask, interaction_partner_flat_index);
 
                 compute_kernel_non_rho0123(X, Y, m_partner, tmpstore,
@@ -104,13 +104,13 @@ namespace fmm {
                 const std::vector<real>& mons, m2m_vector::mask_type& mask,
                 m2m_vector::mask_type& mask_phase_one, size_t interaction_partner_flat_index,
                 m2m_vector(&tmpstore)[20]) {
-                m2m_vector m_partner[20];
-                update_mask<0, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[20]>(
+                m2m_vector m_partner[6];
+                update_mask<4, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[6]>(
                     mask, mask_phase_one, mons, m_partner, interaction_partner_flat_index);
 
-                unrolled_SoA_load<0, 19,
+                unrolled_SoA_load<4, 9,
                     struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>,
-                    m2m_vector(&)[20], m2m_vector::mask_type>(
+                    m2m_vector(&)[6], m2m_vector::mask_type>(
                     local_expansions_SoA, m_partner, mask, interaction_partner_flat_index);
 
                 compute_kernel_non_rho45678(X, Y, m_partner, tmpstore,
@@ -136,13 +136,13 @@ namespace fmm {
                 const std::vector<real>& mons, m2m_vector::mask_type& mask,
                 m2m_vector::mask_type& mask_phase_one, size_t interaction_partner_flat_index,
                 m2m_vector(&tmpstore)[20]) {
-                m2m_vector m_partner[20];
-                update_mask<0, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[20]>(
+                m2m_vector m_partner[10];
+                update_mask<10, m2m_vector::mask_type, std::vector<real>, m2m_vector(&)[10]>(
                     mask, mask_phase_one, mons, m_partner, interaction_partner_flat_index);
 
-                unrolled_SoA_load<0, 19,
+                unrolled_SoA_load<10, 19,
                     struct_of_array_data<expansion, real, 20, ENTRIES, SOA_PADDING>,
-                    m2m_vector(&)[20], m2m_vector::mask_type>(
+                    m2m_vector(&)[10], m2m_vector::mask_type>(
                     local_expansions_SoA, m_partner, mask, interaction_partner_flat_index);
 
                 compute_kernel_non_rho_remaining(X, Y, m_partner, tmpstore,

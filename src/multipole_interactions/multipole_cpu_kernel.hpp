@@ -115,7 +115,7 @@ namespace fmm {
                 const mask_t& mask, const size_t interaction_partner_flat_index)
               : unrolled_SoA_load<startindex, endindex - 1, in_t, out_t, mask_t>(
                     local_expansions_SoA, m_partner, mask, interaction_partner_flat_index) {
-                Vc::where(mask, m_partner[endindex]) =
+                Vc::where(mask, m_partner[endindex-startindex]) =
                     local_expansions_SoA.template value<endindex>(interaction_partner_flat_index);
             }
         };
@@ -127,6 +127,24 @@ namespace fmm {
                 const mask_t& mask, const size_t interaction_partner_flat_index) {
                 Vc::where(mask, m_partner[0]) +=
                     local_expansions_SoA.template value<0>(interaction_partner_flat_index);
+            }
+        };
+        template <typename in_t, typename out_t, typename mask_t>
+        struct unrolled_SoA_load<4, 4, in_t, out_t, mask_t>
+        {
+            unrolled_SoA_load(const in_t& local_expansions_SoA, out_t& m_partner,
+                const mask_t& mask, const size_t interaction_partner_flat_index) {
+                Vc::where(mask, m_partner[0]) =
+                    local_expansions_SoA.template value<4>(interaction_partner_flat_index);
+            }
+        };
+        template <typename in_t, typename out_t, typename mask_t>
+        struct unrolled_SoA_load<10, 10, in_t, out_t, mask_t>
+        {
+            unrolled_SoA_load(const in_t& local_expansions_SoA, out_t& m_partner,
+                const mask_t& mask, const size_t interaction_partner_flat_index) {
+                Vc::where(mask, m_partner[0]) =
+                    local_expansions_SoA.template value<10>(interaction_partner_flat_index);
             }
         };
 

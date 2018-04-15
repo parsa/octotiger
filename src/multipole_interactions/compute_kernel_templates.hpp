@@ -82,7 +82,7 @@ namespace fmm {
         }
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_non_rho0123_extra(
-            const T (&m_partner)[20], T (&tmpstore)[20], const T (&dX)[NDIM], func&& max) noexcept {
+            const T (&m_partner)[4], T (&tmpstore)[20], const T (&dX)[NDIM], func&& max) noexcept {
             T X_00, X_11, X_22;
             X_00 = dX[0] * dX[0];
             X_11 = dX[1] * dX[1];
@@ -137,7 +137,7 @@ namespace fmm {
         }
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_non_rho0123(
-            const T (&m_partner)[20], T (&tmpstore)[20], const T (&dX)[NDIM], func&& max) noexcept {
+            const T (&m_partner)[4], T (&tmpstore)[20], const T (&dX)[NDIM], func&& max) noexcept {
             T X_00, X_11, X_22;
             X_00 = dX[0] * dX[0];
             X_11 = dX[1] * dX[1];
@@ -260,7 +260,7 @@ namespace fmm {
 
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_non_rho456789(
-            const T (&m_partner)[20], T (&tmpstore)[20], const T (&dX)[NDIM], func&& max) noexcept {
+            const T (&m_partner)[6], T (&tmpstore)[20], const T (&dX)[NDIM], func&& max) noexcept {
             T X_00, X_11, X_22;
             X_00 = dX[0] * dX[0];
             X_11 = dX[1] * dX[1];
@@ -277,90 +277,90 @@ namespace fmm {
             // D_lower[4]
             current_D = d2 * X_00;
             current_D += (-d0 * r2inv);
-            tmpstore[0] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[0] += m_partner[0] * (current_D * factor_half[4]);
 
             // D_lower[5]
             current_D = d2 * dX[0] * dX[1];
-            tmpstore[0] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[0] += m_partner[1] * (current_D * factor_half[5]);
 
             // D_lower[6]
             current_D = d2 * dX[0] * dX[2];
-            tmpstore[0] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[0] += m_partner[2] * (current_D * factor_half[6]);
 
             // D_lower[7]
             current_D = d2 * X_11;
             current_D += (-d0 * r2inv);
-            tmpstore[0] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[0] += m_partner[3] * (current_D * factor_half[7]);
 
             // D_lower[8]
             current_D = d2 * dX[1] * dX[2];
-            tmpstore[0] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[0] += m_partner[4] * (current_D * factor_half[8]);
 
             // D_lower[9]
             current_D = d2 * X_22;
             current_D += (-d0 * r2inv);
-            tmpstore[0] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[0] += m_partner[5] * (current_D * factor_half[9]);
 
             // D_lower[10]
             current_D = d3 * X_00 * dX[0];
             current_D += 3.0 * d2 * dX[0];
-            tmpstore[1] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[1] += m_partner[0] * (current_D * factor_half[4]);
 
             // D_lower[11]
             current_D = d3 * X_00 * dX[1];
             current_D += d2 * dX[1];
-            tmpstore[2] += m_partner[4] * (current_D * factor_half[4]);
-            tmpstore[1] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[2] += m_partner[0] * (current_D * factor_half[4]);
+            tmpstore[1] += m_partner[1] * (current_D * factor_half[5]);
 
             // D_lower[12]
             current_D = d3 * X_00 * dX[2];
             current_D += d2 * dX[2];
-            tmpstore[3] += m_partner[4] * (current_D * factor_half[4]);
-            tmpstore[1] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[3] += m_partner[0] * (current_D * factor_half[4]);
+            tmpstore[1] += m_partner[2] * (current_D * factor_half[6]);
 
             // D_lower[13]
             current_D = d3 * dX[0] * X_11;
             current_D += d2 * dX[0];
-            tmpstore[2] += m_partner[5] * (current_D * factor_half[5]);
-            tmpstore[1] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[2] += m_partner[1] * (current_D * factor_half[5]);
+            tmpstore[1] += m_partner[3] * (current_D * factor_half[7]);
 
             // D_lower[14]
             current_D = d3 * dX[0] * dX[1] * dX[2];
-            tmpstore[3] += m_partner[5] * (current_D * factor_half[5]);
-            tmpstore[2] += m_partner[6] * (current_D * factor_half[6]);
-            tmpstore[1] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[3] += m_partner[1] * (current_D * factor_half[5]);
+            tmpstore[2] += m_partner[2] * (current_D * factor_half[6]);
+            tmpstore[1] += m_partner[4] * (current_D * factor_half[8]);
 
             // D_lower[15]
             current_D = d3 * dX[0] * X_22;
             current_D += d2 * dX[0];
-            tmpstore[3] += m_partner[6] * (current_D * factor_half[6]);
-            tmpstore[1] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[3] += m_partner[2] * (current_D * factor_half[6]);
+            tmpstore[1] += m_partner[5] * (current_D * factor_half[9]);
 
             // D_lower[16]
             current_D = d3 * X_11 * dX[1];
             current_D += 3.0 * d2 * dX[1];
-            tmpstore[2] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[2] += m_partner[3] * (current_D * factor_half[7]);
 
             // D_lower[17]
             current_D = d3 * X_11 * dX[2];
             current_D += d2 * dX[2];
-            tmpstore[3] += m_partner[7] * (current_D * factor_half[7]);
-            tmpstore[2] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[3] += m_partner[3] * (current_D * factor_half[7]);
+            tmpstore[2] += m_partner[4] * (current_D * factor_half[8]);
 
             // D_lower[18]
             current_D = d3 * dX[1] * X_22;
             current_D += d2 * dX[1];
-            tmpstore[3] += m_partner[8] * (current_D * factor_half[8]);
-            tmpstore[2] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[3] += m_partner[4] * (current_D * factor_half[8]);
+            tmpstore[2] += m_partner[5] * (current_D * factor_half[9]);
 
             // D_lower[19]
             current_D = d3 * X_22 * dX[2];
             current_D += 3.0 * d2 * dX[2];
-            tmpstore[3] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[3] += m_partner[5] * (current_D * factor_half[9]);
         }
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_non_rho_remaining(
-            const T (&m_partner)[20], T (&tmpstore)[20],
+            const T (&m_partner)[10], T (&tmpstore)[20],
             const T (&dX)[NDIM], func&& max) noexcept {
             T X_00, X_11, X_22;
             X_00 = dX[0] * dX[0];
@@ -378,51 +378,51 @@ namespace fmm {
             // D_lower[10]
             current_D = d3 * X_00 * dX[0];
             current_D += 3.0 * d2 * dX[0];
-            tmpstore[0] -= m_partner[10] * (current_D * factor_sixth[10]);
+            tmpstore[0] -= m_partner[0] * (current_D * factor_sixth[10]);
 
             // D_lower[11]
             current_D = d3 * X_00 * dX[1];
             current_D += d2 * dX[1];
-            tmpstore[0] -= m_partner[11] * (current_D * factor_sixth[11]);
+            tmpstore[0] -= m_partner[1] * (current_D * factor_sixth[11]);
 
             // D_lower[12]
             current_D = d3 * X_00 * dX[2];
             current_D += d2 * dX[2];
-            tmpstore[0] -= m_partner[12] * (current_D * factor_sixth[12]);
+            tmpstore[0] -= m_partner[2] * (current_D * factor_sixth[12]);
 
             // D_lower[13]
             current_D = d3 * dX[0] * X_11;
             current_D += d2 * dX[0];
-            tmpstore[0] -= m_partner[13] * (current_D * factor_sixth[13]);
+            tmpstore[0] -= m_partner[3] * (current_D * factor_sixth[13]);
 
             // D_lower[14]
             current_D = d3 * dX[0] * dX[1] * dX[2];
-            tmpstore[0] -= m_partner[14] * (current_D * factor_sixth[14]);
+            tmpstore[0] -= m_partner[4] * (current_D * factor_sixth[14]);
 
             // D_lower[15]
             current_D = d3 * dX[0] * X_22;
             current_D += d2 * dX[0];
-            tmpstore[0] -= m_partner[15] * (current_D * factor_sixth[15]);
+            tmpstore[0] -= m_partner[5] * (current_D * factor_sixth[15]);
 
             // D_lower[16]
             current_D = d3 * X_11 * dX[1];
             current_D += 3.0 * d2 * dX[1];
-            tmpstore[0] -= m_partner[16] * (current_D * factor_sixth[16]);
+            tmpstore[0] -= m_partner[6] * (current_D * factor_sixth[16]);
 
             // D_lower[17]
             current_D = d3 * X_11 * dX[2];
             current_D += d2 * dX[2];
-            tmpstore[0] -= m_partner[17] * (current_D * factor_sixth[17]);
+            tmpstore[0] -= m_partner[7] * (current_D * factor_sixth[17]);
 
             // D_lower[18]
             current_D = d3 * dX[1] * X_22;
             current_D += d2 * dX[1];
-            tmpstore[0] -= m_partner[18] * (current_D * factor_sixth[18]);
+            tmpstore[0] -= m_partner[8] * (current_D * factor_sixth[18]);
 
             // D_lower[19]
             current_D = d3 * X_22 * dX[2];
             current_D += 3.0 * d2 * dX[2];
-            tmpstore[0] -= m_partner[19] * (current_D * factor_sixth[19]);
+            tmpstore[0] -= m_partner[9] * (current_D * factor_sixth[19]);
         }
         template <typename T>
         CUDA_CALLABLE_METHOD inline void compute_interaction_sorted_non_rho(
@@ -872,7 +872,7 @@ namespace fmm {
 
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho0123_extra(const T (&X)[NDIM], const T (&Y)[NDIM],
-            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T (&m_partner)[4], T (&tmpstore)[20], func&& max) noexcept {
             T dX[NDIM];
             dX[0] = X[0] - Y[0];
             dX[1] = X[1] - Y[1];
@@ -882,7 +882,7 @@ namespace fmm {
 
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho0123(const T (&X)[NDIM], const T (&Y)[NDIM],
-            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T (&m_partner)[4], T (&tmpstore)[20], func&& max) noexcept {
             T dX[NDIM];
             dX[0] = X[0] - Y[0];
             dX[1] = X[1] - Y[1];
@@ -892,7 +892,7 @@ namespace fmm {
 
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho45678(const T (&X)[NDIM], const T (&Y)[NDIM],
-            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T (&m_partner)[6], T (&tmpstore)[20], func&& max) noexcept {
             T dX[NDIM];
             dX[0] = X[0] - Y[0];
             dX[1] = X[1] - Y[1];
@@ -901,7 +901,7 @@ namespace fmm {
         }
         template <typename T, typename func>
         CUDA_CALLABLE_METHOD inline void compute_kernel_non_rho_remaining(const T (&X)[NDIM], const T (&Y)[NDIM],
-            T (&m_partner)[20], T (&tmpstore)[20], func&& max) noexcept {
+            T (&m_partner)[10], T (&tmpstore)[20], func&& max) noexcept {
             T dX[NDIM];
             dX[0] = X[0] - Y[0];
             dX[1] = X[1] - Y[1];
