@@ -41,6 +41,27 @@ namespace fmm {
             compute_interactions(is_direction_empty, neighbors, local_monopoles_staging_area,
                 local_expansions_staging_area, center_of_masses_staging_area);
         }
+        void multipole_interaction_interface::compute_multipole_interactions(
+            std::vector<real>& monopoles, std::vector<multipole>& M_ptr,
+            std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
+            std::vector<neighbor_gravity_type>& neighbors, gsolve_type type, real dx,
+            std::array<bool, geo::direction::count()>& is_direction_empty,
+            std::array<real, NDIM> xbase, const size_t x, const size_t y) {
+            update_input(monopoles, M_ptr, com_ptr, neighbors, type, dx, xbase,
+                local_monopoles_staging_area, local_expansions_staging_area,
+                center_of_masses_staging_area);
+            compute_interactions_compute_block(local_monopoles_staging_area,
+                                 local_expansions_staging_area, center_of_masses_staging_area,
+            x, y);
+        }
+        void multipole_interaction_interface::compute_multipole_interactions(
+            gsolve_type type, real dx, std::array<real, NDIM> xbase,
+            const size_t x, const size_t y) {
+          compute_interactions_compute_block(
+              local_monopoles_staging_area,
+              local_expansions_staging_area, center_of_masses_staging_area, x,
+              y);
+        }
 
         void multipole_interaction_interface::compute_interactions_compute_block(
             const std::vector<real>& local_monopoles,
