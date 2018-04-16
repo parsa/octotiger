@@ -50,45 +50,91 @@ namespace fmm {
 
                 // Launch kernel and queue copying of results
                 const dim3 grid_spec(3);
-                const dim3 threads_per_block(8, 8, 8);
+                const dim3 threads_per_block(4, 4, 8);
                 const dim3 sum_spec(1);
-                const dim3 threads(512);
+                const dim3 threads(128);
+
+                std::array<hpx::future<void>, 4> compute_futs;
+                for (auto x = 0; x < 2; ++x) {
+                  for (auto y = 0; y < 2; ++y) {
+                size_t index = x * 2 + y;
+                // if (index != 0) {
+                //   slot = kernel_scheduler::scheduler.get_launch_slot();
+                //  gpu_interface = kernel_scheduler::scheduler.get_launch_interface(slot);
+                //  env = kernel_scheduler::scheduler.get_device_enviroment(slot);
+                // }
                 if (type == RHO) {
                     void* args[] = {&(env.device_local_monopoles), &(env.device_center_of_masses),
                         &(env.device_local_expansions), &(env.device_potential_expansions),
                         &(env.device_angular_corrections), &(env.device_stencil),
-                        &(env.device_phase_indicator), &theta};
+                                    &(env.device_phase_indicator), &theta, &x, &y};
                     gpu_interface.execute(&cuda_multipole_interactions_kernel_rho, grid_spec,
                         threads_per_block, args, 0);
                     void* sum_args[] = {&(env.device_angular_corrections)};
                     gpu_interface.execute(
                         &cuda_add_multipole_ang_blocks, sum_spec, threads, sum_args, 0);
-                    gpu_interface.copy_async(angular_corrections_SoA.get_pod(),
+                    gpu_interface.copy_async(angular_corrections_SoA[index].get_pod(),
                         env.device_angular_corrections, angular_corrections_size,
                         cudaMemcpyDeviceToHost);
 
                 } else {
                     void* args[] = {&(env.device_local_monopoles), &(env.device_center_of_masses),
                         &(env.device_local_expansions), &(env.device_potential_expansions),
-                        &(env.device_stencil), &(env.device_phase_indicator), &theta};
+                        &(env.device_stencil), &(env.device_phase_indicator), &theta, &x, &y};
                     gpu_interface.execute(&cuda_multipole_interactions_kernel_non_rho, grid_spec,
                         threads_per_block, args, 0);
                 }
                 void* sum_args[] = {&(env.device_potential_expansions)};
                 gpu_interface.execute(
                     &cuda_add_multipole_pot_blocks, sum_spec, threads, sum_args, 0);
-                gpu_interface.copy_async(potential_expansions_SoA.get_pod(),
+                gpu_interface.copy_async(potential_expansions_SoA[index].get_pod(),
                     env.device_potential_expansions, potential_expansions_size,
                     cudaMemcpyDeviceToHost);
 
-                // Wait for stream to finish and allow thread to jump away in the meantime
-                auto fut = gpu_interface.get_future();
-                fut.get();
+                // Wait for stream to finish and allow thread to jump away in
+                // the meantime
+                compute_futs[index] = gpu_interface.get_future().then([this, x, y, index, type](
+                    hpx::future<void> &&f) {
+                  // Copy results back into non-SoA array
+                  std::vector<expansion> &L = grid_ptr->get_L();
+                  std::vector<space_vector> &L_c = grid_ptr->get_L_c();
+                  auto data_c = angular_corrections_SoA[index].get_pod();
+                  auto data = potential_expansions_SoA[index].get_pod();
 
-                // Copy results back into non-SoA array
-                potential_expansions_SoA.add_to_non_SoA(grid_ptr->get_L());
-                if (type == RHO)
-                    angular_corrections_SoA.to_non_SoA(grid_ptr->get_L_c());
+                  for (auto i0 = 0; i0 < COMPUTE_BLOCK_LENGTH; ++i0) {
+                    for (auto i1 = 0; i1 < COMPUTE_BLOCK_LENGTH; ++i1) {
+                      for (auto i2 = 0; i2 < INNER_CELLS_PER_DIRECTION; ++i2) {
+                        const multiindex<> cell_index_unpadded(i0, i1, i2);
+                        const int64_t cell_flat_index_unpadded =
+                            i0 * COMPUTE_BLOCK_LENGTH *
+                                INNER_CELLS_PER_DIRECTION +
+                            i1 * INNER_CELLS_PER_DIRECTION + i2;
+                        const multiindex<> cell_index(
+                            i0 + x * COMPUTE_BLOCK_LENGTH,
+                            i1 + y * COMPUTE_BLOCK_LENGTH, i2);
+                        const int64_t cell_flat_index =
+                            to_inner_flat_index_not_padded(cell_index);
+
+                        for (size_t component = 0; component < 20;
+                             component++) {
+                          L[cell_flat_index][component] +=
+                              data[component * (COMPUTE_BLOCK + SOA_PADDING) +
+                                   cell_flat_index_unpadded];
+                        }
+                        for (size_t component = 0; component < 3 && type == RHO;
+                             component++) {
+                          L_c[cell_flat_index][component] +=
+                              data_c[component * (COMPUTE_BLOCK + SOA_PADDING) +
+                                     cell_flat_index_unpadded];
+                        }
+                      }
+                    }
+                  }
+                });
+                  }
+                }
+                auto fut = hpx::when_all(compute_futs);
+                fut.get();
             }
         }
 
