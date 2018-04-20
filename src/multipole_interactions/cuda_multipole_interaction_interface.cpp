@@ -19,26 +19,12 @@ namespace fmm {
             std::vector<neighbor_gravity_type>& neighbors, gsolve_type type, real dx,
             std::array<bool, geo::direction::count()>& is_direction_empty,
             std::array<real, NDIM> xbase) {
-
-                std::array<hpx::future<void>, 4> compute_futs;
-                bool loaded_cpu_data = false;
-                for (auto x = 0; x < 2; ++x) {
-                  for (auto y = 0; y < 2; ++y) {
-                size_t index = x * 2 + y;
             // Check where we want to run this:
             int slot = kernel_scheduler::scheduler.get_launch_slot();
             if (slot == -1) {    // Run fkernel_scheduler::allback cpu implementation
                 // std::cout << "Running cpu fallback" << std::endl;
-              if(!loaded_cpu_data) {
                 multipole_interaction_interface::compute_multipole_interactions(
-                    monopoles, M_ptr, com_ptr, neighbors, type, dx, is_direction_empty, xbase,
-                x, y);
-                loaded_cpu_data = true;
-              } else {
-                multipole_interaction_interface::compute_multipole_interactions(
-                    type, dx, xbase,
-                x, y);
-              }
+                    monopoles, M_ptr, com_ptr, neighbors, type, dx, is_direction_empty, xbase);
             } else {    // run on cuda device
                 // std::cerr << "Running cuda in slot " << slot << std::endl;
                 // Move data into SoA arrays
@@ -68,6 +54,10 @@ namespace fmm {
                 const dim3 sum_spec(1);
                 const dim3 threads(128);
 
+                std::array<hpx::future<void>, 4> compute_futs;
+                for (auto x = 0; x < 2; ++x) {
+                  for (auto y = 0; y < 2; ++y) {
+                size_t index = x * 2 + y;
                 // if (index != 0) {
                 //   slot = kernel_scheduler::scheduler.get_launch_slot();
                 //  gpu_interface = kernel_scheduler::scheduler.get_launch_interface(slot);

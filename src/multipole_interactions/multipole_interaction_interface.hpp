@@ -31,17 +31,6 @@ namespace fmm {
                 std::vector<neighbor_gravity_type>& neighbors, gsolve_type type, real dx,
                 std::array<bool, geo::direction::count()>& is_direction_empty,
                 std::array<real, NDIM> xbase);
-
-        void compute_multipole_interactions(
-            std::vector<real>& monopoles, std::vector<multipole>& M_ptr,
-            std::vector<std::shared_ptr<std::vector<space_vector>>>& com_ptr,
-            std::vector<neighbor_gravity_type>& neighbors, gsolve_type type, real dx,
-            std::array<bool, geo::direction::count()>& is_direction_empty,
-            std::array<real, NDIM> xbase, const size_t x, const size_t y);
-        void compute_multipole_interactions(
-            gsolve_type type, real dx, std::array<real, NDIM> xbase,
-            const size_t x, const size_t y);
-
             /// Sets the grid pointer - usually only required once
             void set_grid_ptr(std::shared_ptr<grid> ptr) {
                 grid_ptr = ptr;
