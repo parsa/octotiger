@@ -173,8 +173,334 @@ namespace fmm {
             tmpstore[19] += m_partner[0] * D_lower[19];
         }
 
+        template <typename T, typename func>
+        CUDA_CALLABLE_METHOD inline void compute_interaction_sorted_non_rho(T& d2, T& d3, T& X_00,
+            T& X_11, T& X_22, const T (&dX)[NDIM], func&& max, const T (&m_partner)[20],
+            T (&tmpstore)[20]) noexcept {
+            X_00 = dX[0] * dX[0];
+            X_11 = dX[1] * dX[1];
+            X_22 = dX[2] * dX[2];
+
+            T d0;
+            T current_D;
+            T r2inv = T(1.0) / max(X_00 + X_11 + X_22, T(1.0e-20));
+
+            d0 = -sqrt(r2inv);
+            d2 = -3.0 * (-d0 * r2inv) * r2inv;
+            d3 = -5.0 * d2 * r2inv;
+
+            // D_lower[0]
+            tmpstore[0] += m_partner[0] * d0;
+
+            // D_lower[1]
+            tmpstore[1] += m_partner[0] * dX[0] * (-d0 * r2inv);
+            tmpstore[0] -= m_partner[1] * dX[0] * (-d0 * r2inv);
+
+            // D_lower[2]
+            tmpstore[2] += m_partner[0] * dX[1] * (-d0 * r2inv);
+            tmpstore[0] -= m_partner[2] * dX[1] * (-d0 * r2inv);
+
+            // D_lower[3]
+            tmpstore[3] += m_partner[0] * dX[2] * (-d0 * r2inv);
+            tmpstore[0] -= m_partner[3] * dX[2] * (-d0 * r2inv);
+
+            // D_lower[4]
+            current_D = d2 * X_00;
+            current_D += (-d0 * r2inv);
+            tmpstore[4] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[1] -= m_partner[1] * current_D;
+
+            // D_lower[5]
+            current_D = d2 * dX[0] * dX[1];
+            tmpstore[5] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[1] -= m_partner[1] * current_D;
+            tmpstore[2] -= m_partner[2] * current_D;
+
+            // D_lower[6]
+            current_D = d2 * dX[0] * dX[2];
+            tmpstore[6] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[1] -= m_partner[1] * current_D;
+            tmpstore[3] -= m_partner[3] * current_D;
+
+            // D_lower[7]
+            current_D = d2 * X_11;
+            current_D += (-d0 * r2inv);
+            tmpstore[7] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[2] -= m_partner[2] * current_D;
+
+            // D_lower[8]
+            current_D = d2 * dX[1] * dX[2];
+            tmpstore[8] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[2] -= m_partner[2] * current_D;
+            tmpstore[3] -= m_partner[3] * current_D;
+
+            // D_lower[9]
+            current_D = d2 * X_22;
+            current_D += (-d0 * r2inv);
+            tmpstore[9] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[3] -= m_partner[3] * current_D;
+
+            // D_lower[10]
+            current_D = d3 * X_00 * dX[0];
+            current_D += 3.0 * d2 * dX[0];
+            tmpstore[4] -= m_partner[1] * current_D;
+            tmpstore[10] += m_partner[0] * current_D;
+            tmpstore[1] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[0] -= m_partner[10] * (current_D * factor_sixth[10]);
+
+            // D_lower[11]
+            current_D = d3 * X_00 * dX[1];
+            current_D += d2 * dX[1];
+            tmpstore[11] += m_partner[0] * current_D;
+            tmpstore[4] -= m_partner[2] * current_D;
+            tmpstore[5] -= m_partner[1] * current_D;
+            tmpstore[2] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[1] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[0] -= m_partner[11] * (current_D * factor_sixth[11]);
+
+            // D_lower[12]
+            current_D = d3 * X_00 * dX[2];
+            current_D += d2 * dX[2];
+            tmpstore[6] -= m_partner[1] * current_D;
+            tmpstore[4] -= m_partner[3] * current_D;
+            tmpstore[12] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[1] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[0] -= m_partner[12] * (current_D * factor_sixth[12]);
+
+            // D_lower[13]
+            current_D = d3 * dX[0] * X_11;
+            current_D += d2 * dX[0];
+            tmpstore[7] -= m_partner[1] * current_D;
+            tmpstore[5] -= m_partner[2] * current_D;
+            tmpstore[13] += m_partner[0] * current_D;
+            tmpstore[2] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[1] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[0] -= m_partner[13] * (current_D * factor_sixth[13]);
+
+            // D_lower[14]
+            current_D = d3 * dX[0] * dX[1] * dX[2];
+            tmpstore[8] -= m_partner[1] * current_D;
+            tmpstore[6] -= m_partner[2] * current_D;
+            tmpstore[5] -= m_partner[3] * current_D;
+            tmpstore[14] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[2] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[1] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[0] -= m_partner[14] * (current_D * factor_sixth[14]);
+
+            // D_lower[15]
+            current_D = d3 * dX[0] * X_22;
+            current_D += d2 * dX[0];
+            tmpstore[9] -= m_partner[1] * current_D;
+            tmpstore[6] -= m_partner[3] * current_D;
+            tmpstore[15] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[1] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[0] -= m_partner[15] * (current_D * factor_sixth[15]);
+
+            // D_lower[16]
+            current_D = d3 * X_11 * dX[1];
+            current_D += 3.0 * d2 * dX[1];
+            tmpstore[16] += m_partner[0] * current_D;
+            tmpstore[7] -= m_partner[2] * current_D;
+            tmpstore[2] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[0] -= m_partner[16] * (current_D * factor_sixth[16]);
+
+            // D_lower[17]
+            current_D = d3 * X_11 * dX[2];
+            current_D += d2 * dX[2];
+            tmpstore[8] -= m_partner[2] * current_D;
+            tmpstore[7] -= m_partner[3] * current_D;
+            tmpstore[17] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[2] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[0] -= m_partner[17] * (current_D * factor_sixth[17]);
+
+            // D_lower[18]
+            current_D = d3 * dX[1] * X_22;
+            current_D += d2 * dX[1];
+            tmpstore[9] -= m_partner[2] * current_D;
+            tmpstore[8] -= m_partner[3] * current_D;
+            tmpstore[18] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[2] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[0] -= m_partner[18] * (current_D * factor_sixth[18]);
+
+            // D_lower[19]
+            current_D = d3 * X_22 * dX[2];
+            current_D += 3.0 * d2 * dX[2];
+            tmpstore[9] -= m_partner[3] * current_D;
+            tmpstore[19] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[0] -= m_partner[19] * (current_D * factor_sixth[19]);
+        }
+
+        template <typename T, typename func>
+        CUDA_CALLABLE_METHOD inline void compute_interaction_sorted_rho(T& d2, T& d3, T& X_00,
+            T& X_11, T& X_22, const T (&dX)[NDIM], func&& max, const T (&m_partner)[20],
+            T (&tmpstore)[20]) noexcept {
+            X_00 = dX[0] * dX[0];
+            X_11 = dX[1] * dX[1];
+            X_22 = dX[2] * dX[2];
+
+            T d0;
+            T current_D;
+            T r2inv = T(1.0) / max(X_00 + X_11 + X_22, T(1.0e-20));
+
+            d0 = -sqrt(r2inv);
+            d2 = -3.0 * (-d0 * r2inv) * r2inv;
+            d3 = -5.0 * d2 * r2inv;
+
+            // D_lower[0]
+            tmpstore[0] += m_partner[0] * d0;
+
+            // D_lower[1]
+            tmpstore[1] += m_partner[0] * dX[0] * (-d0 * r2inv);
+
+            // D_lower[2]
+            tmpstore[2] += m_partner[0] * dX[1] * (-d0 * r2inv);
+
+            // D_lower[3]
+            tmpstore[3] += m_partner[0] * dX[2] * (-d0 * r2inv);
+
+            // D_lower[4]
+            current_D = d2 * X_00;
+            current_D += (-d0 * r2inv);
+            tmpstore[4] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[4] * (current_D * factor_half[4]);
+
+            // D_lower[5]
+            current_D = d2 * dX[0] * dX[1];
+            tmpstore[5] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[5] * (current_D * factor_half[5]);
+
+            // D_lower[6]
+            current_D = d2 * dX[0] * dX[2];
+            tmpstore[6] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[6] * (current_D * factor_half[6]);
+
+            // D_lower[7]
+            current_D = d2 * X_11;
+            current_D += (-d0 * r2inv);
+            tmpstore[7] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[7] * (current_D * factor_half[7]);
+
+            // D_lower[8]
+            current_D = d2 * dX[1] * dX[2];
+            tmpstore[8] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[8] * (current_D * factor_half[8]);
+
+            // D_lower[9]
+            current_D = d2 * X_22;
+            current_D += (-d0 * r2inv);
+            tmpstore[9] += m_partner[0] * current_D;
+            tmpstore[0] += m_partner[9] * (current_D * factor_half[9]);
+
+            // D_lower[10]
+            current_D = d3 * X_00 * dX[0];
+            current_D += 3.0 * d2 * dX[0];
+            tmpstore[4] -= m_partner[1] * current_D;
+            tmpstore[10] += m_partner[0] * current_D;
+            tmpstore[1] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[0] -= m_partner[10] * (current_D * factor_sixth[10]);
+
+            // D_lower[11]
+            current_D = d3 * X_00 * dX[1];
+            current_D += d2 * dX[1];
+            tmpstore[11] += m_partner[0] * current_D;
+            tmpstore[4] -= m_partner[2] * current_D;
+            tmpstore[5] -= m_partner[1] * current_D;
+            tmpstore[2] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[1] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[0] -= m_partner[11] * (current_D * factor_sixth[11]);
+
+            // D_lower[12]
+            current_D = d3 * X_00 * dX[2];
+            current_D += d2 * dX[2];
+            tmpstore[6] -= m_partner[1] * current_D;
+            tmpstore[4] -= m_partner[3] * current_D;
+            tmpstore[12] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[4] * (current_D * factor_half[4]);
+            tmpstore[1] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[0] -= m_partner[12] * (current_D * factor_sixth[12]);
+
+            // D_lower[13]
+            current_D = d3 * dX[0] * X_11;
+            current_D += d2 * dX[0];
+            tmpstore[7] -= m_partner[1] * current_D;
+            tmpstore[5] -= m_partner[2] * current_D;
+            tmpstore[13] += m_partner[0] * current_D;
+            tmpstore[2] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[1] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[0] -= m_partner[13] * (current_D * factor_sixth[13]);
+
+            // D_lower[14]
+            current_D = d3 * dX[0] * dX[1] * dX[2];
+            tmpstore[8] -= m_partner[1] * current_D;
+            tmpstore[6] -= m_partner[2] * current_D;
+            tmpstore[5] -= m_partner[3] * current_D;
+            tmpstore[14] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[5] * (current_D * factor_half[5]);
+            tmpstore[2] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[1] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[0] -= m_partner[14] * (current_D * factor_sixth[14]);
+
+            // D_lower[15]
+            current_D = d3 * dX[0] * X_22;
+            current_D += d2 * dX[0];
+            tmpstore[9] -= m_partner[1] * current_D;
+            tmpstore[6] -= m_partner[3] * current_D;
+            tmpstore[15] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[6] * (current_D * factor_half[6]);
+            tmpstore[1] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[0] -= m_partner[15] * (current_D * factor_sixth[15]);
+
+            // D_lower[16]
+            current_D = d3 * X_11 * dX[1];
+            current_D += 3.0 * d2 * dX[1];
+            tmpstore[16] += m_partner[0] * current_D;
+            tmpstore[7] -= m_partner[2] * current_D;
+            tmpstore[2] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[0] -= m_partner[16] * (current_D * factor_sixth[16]);
+
+            // D_lower[17]
+            current_D = d3 * X_11 * dX[2];
+            current_D += d2 * dX[2];
+            tmpstore[8] -= m_partner[2] * current_D;
+            tmpstore[7] -= m_partner[3] * current_D;
+            tmpstore[17] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[7] * (current_D * factor_half[7]);
+            tmpstore[2] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[0] -= m_partner[17] * (current_D * factor_sixth[17]);
+
+            // D_lower[18]
+            current_D = d3 * dX[1] * X_22;
+            current_D += d2 * dX[1];
+            tmpstore[9] -= m_partner[2] * current_D;
+            tmpstore[8] -= m_partner[3] * current_D;
+            tmpstore[18] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[8] * (current_D * factor_half[8]);
+            tmpstore[2] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[0] -= m_partner[18] * (current_D * factor_sixth[18]);
+
+            // D_lower[19]
+            current_D = d3 * X_22 * dX[2];
+            current_D += 3.0 * d2 * dX[2];
+            tmpstore[9] -= m_partner[3] * current_D;
+            tmpstore[19] += m_partner[0] * current_D;
+            tmpstore[3] += m_partner[9] * (current_D * factor_half[9]);
+            tmpstore[0] -= m_partner[19] * (current_D * factor_sixth[19]);
+        }
+
         template <typename T>
-        CUDA_CALLABLE_METHOD inline void compute_interaction_multipole_rho(const T& d2, const T& d3,
+        CUDA_CALLABLE_METHOD inline void compute_angular_corrections_rho(const T& d2, const T& d3,
             const T& X_00, const T& X_11, const T& X_22, const T (&m_partner)[20],
             const T (&m_cell)[20], const T (&dX)[NDIM], T (&tmp_corrections)[NDIM]) noexcept {
             T n0_constant = m_partner[0] / m_cell[0];
@@ -296,17 +622,11 @@ namespace fmm {
 
             T X_00, X_11, X_22;
             T d2, d3;
-            T D_lower[20];
 
-            compute_d_factors(d2, d3, X_00, X_11, X_22, D_lower, dX, max);
+            compute_interaction_sorted_rho(
+                d2, d3, X_00, X_11, X_22, dX, max, m_partner, tmpstore);
 
-            tmpstore[0] += m_partner[0] * D_lower[0];
-            tmpstore[1] += m_partner[0] * D_lower[1];
-            tmpstore[2] += m_partner[0] * D_lower[2];
-            tmpstore[3] += m_partner[0] * D_lower[3];
-            compute_interaction_multipole_non_rho(m_partner, tmpstore, D_lower);
-
-            compute_interaction_multipole_rho(
+            compute_angular_corrections_rho(
                 d2, d3, X_00, X_11, X_22, m_partner, m_cell, dX, tmp_corrections);
         }
 
@@ -320,26 +640,8 @@ namespace fmm {
 
             T X_00, X_11, X_22;
             T d2, d3;
-            T D_lower[20];
-            compute_d_factors(d2, d3, X_00, X_11, X_22, D_lower, dX, max);
-
-            tmpstore[0] += m_partner[0] * D_lower[0];
-            tmpstore[1] += m_partner[0] * D_lower[1];
-            tmpstore[2] += m_partner[0] * D_lower[2];
-            tmpstore[3] += m_partner[0] * D_lower[3];
-            tmpstore[0] -= m_partner[1] * D_lower[1];
-            tmpstore[1] -= m_partner[1] * D_lower[4];
-            tmpstore[1] -= m_partner[1] * D_lower[5];
-            tmpstore[1] -= m_partner[1] * D_lower[6];
-            tmpstore[0] -= m_partner[2] * D_lower[2];
-            tmpstore[2] -= m_partner[2] * D_lower[5];
-            tmpstore[2] -= m_partner[2] * D_lower[7];
-            tmpstore[2] -= m_partner[2] * D_lower[8];
-            tmpstore[0] -= m_partner[3] * D_lower[3];
-            tmpstore[3] -= m_partner[3] * D_lower[6];
-            tmpstore[3] -= m_partner[3] * D_lower[8];
-            tmpstore[3] -= m_partner[3] * D_lower[9];
-            compute_interaction_multipole_non_rho(m_partner, tmpstore, D_lower);
+            compute_interaction_sorted_non_rho(
+                d2, d3, X_00, X_11, X_22, dX, max, m_partner, tmpstore);
         }
     }    // namespace multipole_interactions
 }    // namespace fmm
