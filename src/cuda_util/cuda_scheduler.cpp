@@ -37,6 +37,7 @@ namespace fmm {
             std::cout << "Worker " << worker_id << " uses gpu " << gpu_id << std::endl;
             number_of_streams_managed += offset;
             number_cuda_streams_managed = number_of_streams_managed;
+            std::cout << "Worker " << worker_id << " manages " << number_cuda_streams_managed << " streams " << std::endl;
             number_slots = number_cuda_streams_managed * slots_per_cuda_stream;
 
             local_expansions_slots = std::vector<struct_of_array_data<expansion, real, 20, ENTRIES,

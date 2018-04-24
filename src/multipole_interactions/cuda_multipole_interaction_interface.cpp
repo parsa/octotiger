@@ -49,7 +49,7 @@ namespace fmm {
                     cudaMemcpyHostToDevice);
 
                 // Launch kernel and queue copying of results
-                const dim3 grid_spec(3);
+                const dim3 grid_spec(2);
                 const dim3 threads_per_block(4, 4, 8);
                 const dim3 sum_spec(1);
                 const dim3 threads(128);
