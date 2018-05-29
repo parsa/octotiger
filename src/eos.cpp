@@ -71,6 +71,12 @@ real struct_eos::enthalpy_to_density(real h) const {
 		x = std::sqrt(2 * f0 + f0 * f0);
 		const real rho = b * x * x * x;
 		return rho;
+
+	} else if( opts.eos = MESA ) {
+
+		h /= h0();
+		return mesa_eos.rho_of_h(h) * d0();
+
 	} else {
 		real res;
 		ASSERT_NONAN(dC());
@@ -139,6 +145,12 @@ real struct_eos::density_to_enthalpy(real d) const {
 			h = (8.0 * A / b) * (0.5 * x * x + eps * x);
 		}
 		return h;
+
+	} else if( opts.eos == MESA ) {
+
+		d *= d0();
+		return mesa_eos.h_of_rho(d) * h0();
+
 	} else {
 		if (d >= dC()) {
 			return P0() * (1.0 / dC() * (1.0 + n_C) * (std::pow(d / dC(), 1.0 / n_C) - 1.0) + 1.0 / dE() * (1.0 + n_E));
@@ -164,6 +176,10 @@ real struct_eos::pressure(real d) const {
 		}
 		pg = kappa * x * x * x * x;
 		return pd + pg;
+
+	} else if( opts.eos == MESA) {
+
+		return mesa_eos.p_of_rho(d * d0()) * h0() / d0();
 
 	} else {
 		if (d >= dC()) {
@@ -210,6 +226,9 @@ void normalize_constants();
 
 struct_eos::struct_eos(real M, real R) {
 //B = 1.0;
+	if( opts.eos == MESA ) {
+		mesa_eos = build_eos_from_mesa( "mesa.txt" );
+	}
 	real m, r;
 	d0_ = M / (R * R * R);
 	A = M / R;
@@ -231,6 +250,7 @@ struct_eos::struct_eos(real M, real R) {
 
 struct_eos::struct_eos(real M, const struct_eos& other) {
 	d0_ = other.d0_;
+	mesa_eos = other.mesa_eos;
 //B = 1.0;
 //	printf("!!!!!!!!!!!!!!!!!!!\n");
 	*this = other;
@@ -453,7 +473,7 @@ void struct_eos::initialize(real& mass, real& radius, real& core_mass) {
 }
 
 real struct_eos::d0() const {
-	if( opts.eos == WD) {
+	if( opts.eos == WD ) {
 		return d0_;
 	} else {
 		return M0 / (R0 * R0 * R0);

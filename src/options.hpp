@@ -22,7 +22,7 @@ enum problem_type {
 };
 
 enum eos_type {
-	IDEAL, WD
+	IDEAL, WD, MESA
 };
 
 class options {

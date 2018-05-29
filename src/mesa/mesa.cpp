@@ -17,8 +17,7 @@ private:
 	const std::vector<double> x;
 	std::vector<std::array<double, NCOEF>> A;
 
-	std::array<std::array<double, NCOEF>, NCOEF> coef_matrix(double a,
-			double b) {
+	std::array<std::array<double, NCOEF>, NCOEF> coef_matrix(double a, double b) {
 		return { {
 				{	-(1 + 2*b)/(8.*(a + std::pow(a,2))*(1 + a + b)),(1 + 2*a + 2*b + 4*a*b)/(8*a + 8*a*b),(1 + 2*a + 2*b + 4*a*b)/(8*b + 8*a*b),-(1 + 2*a)/(8.*(1 + a + b)*(b + std::pow(b,2)))},
 				{	1/(4.*(a + std::pow(a,2))*(1 + a + b)),-1 - 1/(4*a + 4*a*b),1 + 1/(4*b + 4*a*b),-1/(4.*(1 + a + b)*(b + std::pow(b,2)))},
@@ -27,8 +26,7 @@ private:
 			}};
 	}
 
-	std::array<double, NCOEF> translate(const std::array<double, NCOEF>& in,
-			double dx) {
+	std::array<double, NCOEF> translate(const std::array<double, NCOEF>& in, double dx) {
 		std::array<double, NCOEF> out;
 		out[0] = out[1] = out[2] = out[3] = 0.0;
 
@@ -109,8 +107,8 @@ public:
 	}
 };
 
-std::function<double(double)> build_rho_of_h_from_mesa(
-		const std::string& filename) {
+mesa_eos_t build_eos_from_mesa(const std::string& filename) {
+	mesa_eos_t funcs;
 	char line[BUFFER_SIZE];
 	char dummy[BUFFER_SIZE];
 	char log10_P[BUFFER_SIZE];
@@ -126,11 +124,9 @@ std::function<double(double)> build_rho_of_h_from_mesa(
 	int linenum = 1;
 	while (fgets(line, sizeof line, fp) != NULL) {
 		if (linenum > HEADER_LINES) {
-			std::sscanf(line,
-					"%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
-					dummy, dummy, log10_R, dummy, log10_rho, log10_P, dummy,
-					dummy, dummy, dummy, dummy, dummy, vrot_kms, dummy, dummy,
-					dummy, dummy, dummy, dummy, dummy, dummy, dummy, dummy);
+			std::sscanf(line, "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n", dummy, dummy, log10_R,
+					dummy, log10_rho, log10_P, dummy, dummy, dummy, dummy, dummy, dummy, vrot_kms, dummy, dummy, dummy, dummy,
+					dummy, dummy, dummy, dummy, dummy, dummy);
 			P.push_back(std::pow(10, std::atof(log10_P)));
 //			const double tmp = std::pow(10, std::atof(log10_R)) * 6.957e+10;
 //			r.push_back(tmp);
@@ -166,14 +162,27 @@ std::function<double(double)> build_rho_of_h_from_mesa(
 	double h_max = h[rho.size() - 1];
 	for (auto& x : h) {
 		x /= h_max;
+	}
+
+	for( auto& x : P ) {
+		x /= h_max;
+	}
+
+	const auto rho_of_h_table = std::make_shared < cubic_table > (rho, h);
+	const auto h_of_rho_table = std::make_shared < cubic_table > (h, rho);
+	const auto p_of_rho_table = std::make_shared < cubic_table > (P, rho);
+
+	funcs.rho_of_h = [rho_of_h_table](double x) {
+		return std::max((*rho_of_h_table)(x), 1.0e-20);
 	};
-	const auto rho_of_h_table = std::make_shared<cubic_table>(rho, h);
 
-	return [rho_of_h_table](double h) {
-		return (*rho_of_h_table)(h);
+	funcs.h_of_rho = [h_of_rho_table](double x) {
+		return std::max((*h_of_rho_table)(x), 0.0);
 	};
-}
 
-int main() {
+	funcs.p_of_rho = [p_of_rho_table](double x) {
+		return std::max((*p_of_rho_table)(x),0.0);
+	};
 
+	return funcs;
 }

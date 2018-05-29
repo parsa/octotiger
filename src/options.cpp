@@ -78,7 +78,8 @@ void options::show_help() {
             "-Eos=<equation of state>              - Sets the equation of state for pressure and energy\n"
             "                                        ideal        - ideal gas equation of state\n"
             "                                        wd           - white dwarf equation of state\n"
-            "\n"
+            "                                        mesa         - read eos from mesa\n"
+             "\n"
             "-Help                                 - Displays this help page and exits\n"
             "\n"
             "-Max_level=<number of refined levels> - Set maximum level of refinment.\n"
@@ -195,6 +196,8 @@ bool options::process_options(int argc, char* argv[]) {
                 eos = IDEAL;
             } else if (strncmp(str, "wd", 2) == 0) {
                 eos = WD;
+            } else if (strncmp(str, "mesa", 2) == 0) {
+                eos = MESA;
             } else {
                 printf("Unknown EOS specified - choose ideal or wd.\n");
                 abort();

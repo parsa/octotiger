@@ -372,6 +372,8 @@ std::vector<real> star(real x, real y, real z, real) {
 		u[tau_i] = std::pow(std::max(ei-ztwd_energy(rho),0.0),1.0/fgamma);
 		u[spc_i] = rho;
 		return u;
+	} else if ( opts.eos == MESA) {
+
 	} else {
 
 		x -= 0.0;

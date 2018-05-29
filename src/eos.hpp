@@ -10,6 +10,7 @@
 
 #include "defs.hpp"
 #include "grid.hpp"
+#include "./mesa/mesa.hpp"
 
 
 class struct_eos {
@@ -17,7 +18,7 @@ protected:
 	static constexpr real G = 1.0;
 	real dhdot_dr(real h, real hdot, real r) const;
 	real dh_dr(real h, real hdot, real r) const;
-
+	mesa_eos_t mesa_eos;
 public:
 	real density_at(real, real) const;
 	struct_eos() {
