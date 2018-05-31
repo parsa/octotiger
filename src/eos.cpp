@@ -72,7 +72,7 @@ real struct_eos::enthalpy_to_density(real h) const {
 		const real rho = b * x * x * x;
 		return rho;
 
-	} else if( opts.eos = MESA ) {
+	} else if (opts.eos = MESA) {
 
 		h /= h0();
 		return mesa_eos.rho_of_h(h) * d0();
@@ -133,9 +133,9 @@ real struct_eos::density_to_enthalpy(real d) const {
 	if (opts.eos == WD) {
 		//	return stellar_enthalpy_from_rho_mu_s(d, 4.0 / 3.0, 1.0);
 		const real mu = 4.0 / 3.0;
-	//		printf( "%e %e\n", d0(), A);
+		//		printf( "%e %e\n", d0(), A);
 		const real eps = poly_K(d0(), 4.0 / 3.0) / (2.0 * A);
-	//	printf( "%e\n", eps);
+		//	printf( "%e\n", eps);
 		const real b = B();
 		const real x = std::pow(d / b, 1.0 / 3.0);
 		real h;
@@ -146,7 +146,7 @@ real struct_eos::density_to_enthalpy(real d) const {
 		}
 		return h;
 
-	} else if( opts.eos == MESA ) {
+	} else if (opts.eos == MESA) {
 
 		d *= d0();
 		return mesa_eos.h_of_rho(d) * h0();
@@ -177,7 +177,7 @@ real struct_eos::pressure(real d) const {
 		pg = kappa * x * x * x * x;
 		return pd + pg;
 
-	} else if( opts.eos == MESA) {
+	} else if (opts.eos == MESA) {
 
 		return mesa_eos.p_of_rho(d * d0()) * h0() / d0();
 
@@ -226,15 +226,16 @@ void normalize_constants();
 
 struct_eos::struct_eos(real M, real R) {
 //B = 1.0;
-	if( opts.eos == MESA ) {
-		mesa_eos = build_eos_from_mesa( "mesa.txt" );
+	if (opts.eos == MESA) {
+		mesa_eos = build_eos_from_mesa("mesa.txt");
 	}
 	real m, r;
 	d0_ = M / (R * R * R);
 	A = M / R;
 	while (true) {
+		printf( "!!!!\n");
 		initialize(m, r);
-		//	printf("%e %e  %e  %e %e  %e \n", d0, A, m, M, r, R);
+		printf("%e %e  %e  %e %e  %e \n", d0(), h0(), m, M, r, R);
 		const real m0 = M / m;
 		const real r0 = R / r;
 		d0_ *= m0 / (r0 * r0 * r0);
@@ -351,11 +352,11 @@ struct_eos::struct_eos(real M, real R, real _n_C, real _n_E, real core_frac, rea
 
 void struct_eos::initialize(real& mass, real& radius) {
 	real r;
-	if (opts.eos == WD) {
+	if (opts.eos == WD || opts.eos == MESA) {
 
 		const real dr0 = (1.0 / B()) * sqrt(A / G) / 10.0;
 
-		real h, hdot,  m;
+		real h, hdot, m;
 		h = density_to_enthalpy(d0_);
 		hdot = 0.0;
 		r = 0.0;
@@ -368,7 +369,7 @@ void struct_eos::initialize(real& mass, real& radius) {
 				dr = std::max(std::min(dr0, std::abs(h / hdot) / 2.0), dr0 * 1.0e-6);
 			}
 			d = this->enthalpy_to_density(h);
-			//	printf("%e %e %e\n", r, d, h);
+			printf("%e %e %e\n", r, d, h);
 			//	printf("%e %e %e %e %e\n", r, m, h, d, dr);
 			const real dh1 = dh_dr(h, hdot, r) * dr;
 			const real dhdot1 = dhdot_dr(h, hdot, r) * dr;
@@ -385,6 +386,7 @@ void struct_eos::initialize(real& mass, real& radius) {
 			r += dr;
 			m += (dm1 + dm2) / 2.0;
 			++i;
+			if( i > 10 ) abort();
 		} while (h > 0.0);
 		mass = m;
 		radius = r;
@@ -473,7 +475,7 @@ void struct_eos::initialize(real& mass, real& radius, real& core_mass) {
 }
 
 real struct_eos::d0() const {
-	if( opts.eos == WD ) {
+	if (opts.eos == WD || opts.eos == MESA) {
 		return d0_;
 	} else {
 		return M0 / (R0 * R0 * R0);
@@ -483,6 +485,8 @@ real struct_eos::d0() const {
 real struct_eos::h0() const {
 	if (opts.eos == WD) {
 		return density_to_enthalpy(d0_);
+	} else if (opts.eos == MESA) {
+		return A / d0_ * density_to_enthalpy(d0_);
 	} else {
 		return G * M0 / R0;
 	}
@@ -502,7 +506,7 @@ void struct_eos::set_h0(real h) {
 		}
 	} else {
 		const real d = d0();
-	//	printf( "d = %e h = %e\n", d, h);
+		//	printf( "d = %e h = %e\n", d, h);
 		R0 = std::sqrt(h / (G * d));
 		M0 = h * R0 / G;
 	}
@@ -521,11 +525,9 @@ real struct_eos::B() const {
 	return std::sqrt(pow(A / G, 1.5) / wdcons);
 }
 
-
 namespace hpx {
-    using mutex = hpx::lcos::local::spinlock;
+using mutex = hpx::lcos::local::spinlock;
 }
-
 
 real struct_eos::get_R0() const {
 	return R00;
