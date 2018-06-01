@@ -157,10 +157,14 @@ bool options::process_options(int argc, char* argv[]) {
     donor_refine = 0;
     accretor_refine = 0;
 
-    m2m_kernel_type = interaction_kernel_type::SOA_CPU;
-    m2p_kernel_type = interaction_kernel_type::SOA_CPU;
-    p2p_kernel_type = interaction_kernel_type::SOA_CPU;
-    p2m_kernel_type = interaction_kernel_type::SOA_CPU;
+    m2m_kernel_type = interaction_kernel_type::OLD;
+    m2p_kernel_type = interaction_kernel_type::OLD;
+    p2p_kernel_type = interaction_kernel_type::OLD;
+    p2m_kernel_type = interaction_kernel_type::OLD;
+//    m2m_kernel_type = interaction_kernel_type::SOA_CPU;
+ //   m2p_kernel_type = interaction_kernel_type::SOA_CPU;
+  //  p2p_kernel_type = interaction_kernel_type::SOA_CPU;
+   // p2m_kernel_type = interaction_kernel_type::SOA_CPU;
     for (integer i = 1; i < argc; ++i) {
         if (cmp(argv[i], HELP_OPT)) {
             rc = false;

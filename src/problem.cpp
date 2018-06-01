@@ -375,11 +375,11 @@ std::vector<real> star(real x, real y, real z, real) {
 	} else if ( opts.eos == MESA) {
 		const real r = std::sqrt(x*x+y*y+z*z);
 		static struct_eos eos(1.0, 1.0);
-		const real rho = std::max(eos.density_at(r,0.01),1.0e-10);
+		const real rho = std::max(eos.density_at(r,0.1),1.0e-10);
 		const real ei = eos.energy(rho);
 		u[rho_i] = rho;
 		u[egas_i] = ei;
-		u[tau_i] = std::pow(std::max(ei-ztwd_energy(rho),0.0),1.0/fgamma);
+		u[tau_i] = std::pow(std::max(ei,0.0),1.0/fgamma);
 		u[spc_i] = rho;
 		return u;
 	} else {

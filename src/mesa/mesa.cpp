@@ -71,7 +71,7 @@ public:
 	}
 	double operator()(double x0) const {
 		for (int i = 0; i < N - 1; i++) {
-			if (x0 <= x[i + 1]) {
+			if (x0 <= x[i + 1] || i == N - 2) {
 				i = std::max(i, 1);
 				i = std::min(i, N - 3);
 				x0 = (x0 - 0.5 * (x[i + 1] + x[i])) / (x[i + 1] - x[i]);
@@ -109,12 +109,12 @@ public:
 
 mesa_eos_t build_eos_from_mesa(const std::string& filename) {
 	mesa_eos_t funcs;
-	char line[BUFFER_SIZE];
-	char dummy[BUFFER_SIZE];
-	char log10_P[BUFFER_SIZE];
-	char log10_R[BUFFER_SIZE];
-	char log10_rho[BUFFER_SIZE];
-	char vrot_kms[BUFFER_SIZE];
+	static char line[BUFFER_SIZE];
+	static char dummy[BUFFER_SIZE];
+	static char log10_P[BUFFER_SIZE];
+	static char log10_R[BUFFER_SIZE];
+	static char log10_rho[BUFFER_SIZE];
+	static char vrot_kms[BUFFER_SIZE];
 	FILE* fp = fopen(filename.c_str(), "rt");
 	if (fp == NULL) {
 		printf("%s not found!\n", filename.c_str());
@@ -164,13 +164,13 @@ mesa_eos_t build_eos_from_mesa(const std::string& filename) {
 		x /= h_max;
 	}
 
-	for( auto& x : P ) {
+	for (auto& x : P) {
 		x /= h_max;
 	}
 
-	const auto rho_of_h_table = std::make_shared < cubic_table > (rho, h);
-	const auto h_of_rho_table = std::make_shared < cubic_table > (h, rho);
-	const auto p_of_rho_table = std::make_shared < cubic_table > (P, rho);
+	const auto rho_of_h_table = std::make_shared<cubic_table>(rho, h);
+	const auto h_of_rho_table = std::make_shared<cubic_table>(h, rho);
+	const auto p_of_rho_table = std::make_shared<cubic_table>(P, rho);
 
 	funcs.rho_of_h = [rho_of_h_table](double x) {
 		return std::max((*rho_of_h_table)(x), 1.0e-20);

@@ -5,6 +5,7 @@
  *      Author: dmarce1
  */
 
+
 #ifndef SIMD_VECTOR_HPP_
 #define SIMD_VECTOR_HPP_
 #include "defs.hpp"
