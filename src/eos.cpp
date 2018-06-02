@@ -552,7 +552,6 @@ real struct_eos::density_at(real R, real dr) const {
 		const real dh1 = dh_dr(h, hdot, r) * dr;
 		const real dhdot1 = dhdot_dr(h, hdot, r) * dr;
 		if (h + dh1 <= ZERO) {
-			//	printf( "\n");
 			return 0.0;
 		}
 		const real dh2 = dh_dr(h + dh1, hdot + dhdot1, r + dr) * dr;
@@ -560,7 +559,6 @@ real struct_eos::density_at(real R, real dr) const {
 		h += (dh1 + dh2) / 2.0;
 		hdot += (dhdot1 + dhdot2) / 2.0;
 		if (h <= ZERO) {
-			//		printf( "\n");
 			return 0.0;
 		}
 	}

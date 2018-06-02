@@ -173,6 +173,14 @@ bool refine_test_moving_star(integer level, integer max_level, real x, real y,
 		}
 		den_floor /= 8.0;
 	}
+	if (!rc) {
+		if (opts.problem == STAR) {
+			real dx = (opts.xscale / INX) / real(1 << level);
+			if (x * x + y * y + z * z < 4.0 * dx * dx) {
+				rc = true;
+			}
+		}
+	}
 	return rc;
 
 }
@@ -356,7 +364,7 @@ const real alpha = 1.0;
 
 void normalize_constants();
 
-std::vector<real> star(real x, real y, real z, real) {
+std::vector<real> star(real x, real y, real z, real dx) {
 	const real fgamma = grid::get_fgamma();
 	std::vector<real> u(NF, real(0));
 	if( opts.eos == WD ){
@@ -365,7 +373,7 @@ std::vector<real> star(real x, real y, real z, real) {
 		physcon.A = eos.A;
 		physcon.B = eos.B();
 		normalize_constants();
-		const real rho = std::max(eos.density_at(r,0.01),1.0e-10);
+		const real rho = std::max(eos.density_at(r,10.0),1.0e-10);
 		const real ei = eos.energy(rho);
 		u[rho_i] = rho;
 		u[egas_i] = ei;
@@ -375,7 +383,7 @@ std::vector<real> star(real x, real y, real z, real) {
 	} else if ( opts.eos == MESA) {
 		const real r = std::sqrt(x*x+y*y+z*z);
 		static struct_eos eos(1.0, 1.0);
-		const real rho = std::max(eos.density_at(r,0.1),1.0e-10);
+		real rho = std::max(eos.density_at(r,dx/100.0),1.0e-20);
 		const real ei = eos.energy(rho);
 		u[rho_i] = rho;
 		u[egas_i] = ei;
