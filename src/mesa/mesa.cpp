@@ -93,10 +93,11 @@ public:
 			if (x0 <= x[i + 1]) {
 				i = std::max(i, 1);
 				i = std::min(i, N - 3);
-				x0 = (x0 - 0.5 * (x[i + 1] + x[i])) / (x[i + 1] - x[i]);
+				const double dx = (x[i + 1] - x[i]);
+				x0 = (x0 - 0.5 * (x[i + 1] + x[i])) / dx;
 				double y0 = 0.0;
 				for (int n = 1; n < NCOEF; n++) {
-					y0 += A[i][n] * std::pow(x0, n - 1) * b[n];
+					y0 += A[i][n] * std::pow(x0, n - 1) * b[n] / dx;
 				}
 				return y0;
 			}
@@ -138,10 +139,6 @@ mesa_eos_t build_eos_from_mesa(const std::string& filename) {
 	fclose(fp);
 
 	h.resize(rho.size());
-	double rho_max = rho[rho.size() - 1];
-	for (auto& x : rho) {
-		x /= rho_max;
-	};
 	cubic_table p_of_rho(P, rho);
 	h[0] = 0.0;
 	for (std::size_t i = 0; i < rho.size() - 1; i++) {
@@ -159,13 +156,16 @@ mesa_eos_t build_eos_from_mesa(const std::string& filename) {
 		h[i + 1] += (4.0 / 6.0) * dp_drho1 / rho1 * drho;
 		h[i + 1] += (1.0 / 6.0) * dp_drho2 / rho2 * drho;
 	}
+	double rho_max = rho[rho.size() - 1];
 	double h_max = h[rho.size() - 1];
 	for (auto& x : h) {
 		x /= h_max;
 	}
-
+	for (auto& x : rho) {
+		x /= rho_max;
+	};
 	for (auto& x : P) {
-		x /= h_max;
+		x /= h_max * rho_max;
 	}
 
 	const auto rho_of_h_table = std::make_shared<cubic_table>(rho, h);

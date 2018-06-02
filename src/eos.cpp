@@ -240,6 +240,9 @@ struct_eos::struct_eos(real M, real R) {
 	while (true) {
 		initialize(m, r);
 		printf("%e %e  %e  %e %e  %e \n", d0(), h0(), m, M, r, R);
+		if (opts.eos == MESA) {
+			break;
+		}
 		const real m0 = M / m;
 		const real r0 = R / r;
 		d0_ *= m0 / (r0 * r0 * r0);
@@ -248,9 +251,6 @@ struct_eos::struct_eos(real M, real R) {
 		physcon.B = B();
 		normalize_constants();
 		if (std::abs(1.0 - M / m) < 1.0e-10) {
-			break;
-		}
-		if (opts.eos == MESA) {
 			break;
 		}
 	}
@@ -548,7 +548,6 @@ real struct_eos::density_at(real R, real dr) const {
 	const int N = std::max(int(R / dr + 1.0), 32);
 	dr = R / real(N);
 	for (integer i = 0; i < N; ++i) {
-		//	printf("%e %e %e\n", r, h, dr);
 		r = i * dr;
 		const real dh1 = dh_dr(h, hdot, r) * dr;
 		const real dhdot1 = dhdot_dr(h, hdot, r) * dr;
@@ -566,6 +565,5 @@ real struct_eos::density_at(real R, real dr) const {
 		}
 	}
 	real d = this->enthalpy_to_density(h);
-//	printf( "%d\n", d);
 	return d;
 }
