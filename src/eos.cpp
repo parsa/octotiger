@@ -27,13 +27,17 @@ real poly_K(real rho0, real mu) {
 }
 
 real struct_eos::energy(real d) const {
-	const real b = B();
-	const real x = std::pow(d / b, 1.0 / 3.0);
-	const real mu = 4.0 / 3.0;
-	const real kappa = poly_K(d0(), mu);
-	const real T = T0 * std::pow(d / d0(), 1.0 / 3.0);
-	real eg = 1.5 * (physcon.kb / (mu * physcon.mh)) * d * T;
-	return ztwd_energy(d, A, b) + eg;
+	if (opts.eos == MESA) {
+		return 1.5 * pressure(d);
+	} else {
+		const real b = B();
+		const real x = std::pow(d / b, 1.0 / 3.0);
+		const real mu = 4.0 / 3.0;
+		const real kappa = poly_K(d0(), mu);
+		const real T = T0 * std::pow(d / d0(), 1.0 / 3.0);
+		real eg = 1.5 * (physcon.kb / (mu * physcon.mh)) * d * T;
+		return ztwd_energy(d, A, b) + eg;
+	}
 //	return std::max(d * density_to_enthalpy(d) - pressure(d), 0.0);
 }
 
@@ -180,7 +184,7 @@ real struct_eos::pressure(real d) const {
 
 	} else if (opts.eos == MESA) {
 
-		return mesa_eos.p_of_rho(d * d0()) * h0() / d0();
+		return mesa_eos.p_of_rho(d / d0()) * h0() * d0();
 
 	} else {
 		if (d >= dC()) {
@@ -246,7 +250,7 @@ struct_eos::struct_eos(real M, real R) {
 		if (std::abs(1.0 - M / m) < 1.0e-10) {
 			break;
 		}
-		if( opts.eos == MESA ) {
+		if (opts.eos == MESA) {
 			break;
 		}
 	}

@@ -35,10 +35,22 @@ diagnostics_t grid::diagnostics(const diagnostics_t& diags) {
 				for (integer l = H_BW; l != H_NX - H_BW; ++l) {
 
 					const integer iii = hindex(j, k, l);
-					real ek = ZERO;
-					ek += HALF * pow(U[sx_i][iii], 2) / U[rho_i][iii];
-					ek += HALF * pow(U[sy_i][iii], 2) / U[rho_i][iii];
-					ek += HALF * pow(U[sz_i][iii], 2) / U[rho_i][iii];
+					const integer iiig = gindex(j, k, l);
+						real ek = ZERO;
+					const real rho = U[rho_i][iii];
+					if (rho <= 0.0) {
+						printf("rho <= 0.0 at %s %i\n", __FILE__, __LINE__);
+						abort();
+					}
+					const real tau = U[tau_i][iii];
+					if (tau < 0.0) {
+						printf("tau < 0.0 at %s %i\n", __FILE__, __LINE__);
+						abort();
+					}
+					const real rhoinv = 1.0 / rho;
+					ek += HALF * pow(U[sx_i][iii], 2) * rhoinv;
+					ek += HALF * pow(U[sy_i][iii], 2) * rhoinv;
+					ek += HALF * pow(U[sz_i][iii], 2) * rhoinv;
 					real ei;
 					if (opts.eos == WD) {
 						ei = U[egas_i][iii] - ek - ztwd_energy(U[rho_i][iii]);
@@ -46,16 +58,16 @@ diagnostics_t grid::diagnostics(const diagnostics_t& diags) {
 						ei = U[egas_i][iii] - ek;
 					}
 					real et = U[egas_i][iii];
+
 					if (ei < de_switch2 * et) {
-						ei = std::pow(U[tau_i][iii], fgamma);
+						ei = std::pow(tau, fgamma);
 					}
 					real p = (fgamma - 1.0) * ei;
 					if (opts.eos == WD) {
 						p += ztwd_pressure(U[rho_i][iii]);
 					}
-					auto tmp = G[iiig][phi_i];
-//					rc.virial += (2.0 * ek + 0.5 * U[rho_i][iii] * tmp + 3.0 * p) * (dx * dx * dx);
-//					rc.virial_norm += (2.0 * ek - 0.5 * U[rho_i][iii] * tmp + 3.0 * p) * (dx * dx * dx);
+					rc.virial += (2.0 * ek + 0.5 * U[rho_i][iii] * G[iiig][phi_i] + 3.0 * p) * (dx * dx * dx);
+					rc.virial_norm += (2.0 * ek - 0.5 * U[rho_i][iii] * G[iiig][phi_i] + 3.0 * p) * (dx * dx * dx);
 					for (integer f = 0; f != NF; ++f) {
 						rc.grid_sum[f] += U[f][iii] * dV;
 					}
@@ -385,9 +397,9 @@ integer grid::max_level = 0;
 struct tls_data_t {
 	std::vector<std::vector<real>> v;
 	std::vector<std::vector<std::vector<real>>>dvdx;
-	std::vector<std::vector<std::vector<real>>> dudx;
-	std::vector<std::vector<std::vector<real>>> uf;
-	std::vector<std::vector<real>> zz;
+std::vector<std::vector<std::vector<real>>> dudx;
+std::vector<std::vector<std::vector<real>>> uf;
+std::vector<std::vector<real>> zz;
 };
 
 #if !defined(_MSC_VER)
@@ -396,28 +408,28 @@ struct tls_data_t {
 
 class tls_t {
 private:
-	pthread_key_t key;
+pthread_key_t key;
 public:
-	static void cleanup(void* ptr) {
-		tls_data_t* _ptr = (tls_data_t*) ptr;
-		delete _ptr;
+static void cleanup(void* ptr) {
+	tls_data_t* _ptr = (tls_data_t*) ptr;
+	delete _ptr;
+}
+tls_t() {
+	pthread_key_create(&key, cleanup);
+}
+tls_data_t* get_ptr() {
+	tls_data_t* ptr = (tls_data_t*) pthread_getspecific(key);
+	if (ptr == nullptr) {
+		ptr = new tls_data_t;
+		ptr->v.resize(NF, std::vector<real>(H_N3));
+		ptr->zz.resize(NDIM, std::vector<real>(H_N3));
+		ptr->dvdx.resize(NDIM, std::vector<std::vector<real>>(NF, std::vector<real>(H_N3)));
+		ptr->dudx.resize(NDIM, std::vector<std::vector<real>>(NF, std::vector<real>(H_N3)));
+		ptr->uf.resize(NFACE, std::vector<std::vector<real>>(NF, std::vector<real>(H_N3)));
+		pthread_setspecific(key, ptr);
 	}
-	tls_t() {
-		pthread_key_create(&key, cleanup);
-	}
-	tls_data_t* get_ptr() {
-		tls_data_t* ptr = (tls_data_t*) pthread_getspecific(key);
-		if (ptr == nullptr) {
-			ptr = new tls_data_t;
-			ptr->v.resize(NF, std::vector<real>(H_N3));
-			ptr->zz.resize(NDIM, std::vector<real>(H_N3));
-			ptr->dvdx.resize(NDIM, std::vector<std::vector<real>>(NF, std::vector<real>(H_N3)));
-			ptr->dudx.resize(NDIM, std::vector<std::vector<real>>(NF, std::vector<real>(H_N3)));
-			ptr->uf.resize(NFACE, std::vector<std::vector<real>>(NF, std::vector<real>(H_N3)));
-			pthread_setspecific(key, ptr);
-		}
-		return ptr;
-	}
+	return ptr;
+}
 };
 
 #else
@@ -426,8 +438,8 @@ public:
 class tls_t
 {
 private:
-	struct tls_data_tag {};
-	static hpx::util::thread_specific_ptr<tls_data_t, tls_data_tag> data;
+struct tls_data_tag {};
+static hpx::util::thread_specific_ptr<tls_data_t, tls_data_tag> data;
 
 public:
 //     static void cleanup(void* ptr)
@@ -436,20 +448,20 @@ public:
 //         delete _ptr;
 //     }
 
-	tls_data_t* get_ptr()
-	{
-		tls_data_t* ptr = data.get();
-		if (ptr == nullptr) {
-			ptr = new tls_data_t;
-			ptr->v.resize(NF, std::vector < real > (H_N3));
-			ptr->zz.resize(NDIM, std::vector < real > (H_N3));
-			ptr->dvdx.resize(NDIM, std::vector < std::vector < real >> (NF, std::vector < real > (H_N3)));
-			ptr->dudx.resize(NDIM, std::vector < std::vector < real >> (NF, std::vector < real > (H_N3)));
-			ptr->uf.resize(NFACE, std::vector < std::vector < real >> (NF, std::vector < real > (H_N3)));
-			data.reset(ptr);
-		}
-		return ptr;
+tls_data_t* get_ptr()
+{
+	tls_data_t* ptr = data.get();
+	if (ptr == nullptr) {
+		ptr = new tls_data_t;
+		ptr->v.resize(NF, std::vector < real > (H_N3));
+		ptr->zz.resize(NDIM, std::vector < real > (H_N3));
+		ptr->dvdx.resize(NDIM, std::vector < std::vector < real >> (NF, std::vector < real > (H_N3)));
+		ptr->dudx.resize(NDIM, std::vector < std::vector < real >> (NF, std::vector < real > (H_N3)));
+		ptr->uf.resize(NFACE, std::vector < std::vector < real >> (NF, std::vector < real > (H_N3)));
+		data.reset(ptr);
 	}
+	return ptr;
+}
 };
 
 hpx::util::thread_specific_ptr<tls_data_t, tls_t::tls_data_tag> tls_t::data;
@@ -459,11 +471,11 @@ hpx::util::thread_specific_ptr<tls_data_t, tls_t::tls_data_tag> tls_t::data;
 static tls_t tls;
 
 std::vector<std::vector<real>>& TLS_V() {
-	return tls.get_ptr()->v;
+return tls.get_ptr()->v;
 }
 
 static std::vector<std::vector<std::vector<real>>>& TLS_dVdx() {
-	return tls.get_ptr()->dvdx;
+return tls.get_ptr()->dvdx;
 }
 
 static std::vector<std::vector<std::vector<real>>>& TLS_dUdx() {
