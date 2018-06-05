@@ -237,19 +237,24 @@ struct_eos::struct_eos(real M, real R) {
 	real m, r;
 	d0_ = M / (R * R * R);
 	A = M / R;
+	int i = 0;
 	while (true) {
+		i++;
 		initialize(m, r);
-		printf("%e %e  %e  %e %e  %e \n", d0(), h0(), m, M, r, R);
-		if (opts.eos == MESA) {
-			break;
-		}
+		printf("%e %e  %e  %e %e  %e \n", d0(), A, m, M, r, R);
 		const real m0 = M / m;
 		const real r0 = R / r;
-		d0_ *= m0 / (r0 * r0 * r0);
-		A /= m0 / r0;
-		physcon.A = A;
-		physcon.B = B();
-		normalize_constants();
+		if (opts.eos != MESA) {
+			d0_ *= m0 / (r0 * r0 * r0);
+			A /= m0 / r0;
+			physcon.A = A;
+			physcon.B = B();
+			normalize_constants();
+		} else {
+			const real w = 1.0;
+			d0_ *= std::pow(m0 / (r0 * r0 * r0), w);
+			A *= std::pow(m0 * m0 / (r0 * r0 * r0 * r0 * r0), w);
+		}
 		if (std::abs(1.0 - M / m) < 1.0e-10) {
 			break;
 		}
@@ -361,42 +366,46 @@ void struct_eos::initialize(real& mass, real& radius) {
 	real r;
 	if (opts.eos == WD || opts.eos == MESA) {
 
-		const real dr0 = (1.0 / B()) * sqrt(A / G) / 10.0;
-
-		real h, hdot, m;
-		h = density_to_enthalpy(d0_);
-		hdot = 0.0;
-		r = 0.0;
-		m = 0.0;
-		real dr = dr0;
-		real d;
-		integer i = 0;
+		real dr0 = (1.0 / B()) * sqrt(A / G) / 10.0;
+		integer i;
 		do {
-			if (hdot != 0.0) {
-				dr = std::max(std::min(dr0, std::abs(h / hdot) / 2.0), dr0 * 1.0e-6);
-			}
-			d = this->enthalpy_to_density(h);
-			printf("	%e %e %e\n", r, d, h);
+			real h, hdot, m;
+			h = density_to_enthalpy(d0_);
+			hdot = 0.0;
+			r = 0.0;
+			m = 0.0;
+			real dr = dr0;
+			real d;
+			i = 0;
+			do {
+				if (hdot != 0.0) {
+					dr = std::max(std::min(dr0, std::abs(h / hdot) / 2.0), dr0 * 1.0e-6);
+				}
+				d = this->enthalpy_to_density(h);
+//			printf("	%e %e %e\n", r, d, h);
 			//	printf("%e %e %e %e %e\n", r, m, h, d, dr);
-			const real dh1 = dh_dr(h, hdot, r) * dr;
-			const real dhdot1 = dhdot_dr(h, hdot, r) * dr;
-			const real dm1 = 4.0 * M_PI * d * sqr(r) * dr;
-			if (h + dh1 <= ZERO) {
-				break;
-			}
-			d = this->enthalpy_to_density(h + dh1);
-			const real dh2 = dh_dr(h + dh1, hdot + dhdot1, r + dr) * dr;
-			const real dhdot2 = dhdot_dr(h + dh1, hdot + dhdot1, r + dr) * dr;
-			const real dm2 = 4.0 * M_PI * d * sqr(r + dr) * dr;
-			h += (dh1 + dh2) / 2.0;
-			hdot += (dhdot1 + dhdot2) / 2.0;
-			r += dr;
-			m += (dm1 + dm2) / 2.0;
-			++i;
+				const real dh1 = dh_dr(h, hdot, r) * dr;
+				const real dhdot1 = dhdot_dr(h, hdot, r) * dr;
+				const real dm1 = 4.0 * M_PI * d * sqr(r) * dr;
+				if (h + dh1 <= ZERO) {
+					break;
+				}
+				d = this->enthalpy_to_density(h + dh1);
+				const real dh2 = dh_dr(h + dh1, hdot + dhdot1, r + dr) * dr;
+				const real dhdot2 = dhdot_dr(h + dh1, hdot + dhdot1, r + dr) * dr;
+				const real dm2 = 4.0 * M_PI * d * sqr(r + dr) * dr;
+				h += (dh1 + dh2) / 2.0;
+				hdot += (dhdot1 + dhdot2) / 2.0;
+				r += dr;
+				m += (dm1 + dm2) / 2.0;
+				++i;
 //			if( i > 10 ) abort();
-		} while (h > 0.0);
-		mass = m;
-		radius = r;
+			} while (h > 0.0);
+			mass = m;
+			radius = r;
+			dr0 /= 10.0;
+		} while( i < 10000 );
+//		printf( "%i\n", int(i) );
 	} else {
 		const real dr0 = R0 / 100.0;
 
