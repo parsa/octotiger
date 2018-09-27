@@ -90,41 +90,14 @@ namespace fmm {
                             neighbor_empty_monopoles[dir.flat_index_with_center()] = true;
                         } else {
                             std::vector<real>& neighbor_mons = *(neighbor.data.m);
-                            const bool fullsizes = neighbor_mons.size() == INNER_CELLS;
-                            if (fullsizes) {
-                                iterate_inner_cells_padding(
-                                    dir, [&local_monopoles, neighbor_mons](const multiindex<>& i,
-                                             const size_t flat_index, const multiindex<>&,
-                                             const size_t flat_index_unpadded) {
-                                        // initializes whole expansion, relatively expansion
-                                        local_monopoles.at(flat_index) =
-                                            neighbor_mons.at(flat_index_unpadded);
-                                    });
-                            } else {
-                                iterate_inner_cells_padding(
-                                    dir, [&local_monopoles](const multiindex<>& i,
-                                             const size_t flat_index, const multiindex<>&,
-                                             const size_t) {
-                                        // initializes whole expansion, relatively expansion
-                                        local_monopoles.at(flat_index) = 0.0;
-                                    });
-                                auto list = grid_ptr->get_ilist_n_bnd(dir);
-                                size_t counter = 0;
-                                for (auto i : list) {
-                                    const integer iii = i.second;
-                                    const multiindex<> offset =
-                                        flat_index_to_multiindex_not_padded(iii);
-                                    const multiindex<> m(offset.x + INNER_CELLS_PADDING_DEPTH +
-                                            dir[0] * INNER_CELLS_PADDING_DEPTH,
-                                        offset.y + INNER_CELLS_PADDING_DEPTH +
-                                            dir[1] * INNER_CELLS_PADDING_DEPTH,
-                                        offset.z + INNER_CELLS_PADDING_DEPTH +
-                                            dir[2] * INNER_CELLS_PADDING_DEPTH);
-                                    const size_t flat_index = to_flat_index_padded(m);
-                                    local_monopoles.at(flat_index) = neighbor_mons.at(counter);
-                                    counter++;
-                                }
-                            }
+                            iterate_inner_cells_padding(
+                                dir, [&local_monopoles, neighbor_mons](const multiindex<>& i,
+                                            const size_t flat_index, const multiindex<>&,
+                                            const size_t flat_index_unpadded) {
+                                    // initializes whole expansion, relatively expansion
+                                    local_monopoles.at(flat_index) =
+                                        neighbor_mons.at(flat_index_unpadded);
+                                });
                         }
                     }
                 }

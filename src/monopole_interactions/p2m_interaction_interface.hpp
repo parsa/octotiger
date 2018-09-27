@@ -117,48 +117,24 @@ namespace fmm {
                     } else {
                         std::vector<multipole>& neighbor_M_ptr = *(neighbor.data.M);
                         std::vector<space_vector>& neighbor_com0 = *(neighbor.data.x);
-                        const bool fullsizes = neighbor_M_ptr.size() == INNER_CELLS &&
-                            neighbor_com0.size() == INNER_CELLS;
-                        if (fullsizes) {
-                            // Get multipole data into our input structure
-                            iterate_inner_cells_padding(
-                                dir,
-                                [&local_monopoles, &local_expansions_SoA, &center_of_masses_SoA,
-                                    neighbor_M_ptr, neighbor_com0](const multiindex<>& i,
-                                    const size_t flat_index, const multiindex<>& i_unpadded,
-                                    const size_t flat_index_unpadded) {
-                                    local_expansions_SoA.set_AoS_value(
-                                        std::move(neighbor_M_ptr.at(flat_index_unpadded)),
-                                        flat_index);
-                                    center_of_masses_SoA.set_AoS_value(
-                                        std::move(neighbor_com0.at(flat_index_unpadded)),
-                                        flat_index);
-
-                                    local_monopoles.at(flat_index) = 0.0;
-                                });
-                            multipole_neighbors_exist = true;
-                            x_skip[z][y][x] = false;
-                        } else {
-                            auto list = grid_ptr->get_ilist_n_bnd(dir);
-                            size_t counter = 0;
-                            for (auto i : list) {
-                                const integer iii = i.second;
-                                const multiindex<> offset =
-                                    flat_index_to_multiindex_not_padded(iii);
-                                const multiindex<> m(offset.x + INNER_CELLS_PADDING_DEPTH +
-                                        dir[0] * INNER_CELLS_PADDING_DEPTH,
-                                    offset.y + INNER_CELLS_PADDING_DEPTH +
-                                        dir[1] * INNER_CELLS_PADDING_DEPTH,
-                                    offset.z + INNER_CELLS_PADDING_DEPTH +
-                                        dir[2] * INNER_CELLS_PADDING_DEPTH);
-                                const size_t flat_index = to_flat_index_padded(m);
+                        // Get multipole data into our input structure
+                        iterate_inner_cells_padding(
+                            dir,
+                            [&local_monopoles, &local_expansions_SoA, &center_of_masses_SoA,
+                                neighbor_M_ptr, neighbor_com0](const multiindex<>& i,
+                                const size_t flat_index, const multiindex<>& i_unpadded,
+                                const size_t flat_index_unpadded) {
                                 local_expansions_SoA.set_AoS_value(
-                                    std::move(neighbor_M_ptr.at(counter)), flat_index);
+                                    std::move(neighbor_M_ptr.at(flat_index_unpadded)),
+                                    flat_index);
                                 center_of_masses_SoA.set_AoS_value(
-                                    std::move(neighbor_com0.at(counter)), flat_index);
-                                counter++;
-                            }
-                        }
+                                    std::move(neighbor_com0.at(flat_index_unpadded)),
+                                    flat_index);
+
+                                local_monopoles.at(flat_index) = 0.0;
+                            });
+                        multipole_neighbors_exist = true;
+                        x_skip[z][y][x] = false;
                     }
                 } else {
                     neighbor_empty_multipoles[dir.flat_index_with_center()] = true;
