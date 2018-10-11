@@ -66,27 +66,58 @@ namespace fmm {
                 }
             }
 
-            two_phase_stencil superimposed_stencil;
+            // Create completely unsorted stencil
+            two_phase_stencil superimposed_stencil_unsorted;
             for (size_t i = 0; i < 8; i++) {
                 for (auto element_index = 0; element_index < stencils[i].stencil_elements.size();
                      ++element_index) {
                     multiindex<>& stencil_element = stencils[i].stencil_elements[element_index];
                     bool found = false;
-                    for (multiindex<>& super_element : superimposed_stencil.stencil_elements) {
+                    for (multiindex<>& super_element : superimposed_stencil_unsorted.stencil_elements) {
                         if (stencil_element.compare(super_element)) {
                             found = true;
                             break;
                         }
                     }
                     if (!found) {
-                        superimposed_stencil.stencil_elements.push_back(stencil_element);
-                        superimposed_stencil.stencil_phase_indicator.push_back(
+                        superimposed_stencil_unsorted.stencil_elements.push_back(stencil_element);
+                        superimposed_stencil_unsorted.stencil_phase_indicator.push_back(
                             stencils[i].stencil_phase_indicator[element_index]);
                     }
                 }
                 // std::cout << "Stencil size: " << stencils[i].stencil_elements.size() << std::endl;
             }
-            return superimposed_stencil;
+            // Create sorted stencil, but with unsorted indicators
+            two_phase_stencil superimposed_stencil_tmp = superimposed_stencil_unsorted;
+            std::sort(superimposed_stencil_tmp.stencil_elements.begin(), superimposed_stencil_tmp.stencil_elements.end(), compare_multiindices<int32_t>);
+            // Combine both superimposed stencils to get a sorted stencil with sorted indicators - use the unsorted
+            // stencil as a lookup table
+            two_phase_stencil superimposed_stencil_sorted;
+            {
+                for (auto element_index = 0; element_index < superimposed_stencil_tmp.stencil_elements.size();
+                     ++element_index) {
+                    multiindex<>& stencil_element = superimposed_stencil_tmp.stencil_elements[element_index];
+                    // lookup this stencil element in order to retrieve the indicator for it
+                    long found_index = -1;
+                    for (auto compare_index = 0; compare_index < superimposed_stencil_unsorted.stencil_elements.size();
+                     ++compare_index) {
+                      if (stencil_element.compare(superimposed_stencil_unsorted.stencil_elements[compare_index])) {
+                            found_index = compare_index;
+                            break;
+                        }
+                    }
+                    // put the element and the associated indicator into the sorted stencil
+                    if (found_index >= 0) {
+                        superimposed_stencil_sorted.stencil_elements.push_back(stencil_element);
+                        superimposed_stencil_sorted.stencil_phase_indicator.push_back(
+                            superimposed_stencil_unsorted.stencil_phase_indicator[found_index]);
+                    } else {
+                      throw "Stencil error! A stencil element has not been found";
+                    }
+                }
+                // std::cout << "Stencil size: " << stencils[i].stencil_elements.size() << std::endl;
+            }
+            return superimposed_stencil_sorted;
         }
 
     }    // namespace multipole_interactions

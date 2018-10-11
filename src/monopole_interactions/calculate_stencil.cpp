@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "defs.hpp"
 #include "geometry.hpp"
 #include "options.hpp"
@@ -164,6 +165,7 @@ namespace fmm {
             //     std::cout << std::endl;
             // }
 
+            std::sort(superimposed_stencil.begin(), superimposed_stencil.end(), compare_multiindices<int32_t>);
             std::vector<std::array<real, 4>> four_constants;
             for (auto stencil_element : superimposed_stencil) {
                 const real x = stencil_element.x;

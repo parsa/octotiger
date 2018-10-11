@@ -67,6 +67,25 @@ namespace fmm {
         }
     };
 
+    template <typename T>
+    bool compare_multiindices(multiindex<T> op1, multiindex<T> op2) {
+        if (op1.x == op2.x) {
+            if (op1.y == op2.y) {
+                if (std::abs(op1.y)%2 == 0)
+                    return op1.z < op2.z;
+                else
+                    return op1.z > op2.z;
+            } else {
+                if (std::abs(op1.x)%2 == 0)
+                    return op1.y < op2.y;
+                else
+                    return op1.y > op2.y;
+            }
+        } else {
+            return op1.x < op2.x;
+        }
+    }
+
     CUDA_CALLABLE_METHOD inline multiindex<> flat_index_to_multiindex_not_padded(
         size_t flat_index) {
         size_t x = flat_index / (INNER_CELLS_PER_DIRECTION * INNER_CELLS_PER_DIRECTION);
