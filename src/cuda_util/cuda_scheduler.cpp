@@ -88,6 +88,21 @@ namespace fmm {
                 four_tmp[i * 4 + 3] = four_constants[i][3];
             }
 
+            // Get and save the offset to the last stencil element
+            std::vector<int> move_offsets;
+            move_offsets.reserve(STENCIL_SIZE);
+            move_offsets.push_back(0);
+            for (size_t i = 1; i < stencil.stencil_elements.size(); i++) {
+                const auto last_element = stencil.stencil_elements[i - 1];
+                const auto current_element = stencil.stencil_elements[i];
+                const int x_change = current_element.x - last_element.x;
+                const int y_change = current_element.y - last_element.y;
+                const int z_change = current_element.z - last_element.z;
+                const int total_change = x_change * INX * INX + y_change * INX + z_change;
+                const int total_stencil_moves = std::abs(x_change) + std::abs(y_change) + std::abs(z_change);
+                move_offsets.push_back(total_change);
+            }
+
             // Move data to constant memory, once per gpu
             if (worker_id == 0) {
                 for (size_t gpu_id = 0; gpu_id < gpu_count; gpu_id++) {
