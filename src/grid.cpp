@@ -9,7 +9,6 @@
 #include "node_server.hpp"
 #include "exact_sod.hpp"
 
-
 #include <array>
 #include <cmath>
 #include <cassert>
@@ -77,10 +76,12 @@ void grid::set(const std::string name, real* data) {
 	if (iter != str_to_index_hydro.end()) {
 		int f = iter->second;
 		int jjj = 0;
-		for (int i = 0; i < INX; i++) {
-			for (int j = 0; j < INX; j++) {
-				for (int k = 0; k < INX; k++) {
-					const int iii = hindex(k + H_BW, j + H_BW, i + H_BW);
+		const integer lb = is_root ? 0 : H_BW;
+		const integer ub = is_root ? H_NX : H_NX - H_BW;
+		for (int i = lb; i < ub; i++) {
+			for (int j = lb; j < ub; j++) {
+				for (int k = lb; k < ub; k++) {
+					const int iii = hindex(k, j, i);
 					U[f][iii] = data[jjj];
 					jjj++;
 				}
@@ -93,6 +94,8 @@ void grid::set(const std::string name, real* data) {
 }
 
 std::vector<silo_var_t> grid::var_data(const std::string suffix) const {
+	const integer lb = is_root ? 0 : H_BW;
+	const integer ub = is_root ? H_NX : H_NX - H_BW;
 	std::vector<silo_var_t> s;
 	if (opts.hydro) {
 		for (auto l : str_to_index_hydro) {
@@ -103,10 +106,10 @@ std::vector<silo_var_t> grid::var_data(const std::string suffix) const {
 			}
 			int jjj = 0;
 			silo_var_t this_s(this_name);
-			for (int i = 0; i < INX; i++) {
-				for (int j = 0; j < INX; j++) {
-					for (int k = 0; k < INX; k++) {
-						const int iii = hindex(k + H_BW, j + H_BW, i + H_BW);
+			for (int i = lb; i < ub; i++) {
+				for (int j = lb; j < ub; j++) {
+					for (int k = lb; k < ub; k++) {
+						const int iii = hindex(k, j, i);
 						this_s(jjj) = U[f][iii];
 						jjj++;
 					}
@@ -125,11 +128,15 @@ std::vector<silo_var_t> grid::var_data(const std::string suffix) const {
 			}
 			int jjj = 0;
 			silo_var_t this_s(this_name);
-			for (int i = 0; i < INX; i++) {
-				for (int j = 0; j < INX; j++) {
-					for (int k = 0; k < INX; k++) {
-						const int iii = hindex(k + H_BW, j + H_BW, i + H_BW);
-						this_s(jjj) = U[f][iii];
+			for (int i = lb; i < ub; i++) {
+				for (int j = lb; j < ub; j++) {
+					for (int k = lb; k < ub; k++) {
+						if (k >= H_BW && k < H_NX - H_BW && j >= H_BW && j < H_NX - H_BW && i >= H_BW && i < H_NX - H_BW) {
+							const int iii = gindex(k - H_BW, j - H_BW, i - H_BW);
+							this_s(jjj) = G[iii][f];
+						} else {
+							this_s(jjj) = 0.0;
+						}
 						jjj++;
 					}
 				}
@@ -1762,12 +1769,14 @@ void grid::allocate() {
 }
 
 grid::grid() :
-		U(opts.n_fields), U0(opts.n_fields), dUdt(opts.n_fields), F(NDIM), X(NDIM), G(NGF), is_root(false), is_leaf(true), dphi_dt(H_N3) {
+		U(opts.n_fields), U0(opts.n_fields), dUdt(opts.n_fields), F(NDIM), X(NDIM), G(NGF), is_root(false), is_leaf(true), dphi_dt(
+				H_N3) {
 //	allocate();
 }
 
 grid::grid(const init_func_type& init_func, real _dx, std::array<real, NDIM> _xmin) :
-		U(opts.n_fields), U0(opts.n_fields), dUdt(opts.n_fields), F(NDIM), X(NDIM), G(NGF), is_root(false), is_leaf(true), dphi_dt(H_N3) {
+		U(opts.n_fields), U0(opts.n_fields), dUdt(opts.n_fields), F(NDIM), X(NDIM), G(NGF), is_root(false), is_leaf(true), dphi_dt(
+				H_N3) {
 	PROF_BEGIN;
 	dx = _dx;
 	xmin = _xmin;
@@ -2218,9 +2227,9 @@ void grid::set_physical_boundaries(const geo::face& face, real t) {
 	const integer klb = side == geo::MINUS ? 0 : H_NX - H_BW;
 	const integer kub = side == geo::MINUS ? H_BW : H_NX;
 	const integer ilb = H_BW;
-	const integer iub = H_NX-H_BW;
+	const integer iub = H_NX - H_BW;
 	const integer jlb = H_BW;
-	const integer jub = H_NX-H_BW;
+	const integer jub = H_NX - H_BW;
 
 	/*	if (opts.problem == SOD) {
 	 for (integer k = klb; k != kub; ++k) {
@@ -2265,7 +2274,7 @@ void grid::set_physical_boundaries(const geo::face& face, real t) {
 					}
 					const real value = U[field][i * dni + j * dnj + k0 * dnk];
 					const integer iii = i * dni + j * dnj + k * dnk;
-					real& ref = U[field][iii];
+					real new_value = U[field][iii];
 					if (field == sx_i + dim) {
 						real s0;
 						if (field == sx_i) {
@@ -2277,16 +2286,16 @@ void grid::set_physical_boundaries(const geo::face& face, real t) {
 						}
 						switch (boundary_types[face]) {
 						case REFLECT:
-							ref = -value;
+							new_value = -value;
 							break;
 						case OUTFLOW:
 							const real before = value;
 							if (side == geo::MINUS) {
-								ref = s0 + std::min(value - s0, ZERO);
+								new_value = s0 + std::min(value - s0, ZERO);
 							} else {
-								ref = s0 + std::max(value - s0, ZERO);
+								new_value = s0 + std::max(value - s0, ZERO);
 							}
-							const real after = ref;
+							const real after = new_value;
 							assert(rho_i < field);
 							assert(egas_i < field);
 							real this_rho = U[rho_i][iii];
@@ -2296,8 +2305,12 @@ void grid::set_physical_boundaries(const geo::face& face, real t) {
 							break;
 						}
 					} else {
-						ref = +value;
+						new_value = +value;
 					}
+					/* acculumate differences in first cell for conservation*/
+					U[field][0] += U[field][iii] - value;
+					U[field][iii] = value;
+
 				}
 			}
 		}
@@ -2484,7 +2497,6 @@ void grid::next_u(integer rk, real t, real dt) {
 		}
 	}
 
-
 	std::vector<real> ds(NDIM, ZERO);
 	for (integer i = H_BW; i != H_NX - H_BW; ++i) {
 		for (integer j = H_BW; j != H_NX - H_BW; ++j) {
@@ -2500,9 +2512,7 @@ void grid::next_u(integer rk, real t, real dt) {
 			}
 		}
 	}
-
-	/* TODO REPLACE ME
-
+	std::vector<real> du_out(opts.n_fields, 0.0);
 	for (integer i = H_BW; i != H_NX - H_BW; ++i) {
 #pragma GCC ivdep
 		for (integer j = H_BW; j != H_NX - H_BW; ++j) {
@@ -2600,15 +2610,12 @@ void grid::next_u(integer rk, real t, real dt) {
 				du_out[field] += du[field] * dt;
 			}
 
-
 		}
 #pragma GCC ivdep
-	for (integer field = 0; field != opts.n_fields; ++field) {
-		const real out1 = U_out[field] + du_out[field];
-		const real out0 = U_out0[field];
-		U_out[field] = (ONE - rk_beta[rk]) * out0 + rk_beta[rk] * out1;
+		for (integer field = 0; field != opts.n_fields; ++field) {
+			U[field][0] += du_out[field] * 0.5;
+		}
 	}
-	}*/
 	for (integer i = H_BW; i != H_NX - H_BW; ++i) {
 		for (integer j = H_BW; j != H_NX - H_BW; ++j) {
 #pragma GCC ivdep

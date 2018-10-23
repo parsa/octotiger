@@ -89,7 +89,7 @@ struct mesh_vars_t {
 	std::vector<silo_var_t> vars;
 	std::vector<std::string> var_names;
 	std::string mesh_name;
-	std::vector<std::array<real, INX + 1>> X;
+	std::vector<std::vector<real>> X;
 };
 
 static std::vector<hpx::future<mesh_vars_t>> futs_;
@@ -99,14 +99,25 @@ std::vector<node_location::node_id> output_stage1(std::string fname, int cycle) 
 	std::vector<node_location::node_id> ids;
 	futs_.clear();
 	for (auto i = node_registry::begin(); i != node_registry::end(); i++) {
+		auto loc = i->first;
 		if (!i->second->refined()) {
-			futs_.push_back(hpx::async([&ids](node_location loc, node_server* this_ptr) {
-				std::vector<std::array<real, INX+1>> X(NDIM);
+			futs_.push_back(hpx::async([&ids,loc](node_location loc, node_server* this_ptr) {
+				std::vector<std::vector<real>> X;
+				integer lb, ub;
+				if( loc.level() == 0 ) {
+					X.resize(NDIM,std::vector<real>(H_NX+1));
+					lb = 0;
+					ub = H_NX;
+				} else {
+					X.resize(NDIM,std::vector<real>(INX+1));
+					lb = H_BW;
+					ub = H_NX - 2 * H_BW;
+				}
 				const real dx = TWO / real(1 << loc.level()) / real(INX);
 				for( int d = 0; d < NDIM; d++) {
 					const real x0 = loc.x_location(d);
-					for( int i = 0; i <= INX; i++) {
-						X[d][i] = x0 + real(i) * dx;
+					for( int i = lb; i <= ub; i++) {
+						X[d][i] = x0 + real(i - H_BW) * dx;
 					}
 				}
 				mesh_vars_t rc;
@@ -150,8 +161,6 @@ void output_stage2(std::string fname, int cycle) {
 		CALL_SILO(DBAddOption, optlist, DBOPT_DTIME, &dtime);
 		CALL_SILO(DBAddOption, optlist, DBOPT_TIME, &ftime);
 		const char* coord_names[] = { "x", "y", "z" };
-		constexpr int dims[] = { INX + 1, INX + 1, INX + 1 };
-		constexpr int dims2[] = { INX, INX, INX };
 		constexpr int data_type = DB_DOUBLE;
 		constexpr int ndim = NDIM;
 		constexpr int coord_type = DB_COLLINEAR;
@@ -159,6 +168,8 @@ void output_stage2(std::string fname, int cycle) {
 		for (auto& this_fut : futs_) {
 			auto mesh_vars = this_fut.get();
 			const auto& X = mesh_vars.X;
+			const int dims[] = { int(X[0].size()) + 1, int(X[1].size()) + 1, int(X[2].size()) + 1 };
+			const int dims2[] = { int(X[0].size()), int(X[1].size()), int(X[2].size()) };
 			const real* coords[] = { X[0].data(), X[1].data(), X[2].data() };
 			CALL_SILO(DBPutQuadmesh, db, mesh_vars.mesh_name.c_str(), coord_names, coords, dims, ndim, data_type, coord_type,
 					optlist);
@@ -251,6 +262,8 @@ void output_stage2(std::string fname, int cycle) {
 }
 
 void output_all(std::string fname, int cycle) {
+	static hpx::future<void> output_barrier(hpx::make_ready_future<void>());
+	output_barrier.get();
 	std::vector<hpx::future<std::vector<node_location::node_id>>> id_futs;
 	for (auto& id : localities) {
 		id_futs.push_back(hpx::async<output1_action>(id, fname, cycle));
@@ -262,8 +275,7 @@ void output_all(std::string fname, int cycle) {
 			loc_ids.push_back(i);
 		}
 	}
-	output_stage2_action func;
-	func(localities[0], fname, cycle);
+	output_barrier = hpx::async<output_stage2_action>(localities[0], fname, cycle);
 }
 
 void local_load(const std::string&, std::vector<node_location::node_id> node_ids);
@@ -299,7 +311,7 @@ void local_load(const std::string& fname, std::vector<node_location::node_id> no
 	for (const auto& i : node_ids) {
 		node_location l;
 		l.from_id(i);
-		futs.push_back(hpx::new_ < node_server > (me, l).then([&me,l,&fname](hpx::future<hpx::id_type>&& f) {
+		futs.push_back(hpx::new_<node_server>(me, l).then([&me,l,&fname](hpx::future<hpx::id_type>&& f) {
 			const auto id = f.get();
 			auto client = node_client(id);
 			load_registry::put(l.to_id(), id);
