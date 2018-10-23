@@ -232,7 +232,7 @@ public:
 
 	void start_run(bool scf, integer);
 
-	void set_grid(const std::vector<real>&, std::vector<real>&&);/**/
+	void set_grid(const std::vector<real>&);/**/
 	HPX_DEFINE_COMPONENT_DIRECT_ACTION(node_server, set_grid, set_grid_action);
 
 	hpx::future<void> timestep_driver_descend();

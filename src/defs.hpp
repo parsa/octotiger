@@ -190,6 +190,13 @@ constexpr inline integer h0index(integer i, integer j, integer k)
     return i * INX * INX + j * INX + k;
 }
 
+
+// #define h0index(i,j,k) ((i)*INX*INX+(j)*INX+(k))
+constexpr inline integer h1index(integer i, integer j, integer k)
+{
+    return i * (INX+2) * (INX+2) + j * (INX+2) + k;
+}
+
 // #define hindex(i,j,k) ((i)*H_DNX + (j)*H_DNY + (k)*H_DNZ)
 constexpr inline integer hindex(integer i, integer j, integer k)
 {

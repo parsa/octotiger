@@ -103,9 +103,6 @@ future<hpx::id_type> node_server::create_child(hpx::id_type const& locality, int
 				ub[d] = lb[d] + (INX);
 			}
 			std::vector<real> outflows(opts.n_fields, ZERO);
-			if (ci == 0) {
-				outflows = grid_ptr->get_outflows();
-			}
 			if (current_time > ZERO)
 			{
 				std::vector<real> prolong;
@@ -113,7 +110,7 @@ future<hpx::id_type> node_server::create_child(hpx::id_type const& locality, int
 					std::unique_lock<hpx::lcos::local::spinlock> lk(prolong_mtx);
 					prolong = grid_ptr->get_prolong(lb, ub);
 				}
-				GET(child.set_grid(std::move(prolong), std::move(outflows)));
+				GET(child.set_grid(std::move(prolong)));
 			}
 		}
 		if( opts.radiation ) {
@@ -246,12 +243,12 @@ void node_server::set_aunt(const hpx::id_type& aunt, const geo::face& face) {
 typedef node_server::set_grid_action set_grid_action_type;
 HPX_REGISTER_ACTION(set_grid_action_type);
 
-future<void> node_client::set_grid(std::vector<real>&& g, std::vector<real>&& o) const {
-	return hpx::async<typename node_server::set_grid_action>(get_unmanaged_gid(), std::move(g), std::move(o));
+future<void> node_client::set_grid(std::vector<real>&& g) const {
+	return hpx::async<typename node_server::set_grid_action>(get_unmanaged_gid(), std::move(g));
 }
 
-void node_server::set_grid(const std::vector<real>& data, std::vector<real>&& outflows) {
-	grid_ptr->set_prolong(data, std::move(outflows));
+void node_server::set_grid(const std::vector<real>& data) {
+	grid_ptr->set_prolong(data);
 }
 
 typedef node_server::solve_gravity_action solve_gravity_action_type;

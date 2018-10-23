@@ -43,20 +43,37 @@ future<void> node_server::exchange_flux_corrections() {
 	const geo::octant ci = my_location.get_child_index();
 	constexpr auto full_set = geo::face::full_set();
 	for (auto& f : full_set) {
-		const auto face_dim = f.get_dimension();
-		auto const& this_aunt = aunts[f];
-		if (!this_aunt.empty()) {
-			std::array<integer, NDIM> lb, ub;
-			lb[XDIM] = lb[YDIM] = lb[ZDIM] = 0;
-			ub[XDIM] = ub[YDIM] = ub[ZDIM] = INX;
-			if (f.get_side() == geo::MINUS) {
-				lb[face_dim] = 0;
-			} else {
-				lb[face_dim] = INX;
+		if (my_location.is_physical_boundary(f)  ) {
+			const auto face_dim = f.get_dimension();
+			if (!parent.empty()) {
+				std::array<integer, NDIM> lb, ub;
+				lb[XDIM] = lb[YDIM] = lb[ZDIM] = 0;
+				ub[XDIM] = ub[YDIM] = ub[ZDIM] = INX;
+				if (f.get_side() == geo::MINUS) {
+					lb[face_dim] = 0;
+				} else {
+					lb[face_dim] = INX;
+				}
+				ub[face_dim] = lb[face_dim] + 1;
+				auto data = grid_ptr->get_flux_restrict(lb, ub, face_dim);
+				parent.send_hydro_flux_correct(std::move(data), f, ci);
 			}
-			ub[face_dim] = lb[face_dim] + 1;
-			auto data = grid_ptr->get_flux_restrict(lb, ub, face_dim);
-			this_aunt.send_hydro_flux_correct(std::move(data), f.flip(), ci);
+		} else {
+			const auto face_dim = f.get_dimension();
+			auto const& this_aunt = aunts[f];
+			if (!this_aunt.empty()) {
+				std::array<integer, NDIM> lb, ub;
+				lb[XDIM] = lb[YDIM] = lb[ZDIM] = 0;
+				ub[XDIM] = ub[YDIM] = ub[ZDIM] = INX;
+				if (f.get_side() == geo::MINUS) {
+					lb[face_dim] = 0;
+				} else {
+					lb[face_dim] = INX;
+				}
+				ub[face_dim] = lb[face_dim] + 1;
+				auto data = grid_ptr->get_flux_restrict(lb, ub, face_dim);
+				this_aunt.send_hydro_flux_correct(std::move(data), f.flip(), ci);
+			}
 		}
 	}
 
@@ -133,7 +150,6 @@ void node_server::exchange_interlevel_hydro_data() {
 				++fi;
 			}
 		}
-		grid_ptr->set_outflows(std::move(outflow));
 	}
 	auto data = grid_ptr->get_restrict();
 	integer ci = my_location.get_child_index();
@@ -158,10 +174,10 @@ void node_server::collect_hydro_boundaries(bool tau_only) {
 			results[index++] = sibling_hydro_channels[dir].get_future(hcycle).then(
 					hpx::util::annotated_function([this, tau_only](future<sibling_hydro_type> && f) -> void
 					{
-							auto&& tmp = GET(f);
-							grid_ptr->set_hydro_boundary(tmp.data, tmp.direction,
-									H_BW, tau_only);
-						}, "node_server::collect_hydro_boundaries::set_hydro_boundary"));
+						auto&& tmp = GET(f);
+						grid_ptr->set_hydro_boundary(tmp.data, tmp.direction,
+								H_BW, tau_only);
+					}, "node_server::collect_hydro_boundaries::set_hydro_boundary"));
 		}
 	}
 	while (index < geo::direction::count()) {
@@ -232,7 +248,7 @@ void node_server::clear_family() {
 	parent = me = hpx::invalid_id;
 	std::fill(aunts.begin(), aunts.end(), hpx::invalid_id);
 	std::fill(nieces.begin(), nieces.end(), 0);
-	std::fill(neighbors.begin(), neighbors.end(),hpx::invalid_id);
+	std::fill(neighbors.begin(), neighbors.end(), hpx::invalid_id);
 }
 
 integer child_index_to_quadrant_index(integer ci, integer dim) {

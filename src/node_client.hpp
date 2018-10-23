@@ -21,12 +21,7 @@
 class node_server;
 class analytic_t;
 
-
-#ifdef USE_NIECE_BOOL
-typedef bool set_child_aunt_type;
-#else
 typedef integer set_child_aunt_type;
-#endif
 
 
 namespace hpx {
@@ -96,7 +91,7 @@ public:
 	future<real> step(integer) const;
 	future<void> solve_gravity(bool ene,bool aonly) const;
 	future<hpx::id_type> copy_to_locality(const hpx::id_type& ) const;
-	future<void> set_grid(std::vector<real>&&,std::vector<real>&&) const;
+	future<void> set_grid(std::vector<real>&&) const;
 	void timestep_driver_ascend(real) const;
     void set_local_timestep(integer, real) const;
 	future<void> velocity_inc(const space_vector&) const;

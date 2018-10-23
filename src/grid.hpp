@@ -129,8 +129,6 @@ private:
 	bool is_leaf;
 	real dx;
 	std::array<real, NDIM> xmin;
-	std::vector<real> U_out;
-	std::vector<real> U_out0;
 	std::vector<std::shared_ptr<std::vector<space_vector>>> com_ptr;
 	static bool xpoint_eq(const xpoint& a, const xpoint& b);
 	void compute_boundary_interactions_multipole_multipole(gsolve_type type, const std::vector<boundary_interaction_type>&,
@@ -211,9 +209,7 @@ public:
 	real get_source(integer i, integer j, integer k) const {
 		return U[rho_i][hindex(i + H_BW, j + H_BW, k + H_BW)] * dx * dx * dx;
 	}
-	std::vector<real> const& get_outflows() const {
-		return U_out;
-	}
+
 	void set_root(bool flag = true) {
 		is_root = flag;
 	}
@@ -237,23 +233,18 @@ public:
 	void compute_primitives(const std::array<integer, NDIM> lb = { 1, 1, 1 },
 			const std::array<integer, NDIM> ub = { H_NX - 1, H_NX - 1, H_NX - 1 }, bool tau_only = false) const;
 	void set_coordinates();
-	std::vector<real> get_flux_check(const geo::face&);
-	void set_flux_check(const std::vector<real>&, const geo::face&);
 	void set_hydro_boundary(const std::vector<real>&, const geo::direction&, integer width, bool tau_only = false);
 	std::vector<real> get_hydro_boundary(const geo::direction& face, integer width, bool tau_only = false);
 	scf_data_t scf_params();
 	real scf_update(real, real, real, real, real, real, real, struct_eos, struct_eos);
 	std::pair<std::vector<real>, std::vector<real> > field_range() const;
 	void velocity_inc(const space_vector& dv);
-	void set_outflows(std::vector<real>&& u) {
-		U_out = std::move(u);
-	}
 	std::vector<real> get_restrict() const;
 	std::vector<real> get_flux_restrict(const std::array<integer, NDIM>& lb, const std::array<integer, NDIM>& ub,
 			const geo::dimension&) const;
 	std::vector<real> get_prolong(const std::array<integer, NDIM>& lb, const std::array<integer, NDIM>& ub, bool tau_only =
 			false);
-	void set_prolong(const std::vector<real>&, std::vector<real>&&);
+	void set_prolong(const std::vector<real>&);
 	void set_restrict(const std::vector<real>&, const geo::octant&);
 	void set_flux_restrict(const std::vector<real>&, const std::array<integer, NDIM>& lb, const std::array<integer, NDIM>& ub,
 			const geo::dimension&);
@@ -283,7 +274,6 @@ public:
 			bool donor) const;
 	std::vector<real> l_sums() const;
 	std::vector<real> gforce_sum(bool torque) const;
-	std::vector<real> conserved_outflows() const;
 	grid(const init_func_type&, real dx, std::array<real, NDIM> xmin);
 	grid(real dx, std::array<real, NDIM>);
 	grid();
@@ -368,7 +358,6 @@ void grid::load(Archive& arc, const unsigned) {
 		arc >> G[i][3];
 #endif
 	}
-	arc >> U_out;
 }
 
 template<class Archive>
@@ -392,7 +381,6 @@ void grid::save(Archive& arc, const unsigned) const {
 		arc << G[i][3];
 #endif
 	}
-	arc << U_out;
 }
 
 #endif /* GRID_HPP_ */

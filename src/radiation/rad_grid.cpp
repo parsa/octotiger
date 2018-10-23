@@ -576,6 +576,8 @@ void rad_grid::change_units(real m, real l, real t, real k) {
 	}
 }
 
+
+/*** TODO outflow flux into boundary*/
 void rad_grid::advance(real dt, real beta) {
 	const real l = dt * INVERSE(dx);
 	const integer D[3] = { DX, DY, DZ };

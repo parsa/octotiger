@@ -195,10 +195,6 @@ diagnostics_t grid::diagnostics(const diagnostics_t& diags) {
 				}
 			}
 		}
-		for (integer f = 0; f != opts.n_fields; ++f) {
-			rc.grid_out[f] += U_out[f];
-		}
-		rc.grid_out[egas_i] += U_out[pot_i];
 		return rc;
 	}
 
@@ -446,61 +442,7 @@ diagnostics_t grid::diagnostics(const diagnostics_t& diags) {
 			rc.com_dot[s][ZDIM] /= rc.m[s];
 		}
 	}
-	for (integer f = 0; f != opts.n_fields; ++f) {
-		rc.grid_out[f] += U_out[f];
-	}
-	rc.grid_out[egas_i] += U_out[pot_i];
 	return rc;
-}
-
-std::vector<real> grid::get_flux_check(const geo::face& f) {
-	std::vector<real> flux;
-	const integer dim = f.get_dimension();
-	int i, j, k;
-	int& i1 = dim == XDIM ? j : i;
-	int& i2 = dim == ZDIM ? j : k;
-	int& n = dim == XDIM ? i : (dim == YDIM ? j : k);
-	if (f.get_side() == geo::MINUS) {
-		n = 0;
-	} else {
-		n = INX;
-	}
-	for (integer f = 0; f != opts.n_fields; ++f) {
-		for (i1 = 0; i1 != INX; ++i1) {
-			for (i2 = 0; i2 != INX; ++i2) {
-				flux.push_back(F[dim][f][findex(i, j, k)]);
-			}
-		}
-	}
-	return flux;
-}
-
-void grid::set_flux_check(const std::vector<real>& data, const geo::face& f) {
-	const integer dim = f.get_dimension();
-	integer index = 0;
-	int i, j, k;
-	int& i1 = dim == XDIM ? j : i;
-	int& i2 = dim == ZDIM ? j : k;
-	int& n = dim == XDIM ? i : (dim == YDIM ? j : k);
-	if (f.get_side() == geo::MINUS) {
-		n = 0;
-	} else {
-		n = INX;
-	}
-	for (integer f = 0; f != opts.n_fields; ++f) {
-		for (i1 = 0; i1 != INX; ++i1) {
-			for (i2 = 0; i2 != INX; ++i2) {
-				const real a = F[dim][f][findex(i, j, k)];
-				const real b = data[index];
-				++index;
-				if (a != b) {
-					printf("Flux error\n");
-					//		printf("%e %e %i\n", a, b, f);
-//					abort();
-				}
-			}
-		}
-	}
 }
 
 hpx::lcos::local::spinlock grid::omega_mtx;
@@ -920,10 +862,9 @@ void grid::set_flux_restrict(const std::vector<real>& data, const std::array<int
 	}PROF_END;
 }
 
-void grid::set_prolong(const std::vector<real>& data, std::vector<real>&& outflows) {
+void grid::set_prolong(const std::vector<real>& data) {
 	PROF_BEGIN;
 	integer index = 0;
-	U_out = std::move(outflows);
 	for (integer field = 0; field != opts.n_fields; ++field) {
 		for (integer i = H_BW; i != H_NX - H_BW; ++i) {
 			for (integer j = H_BW; j != H_NX - H_BW; ++j) {
@@ -1060,9 +1001,8 @@ std::vector<real> grid::get_restrict() const {
 			}
 		}
 	}
-	for (integer field = 0; field != opts.n_fields; ++field) {
-		data.push_back(U_out[field]);
-	}PROF_END;
+
+	PROF_END;
 	return data;
 }
 
@@ -1794,8 +1734,6 @@ void grid::allocate() {
 		rad_grid_ptr = std::make_shared<rad_grid>();
 		rad_grid_ptr->set_dx(dx);
 	}
-	U_out0 = std::vector<real>(opts.n_fields, ZERO);
-	U_out = std::vector<real>(opts.n_fields, ZERO);
 	dphi_dt = std::vector<real>(INX * INX * INX);
 	G.resize(G_N3);
 	for (integer dim = 0; dim != NDIM; ++dim) {
@@ -1824,14 +1762,12 @@ void grid::allocate() {
 }
 
 grid::grid() :
-		U(opts.n_fields), U0(opts.n_fields), dUdt(opts.n_fields), F(NDIM), X(NDIM), G(NGF), is_root(false), is_leaf(true), U_out(
-				opts.n_fields, ZERO), U_out0(opts.n_fields, ZERO), dphi_dt(H_N3) {
+		U(opts.n_fields), U0(opts.n_fields), dUdt(opts.n_fields), F(NDIM), X(NDIM), G(NGF), is_root(false), is_leaf(true), dphi_dt(H_N3) {
 //	allocate();
 }
 
 grid::grid(const init_func_type& init_func, real _dx, std::array<real, NDIM> _xmin) :
-		U(opts.n_fields), U0(opts.n_fields), dUdt(opts.n_fields), F(NDIM), X(NDIM), G(NGF), is_root(false), is_leaf(true), U_out(
-				opts.n_fields, ZERO), U_out0(opts.n_fields, ZERO), dphi_dt(H_N3) {
+		U(opts.n_fields), U0(opts.n_fields), dUdt(opts.n_fields), F(NDIM), X(NDIM), G(NGF), is_root(false), is_leaf(true), dphi_dt(H_N3) {
 	PROF_BEGIN;
 	dx = _dx;
 	xmin = _xmin;
@@ -2258,7 +2194,6 @@ void grid::store() {
 			}
 		}
 	}
-	U_out0 = U_out;
 }
 
 void grid::restore() {
@@ -2272,7 +2207,6 @@ void grid::restore() {
 			}
 		}
 	}
-	U_out = U_out0;
 }
 
 void grid::set_physical_boundaries(const geo::face& face, real t) {
@@ -2283,10 +2217,10 @@ void grid::set_physical_boundaries(const geo::face& face, real t) {
 	const integer dnk = H_DN[dim];
 	const integer klb = side == geo::MINUS ? 0 : H_NX - H_BW;
 	const integer kub = side == geo::MINUS ? H_BW : H_NX;
-	const integer ilb = 0;
-	const integer iub = H_NX;
-	const integer jlb = 0;
-	const integer jub = H_NX;
+	const integer ilb = H_BW;
+	const integer iub = H_NX-H_BW;
+	const integer jlb = H_BW;
+	const integer jub = H_NX-H_BW;
 
 	/*	if (opts.problem == SOD) {
 	 for (integer k = klb; k != kub; ++k) {
@@ -2535,8 +2469,6 @@ void grid::etot_to_egas() {
 }
 
 void grid::next_u(integer rk, real t, real dt) {
-//	return;
-
 	PROF_BEGIN;
 	for (integer i = H_BW; i != H_NX - H_BW; ++i) {
 		for (integer j = H_BW; j != H_NX - H_BW; ++j) {
@@ -2552,7 +2484,6 @@ void grid::next_u(integer rk, real t, real dt) {
 		}
 	}
 
-	std::vector<real> du_out(opts.n_fields, ZERO);
 
 	std::vector<real> ds(NDIM, ZERO);
 	for (integer i = H_BW; i != H_NX - H_BW; ++i) {
@@ -2570,8 +2501,7 @@ void grid::next_u(integer rk, real t, real dt) {
 		}
 	}
 
-	du_out[sx_i] += omega * U_out[sy_i] * dt;
-	du_out[sy_i] -= omega * U_out[sx_i] * dt;
+	/* TODO REPLACE ME
 
 	for (integer i = H_BW; i != H_NX - H_BW; ++i) {
 #pragma GCC ivdep
@@ -2669,14 +2599,16 @@ void grid::next_u(integer rk, real t, real dt) {
 			for (integer field = 0; field != opts.n_fields; ++field) {
 				du_out[field] += du[field] * dt;
 			}
+
+
 		}
-	}
 #pragma GCC ivdep
 	for (integer field = 0; field != opts.n_fields; ++field) {
 		const real out1 = U_out[field] + du_out[field];
 		const real out0 = U_out0[field];
 		U_out[field] = (ONE - rk_beta[rk]) * out0 + rk_beta[rk] * out1;
 	}
+	}*/
 	for (integer i = H_BW; i != H_NX - H_BW; ++i) {
 		for (integer j = H_BW; j != H_NX - H_BW; ++j) {
 #pragma GCC ivdep
@@ -2763,12 +2695,4 @@ std::pair<real, real> grid::virial() const {
 		}
 	}PROF_END;
 	return v;
-}
-
-std::vector<real> grid::conserved_outflows() const {
-	auto Uret = U_out;
-	if (opts.gravity) {
-		Uret[egas_i] += Uret[pot_i];
-	}
-	return Uret;
 }
