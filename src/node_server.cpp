@@ -27,7 +27,10 @@ extern options opts;
 #include <hpx/include/util.hpp>
 
 void node_server::delist() {
-	listed = false;
+        if (listed) {
+                node_registry::delete_(my_location);
+        }
+        listed = false;
 }
 
 HPX_REGISTER_COMPONENT(hpx::components::managed_component<node_server>, node_server);
@@ -299,10 +302,7 @@ void node_server::initialize(real t, real rt) {
 }
 
 node_server::~node_server() {
-	if (!listed) {
-		node_registry::delete_(my_location);
-	}
-	listed = false;
+	delist();
 }
 
 node_server::node_server(const node_location& loc, const node_client& parent_id, real t, real rt, std::size_t _step_num,
