@@ -44,156 +44,16 @@ endif()
 # Set up Octotiger target
 ################################################################################
 # Octotiger executable
-set(source_files
-    src/test_problems/marshak/marshak.cpp
-    src/test_problems/blast/sedov.cpp
-    src/test_problems/blast/sedovf_c.cpp
-    src/test_problems/rotating_star/rotating_star.cpp
-    src/test_problems/sod/sod.cpp
-    src/silo.cpp
-    src/node_registry.cpp
-    src/eos.cpp
-    src/scf_data.cpp
-    src/test_problems/sod/exact_sod.cpp
-    src/geometry.cpp
-    src/grid.cpp
-    src/grid_fmm.cpp
-    src/grid_output.cpp
-    src/grid_scf.cpp
-    src/lane_emden.cpp
-    src/main.cpp
-    src/new.cpp
-    src/node_client.cpp
-    src/node_location.cpp
-    src/node_server.cpp
-    src/node_server_actions_1.cpp
-    src/node_server_actions_2.cpp
-    src/node_server_actions_3.cpp
-    src/options.cpp
-    src/physcon.cpp
-    src/problem.cpp
-    src/profiler.cpp
-    src/radiation/rad_grid.cpp
-    src/radiation/implicit.cpp
-    src/real.cpp
-    src/roe.cpp
-    src/scf_data.cpp
-    src/stack_trace.cpp
-    src/taylor.cpp
-    src/util.cpp
-    src/compute_factor.cpp
-    src/multipole_interactions/multipole_interaction_interface.cpp
-    src/multipole_interactions/cuda_multipole_interaction_interface.cpp
-    src/multipole_interactions/multipole_cuda_kernel.cu
-    src/multipole_interactions/calculate_stencil.cpp
-    src/multipole_interactions/multipole_cpu_kernel.cpp
-    src/monopole_interactions/cuda_p2p_interaction_interface.cpp
-    src/monopole_interactions/p2p_cuda_kernel.cu
-    src/monopole_interactions/p2p_cpu_kernel.cpp
-    src/monopole_interactions/p2p_interaction_interface.cpp
-    src/monopole_interactions/calculate_stencil.cpp
-    src/monopole_interactions/p2m_interaction_interface.cpp
-    src/monopole_interactions/p2m_kernel.cpp
-    src/common_kernel/interactions_iterators.cpp
-    src/cuda_util/cuda_scheduler.cpp
-)
-
-set(header_files
-    src/channel.hpp
-    src/container_device.hpp
-    src/defs.hpp
-    src/diagnostics.hpp
-    src/eos.hpp
-    src/test_problems/sod/exact_sod.hpp
-    src/future.hpp
-    src/geometry.hpp
-    src/grid.hpp
-    src/lane_emden.hpp
-    src/node_client.hpp
-    src/node_location.hpp
-    src/node_server.hpp
-    src/options.hpp
-    src/physcon.hpp
-    src/problem.hpp
-    src/profiler.hpp
-    src/radiation/rad_grid.hpp
-    src/real.hpp
-    src/roe.hpp
-    src/scf_data.hpp
-    src/simd.hpp
-    src/space_vector.hpp
-    src/state.hpp
-    src/struct_eos.hpp
-    src/taylor.hpp
-    src/util.hpp
-    src/compute_factor.hpp
-    src/common_kernel/interaction_constants.hpp
-    src/common_kernel/multiindex.hpp
-    src/multipole_interactions/multipole_interaction_interface.hpp
-    src/multipole_interactions/compute_kernel_templates.hpp
-    src/multipole_interactions/multipole_cuda_kernel.hpp
-    src/multipole_interactions/cuda_multipole_interaction_interface.hpp
-    src/multipole_interactions/calculate_stencil.hpp
-    src/multipole_interactions/multipole_cpu_kernel.hpp
-    src/monopole_interactions/cuda_p2p_interaction_interface.hpp
-    src/monopole_interactions/p2p_interaction_interface.hpp
-    src/monopole_interactions/p2p_cuda_kernel.hpp
-    src/monopole_interactions/p2p_cpu_kernel.hpp
-    src/monopole_interactions/calculate_stencil.hpp
-    src/monopole_interactions/p2m_interaction_interface.hpp
-    src/monopole_interactions/p2m_kernel.hpp
-    src/common_kernel/kernel_simd_types.hpp
-    src/common_kernel/kernel_taylor_set_basis.hpp
-    src/cuda_util/cuda_scheduler.hpp
-)
-
 add_hpx_executable(
   octotiger
+  SOURCES ""
+  HEADERS ""
   DEPENDENCIES
     Silo::silo Vc::Vc Boost::boost
-  SOURCES
-    ${source_files}
-  HEADERS
-    ${header_files}
 )
 
 target_include_directories(octotiger PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-if(MSVC)
-  # Enable solution folders for MSVC
-  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-  target_compile_definitions(octotiger PRIVATE
-    _USE_MATH_DEFINES
-    NOMINMAX
-    _CRT_SECURE_NO_WARNINGS
-    __restrict__=__restrict)
-
-  target_compile_options(octotiger PRIVATE
-    /wd4018
-    /wd4068 # unknown pragma
-    /wd4146
-    /wd4244
-    /wd4267
-    /wd4334
-    /wd4521
-    /wd4800
-    /wd4996)
-
-  target_compile_options(octotiger PRIVATE /EHsc)
-else()
-  target_link_libraries(octotiger octotiger::hdf5 dl z quadmath)
-  
-  if(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-    target_compile_options(octotiger PRIVATE
-      -Wno-ignored-attributes -Wno-attributes -Wno-deprecated-declarations
-      -Wno-unused-result -ffast-math)
-  elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
-      #set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -ipo -Wunused-result")
-      #set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Ofast -ipo")
-      target_compile_options(octotiger -Wno-attributes -Wno-deprecated)
-  endif()
-endif()
+add_subdirectory(src)
 
 if(USE_AVX2)
   if(MSVC)
@@ -222,6 +82,46 @@ endif()
 
 if(OCTOTIGER_WITH_RADIATION)
   target_compile_definitions(octotiger PRIVATE OCTOTIGER_HAVE_RADIATION)
+endif()
+
+if(MSVC)
+  # Enable solution folders for MSVC
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+  target_compile_definitions(octotiger PRIVATE
+    _USE_MATH_DEFINES
+    NOMINMAX
+    _CRT_SECURE_NO_WARNINGS
+    __restrict__=__restrict)
+
+  target_compile_options(octotiger PRIVATE
+    /wd4018
+    /wd4068 # unknown pragma
+    /wd4146
+    /wd4244
+    /wd4267
+    /wd4334
+    /wd4521
+    /wd4800
+    /wd4996)
+
+  target_compile_options(octotiger PRIVATE /EHsc)
+
+  # Ensure source files are shown in groups
+  get_target_property(octotiger_SOURCES octotiger SOURCES)
+  source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${octotiger_SOURCES})
+else()
+  target_link_libraries(octotiger octotiger::hdf5 dl z quadmath)
+  
+  if(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
+    target_compile_options(octotiger PRIVATE
+      -Wno-ignored-attributes -Wno-attributes -Wno-deprecated-declarations
+      -Wno-unused-result -ffast-math)
+  elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
+      #set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -ipo -Wunused-result")
+      #set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Ofast -ipo")
+      target_compile_options(octotiger -Wno-attributes -Wno-deprecated)
+  endif()
 endif()
 
 ################################################################################
