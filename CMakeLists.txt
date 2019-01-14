@@ -7,7 +7,7 @@
 
 project(octotiger CXX)
 
-cmake_minimum_required(VERSION 3.3.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0015 NEW)
 cmake_policy(SET CMP0003 NEW)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -35,26 +35,14 @@ set_property(TARGET octotiger::hdf5
   PROPERTY INTERFACE_LINK_LIBRARIES ${HDF5_LIBRARIES})
 
 if(OCTOTIGER_WITH_CUDA)
-  add_definitions(-DOCTOTIGER_CUDA_ENABLED)
-  find_package(CUDA REQUIRED)
+  enable_language(CUDA)
 
-  add_library(octotiger::cuda INTERFACE IMPORTED)
-  set_property(TARGET octotiger::cuda
-    PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${CUDA_INCLUDE_DIRS}")
-  set_property(TARGET octotiger::cuda
-    PROPERTY INTERFACE_LINK_LIBRARIES ${CUDA_CUBLAS_LIBRARIES})
   string(APPEND HPX_CUDA_CLANG_FLAGS " -fno-fast-math -Xcuda-ptxas -v")
 endif()
 
 ################################################################################
 # Set up Octotiger target
 ################################################################################
-set(dependencies silo::silo Vc::Vc Boost::boost)
-
-if(NOT MSVC)
-  list(APPEND dependencies octotiger::hdf5 dl z quadmath)
-endif()
-
 # Octotiger executable
 set(source_files
     src/test_problems/marshak/marshak.cpp
@@ -162,30 +150,17 @@ set(header_files
 add_hpx_executable(
   octotiger
   DEPENDENCIES
-    ${dependencies}
+    Silo::silo Vc::Vc Boost::boost
   SOURCES
     ${source_files}
   HEADERS
     ${header_files}
-  FOLDER  "Octotiger"
 )
 
-target_include_directories(octotiger PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(octotiger PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_compile_definitions(octotiger PRIVATE OCTOTIGER_HAVE_SILO)
-
-if(NOT MSVC)
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    target_compile_options(octotiger PRIVATE
-      -Wno-ignored-attributes -Wno-attributes -Wno-deprecated-declarations
-      -Wno-unused-result -ffast-math)
-  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-      #set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -ipo -Wunused-result")
-      #set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Ofast -ipo")
-      target_compile_options(octotiger -Wno-attributes -Wno-deprecated)
-  endif()
-else()
-  # enable solution folders for MSVC
+if(MSVC)
+  # Enable solution folders for MSVC
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
   target_compile_definitions(octotiger PRIVATE
@@ -202,9 +177,22 @@ else()
     /wd4267
     /wd4334
     /wd4521
-    /wd4800)
+    /wd4800
+    /wd4996)
 
   target_compile_options(octotiger PRIVATE /EHsc)
+else()
+  target_link_libraries(octotiger octotiger::hdf5 dl z quadmath)
+  
+  if(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
+    target_compile_options(octotiger PRIVATE
+      -Wno-ignored-attributes -Wno-attributes -Wno-deprecated-declarations
+      -Wno-unused-result -ffast-math)
+  elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Intel)
+      #set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -ipo -Wunused-result")
+      #set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Ofast -ipo")
+      target_compile_options(octotiger -Wno-attributes -Wno-deprecated)
+  endif()
 endif()
 
 if(USE_AVX2)
@@ -223,16 +211,16 @@ endif()
 
 # Handle CUDA
 if(OCTOTIGER_WITH_CUDA)
-  target_link_libraries(octotiger octotiger::cuda)
+  target_compile_definitions(octotiger PRIVATE OCTOTIGER_HAVE_CUDA)
   set_property(TARGET octotiger PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 endif()
 
 # Handle other options
-if (OCTOTIGER_WITH_GRAV_PAR)
+if(OCTOTIGER_WITH_GRAV_PAR)
   target_compile_definitions(octotiger PRIVATE OCTOTIGER_HAVE_GRAV_PAR)
 endif()
 
-if (OCTOTIGER_WITH_RADIATION)
+if(OCTOTIGER_WITH_RADIATION)
   target_compile_definitions(octotiger PRIVATE OCTOTIGER_HAVE_RADIATION)
 endif()
 
@@ -241,9 +229,9 @@ endif()
 ################################################################################
 add_executable(silo_compare src/compare/compare.cpp)
 
-target_link_libraries(silo_compare silo::silo)
+target_link_libraries(silo_compare Silo::silo)
 if(NOT MSVC)
-  target_link_libraries(silo_compare octotiger::hdf5 dl pthread dl z)
+  target_link_libraries(silo_compare octotiger::hdf5 pthread dl z)
 else()
   target_compile_options(silo_compare PRIVATE /EHsc)
 endif()
