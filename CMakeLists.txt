@@ -72,7 +72,6 @@ set(source_files
     src/common_kernel/interactions_iterators.cpp
     src/cuda_util/cuda_scheduler.cpp
     src/monopole_interactions/cuda_p2p_interaction_interface.cpp
-    src/monopole_interactions/p2p_cuda_kernel.cu
     src/monopole_interactions/p2p_cpu_kernel.cpp
     src/monopole_interactions/p2p_interaction_interface.cpp
     src/monopole_interactions/calculate_stencil.cpp
@@ -80,7 +79,6 @@ set(source_files
     src/monopole_interactions/p2m_kernel.cpp
     src/multipole_interactions/multipole_interaction_interface.cpp
     src/multipole_interactions/cuda_multipole_interaction_interface.cpp
-    src/multipole_interactions/multipole_cuda_kernel.cu
     src/multipole_interactions/calculate_stencil.cpp
     src/multipole_interactions/multipole_cpu_kernel.cpp
     src/radiation/rad_grid.cpp
@@ -170,6 +168,12 @@ add_hpx_executable(
   HEADERS
     ${header_files}
 )
+set_property(TARGET octotiger PROPERTY FOLDER "Octotiger")
+set_target_properties(octotiger PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED YES
+    #CXX_EXTENSIONS NO
+)
 
 target_include_directories(octotiger PRIVATE ${PROJECT_SOURCE_DIR})
 
@@ -236,6 +240,21 @@ endif()
 if(OCTOTIGER_WITH_CUDA)
   target_compile_definitions(octotiger PRIVATE OCTOTIGER_HAVE_CUDA)
   set_property(TARGET octotiger PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+  add_library(monopole_p2p_kernel src/monopole_interactions/p2p_cuda_kernel.cu)
+  add_library(multipole_kernel src/multipole_interactions/multipole_cuda_kernel.cu)
+
+  target_link_libraries(octotiger monopole_p2p_kernel multipole_kernel)
+
+  set_property(
+    TARGET monopole_p2p_kernel multipole_kernel
+    PROPERTY FOLDER "Octotiger/CUDA Kernels")
+  set_property(
+    TARGET monopole_p2p_kernel
+    PROPERTY CUDA_STANDARD 14)
+  
+  target_include_directories(monopole_p2p_kernel PRIVATE ${PROJECT_SOURCE_DIR})
+  target_include_directories(multipole_kernel PRIVATE ${PROJECT_SOURCE_DIR})
 endif()
 
 # Handle other options
@@ -256,3 +275,5 @@ target_link_libraries(silo_compare Silo::silo)
 if(MSVC)
   target_compile_options(silo_compare PRIVATE /EHsc)
 endif()
+
+set_property(TARGET silo_compare PROPERTY FOLDER "Tools")

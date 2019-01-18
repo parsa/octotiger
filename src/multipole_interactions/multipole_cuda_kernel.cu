@@ -1,4 +1,3 @@
-#ifdef OCTOTIGER_HAVE_CUDA
 #include "octotiger/multipole_interactions/compute_kernel_templates.hpp"
 #include "octotiger/multipole_interactions/multipole_cuda_kernel.hpp"
 
@@ -8,8 +7,8 @@ namespace octotiger {
 namespace fmm {
     namespace multipole_interactions {
 
-        __device__ HPX_CONSTEXPR size_t component_length = ENTRIES + SOA_PADDING;
-        __device__ HPX_CONSTEXPR size_t component_length_unpadded = INNER_CELLS + SOA_PADDING;
+        __device__ static const size_t component_length = ENTRIES + SOA_PADDING;
+        __device__ static const size_t component_length_unpadded = INNER_CELLS + SOA_PADDING;
 
         __global__ void
         __launch_bounds__(512, 1)
@@ -302,4 +301,3 @@ namespace fmm {
     }    // namespace multipole_interactions
 }    // namespace fmm
 }    // namespace octotiger
-#endif
