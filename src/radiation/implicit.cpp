@@ -12,7 +12,7 @@
 
 template <typename F>
 void abort_if_solver_not_converged(
-    real const eg_t0, real E0, F const test, real const E, real const eg_t)
+    real const eg_t0, real E0, F const test, real const& E, real const eg_t)
 {
     // Bisection root finding method
     // Indices of max, mid, and min
