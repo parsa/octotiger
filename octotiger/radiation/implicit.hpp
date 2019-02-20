@@ -11,16 +11,17 @@
 #include "octotiger/physcon.hpp"
 #include "octotiger/real.hpp"
 #include "octotiger/safe_math.hpp"
-#include "octotiger/space_vector.hpp"
+//#include "octotiger/space_vector.hpp"
 
+#include <array>
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
 #include <utility>
 
-std::pair<real, space_vector> implicit_radiation_step(real E0, real& e0, space_vector F0,
-		space_vector u0, real rho, real mmw, real X, real Z, real dt);
-
+using real3 = std::array<real, 3>;
+std::pair<real, real3> implicit_radiation_step(real E0, real& e0, real3 F0,
+    real3 u0, real rho, real mmw, real X, real Z, real dt);
 
 template<class T>
 T light_f(const T& E, const T& F) {

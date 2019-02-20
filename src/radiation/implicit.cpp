@@ -58,8 +58,35 @@ void abort_if_solver_not_converged(
     abort();
 }
 
-std::pair<real, space_vector> implicit_radiation_step(real E0, real& e0, space_vector F0,
-		space_vector u0, real rho, real mmw, real X, real Z, real dt) {
+real3& operator/=(real3& lhs, real const& rhs)
+{
+    lhs[0] /= rhs;
+    lhs[1] /= rhs;
+    lhs[2] /= rhs;
+
+    return lhs;
+}
+
+real3 operator*(real3 const& lhs, real const& rhs)
+{
+    return real3{
+        lhs[0] * rhs,
+        lhs[1] * rhs,
+        lhs[2] * rhs
+    };
+}
+
+real3 operator-(real3 const& lhs, real3 const& rhs)
+{
+    return real3{
+        lhs[0] - rhs[0],
+        lhs[1] - rhs[1],
+        lhs[2] - rhs[2]
+    };
+}
+
+std::pair<real, real3> implicit_radiation_step(real E0, real& e0, real3 F0,
+		real3 u0, real rho, real mmw, real X, real Z, real dt) {
 
 	const real c = physcon().c;
 	real kp = kappa_p(rho, e0, mmw, X, Z);
@@ -67,9 +94,9 @@ std::pair<real, space_vector> implicit_radiation_step(real E0, real& e0, space_v
 	const real rhoc2 = rho * c * c;
 
 	E0 /= rhoc2;
-	F0 = F0 / (rhoc2 * c);
+	F0 /= (rhoc2 * c);
 	e0 /= rhoc2;
-	u0 = u0 / c;
+	u0 /= c;
 	kp *= dt * c;
 	kr *= dt * c;
 
@@ -118,6 +145,7 @@ std::pair<real, space_vector> implicit_radiation_step(real E0, real& e0, space_v
 	e0 = ei * rhoc2;
 	const auto dtinv = 1.0 / dt;
 
-	return std::make_pair(real((E - E0) * dtinv * rhoc2), ((F - F0) * dtinv * rhoc2 * c));
+    return std::make_pair(
+        real((E - E0) * dtinv * rhoc2), ((F - F0) * dtinv * rhoc2 * c));
 }
 

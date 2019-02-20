@@ -180,8 +180,8 @@ void rad_grid::rad_imp(std::vector<real>& egas, std::vector<real>& tau, std::vec
 					e0 = std::pow(tau[iiih], fgamma);
 				}
 				real E0 = U[er_i][iiir];
-				space_vector F0;
-				space_vector u0;
+				real3 F0;
+				real3 u0;
 				F0[0] = U[fx_i][iiir];
 				F0[1] = U[fy_i][iiir];
 				F0[2] = U[fz_i][iiir];
@@ -189,9 +189,9 @@ void rad_grid::rad_imp(std::vector<real>& egas, std::vector<real>& tau, std::vec
 				u0[1] = vy;
 				u0[2] = vz;
 				real E1 = E0;
-				space_vector F1 = F0;
-				space_vector u1 = u0;
-				real e1 = e0;
+                real3 F1 = F0;
+                real3 u1 = u0;
+                real e1 = e0;
 
 				const auto ddt = implicit_radiation_step(E1, e1, F1, u1, den, mmw[iiir], X_spc[iiir], Z_spc[iiir],
 						dt);
@@ -327,10 +327,11 @@ void rad_grid::compute_mmw(const std::vector<std::vector<real>>& U) {
 }
 
 void node_server::compute_radiation(real dt) {
-//	physcon().c = 1.0;
-	if (my_location.level() == 0) {
-//		printf("c = %e\n", physcon().c);
-	}
+    //physcon().c = 1.0;
+    //if (my_location.level() == 0)
+    //{
+    //    printf("c = %e\n", physcon().c);
+    //}
 
 	rad_grid_ptr->set_dx(grid_ptr->get_dx());
 	auto rgrid = rad_grid_ptr;
